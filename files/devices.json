@@ -1,0 +1,82 @@
+{
+    "Room":{
+        "Maria_Room":{
+            "TV":{
+                "1":{
+
+                    "name":"Main_TV",
+                    "type":"TV",
+                    "ip":"192.168.1.5"
+                }
+            },
+
+            "Router":{
+                "1":{
+                "name":"Main_Router",
+                "type":"Wi-Fi 6 Router",
+                "SSID":"COSMOTE-145844",
+                "password":"2510316265",
+                "ip":"192.168.1.1"
+            }
+            }
+        },
+
+        "Main_Bedroom":{
+            "TV":{
+                "1":{
+
+                    "name":"Bedroom's TV",
+                    "type":"TV",
+                    "ip":"192.168.1."
+                }
+            }
+        },
+
+        "Gregory's_Bedroom": {
+            "lights":{
+                "1":{
+
+                    "name":"tapo_led_strip",
+                    "type":"led_strip",
+                    "ip":"192.168.1."
+                }
+            },
+
+            "laptops":{
+                "1":{
+
+                "name":"home-server",
+                "type":"server",
+                "ip":"192.168.1."
+            },
+
+                "2":{
+
+                    "name":"main_laptop",
+                    "type":"laptop",
+                    "ip":"192.168.1.2"
+                },
+
+                "3":{
+
+                    "name":"secondary_laptop",
+                    "type":"laptop",
+                    "ip":"192.168.1."
+                }
+            },
+
+            "TV":{
+                "1":{
+                    
+                    "name":"Gregory's TV",
+                    "type":"TV",
+                    "ip":"192.168.1."
+
+                }
+            }
+        
+        }
+    }
+         
+    
+}

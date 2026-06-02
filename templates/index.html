@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+    <meta charset="UTF-8">
+    <title>Edge AI Home Dashboard</title>
+    
+    <style>
+        body { background: #121212; color: white; font-family: sans-serif; text-align: center; }
+        .card { background: #1e1e1e; padding: 20px; margin: 10px; border-radius: 12px; display: inline-block; }
+        button { background: #333; color: white; border: none; padding: 10px 20px; margin: 5px; border-radius: 8px; cursor: pointer; }
+        button:hover { background: #555; }
+        .btn-on { background: #2e7d32; }
+        .btn-off { background: #c62828; }
+    </style>
+</head>
+<body>
+
+    <h1>Edge AI Home Monitoring</h1>
+
+    <div class="card">
+        <h3>Led Strip</h3>
+        <button class="btn-on" onclick="sendCommand('light', 'ON')">ON</button>
+        <button class="btn-off" onclick="sendCommand('light', 'OFF')">OFF</button>
+    </div>
+
+    <div class="card">
+        <h3>Maria TV</h3>
+        <button onclick="sendTV('Maria_TV','power')">Power</button>
+        <button onclick="sendTV('Maria_TV','home')">Home</button>
+    </div>
+
+    <script>
+        const API_URL = "http://192.168.1.2:8080";
+
+        function sendCommand(type, cmd) {
+            fetch(`${API_URL}/api/${type}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ device: "tapo_led_strip", room: "Gregory's_Bedroom", command: cmd, type:type})
+            }).then(r => r.json()).then(d => console.log(d));
+        }
+
+        function sendTV(device,cmd) {
+            fetch(`${API_URL}/api/tv`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ room: "Maria_Room", type: "TV", number: "1", command: cmd, device:device})
+            }).then(r => r.json()).then(d => console.log(d));
+        }
+    </script>
+</body>
+</html>
