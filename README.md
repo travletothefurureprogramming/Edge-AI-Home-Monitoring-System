@@ -31,6 +31,20 @@ git clone https://github.com/travletothefurureprogramming/Edge-AI-Home-Monitorin
 Bash
 pip install -r requirements.txt
 
+### Install Android SDK platform tools
+
+* **Find it here:** [Download SDK Platform-Tools](https://developer.android.com/tools/releases/platform-tools)
+
+* **Add to PATH:**
+  1. **Download and Extract:** Download the zip file and extract it to a permanent folder on your machine (e.g., `/opt/platform-tools` or `C:\tools\platform-tools`).
+  2. **Linux / macOS:** Add the following line to your `~/.bashrc` or `~/.zshrc` file:
+     ```bash
+     export PATH=$PATH:/your/extracted/path/platform-tools
+     ```
+     Then run `source ~/.bashrc` to apply the changes.
+  3. **Windows:** Search for "Edit the system environment variables" in the Start menu, go to **Environment Variables**, select **Path**, click **Edit**, and add the full path to your extracted `platform-tools` folder.
+  4. **Verify:** Open a new terminal and type `adb version` to confirm the installation.
+
 ## 📜 Credits & Licensing
 This project utilizes the AndroidTV-Remote-Controller library by Jekso, which is distributed under the MIT License.
 
