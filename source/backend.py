@@ -55,7 +55,7 @@ def handle_lights():
     return jsonify({"status": "success", "message": "Command received"}), 200
    
    else:  
-      device_status = utils.read_json_file("files/device_status.json")["Lights"]
+      device_status = utils.read_json_file("source/files/device_status.json")["Lights"]
 
       return jsonify(device_status)
 
@@ -69,7 +69,7 @@ def handle_tv():
     command = content["command"]
     device = content["device"]
     
-    data = utils.read_json_file("files/devices.json")
+    data = utils.read_json_file("source/files/devices.json")
     ip = data["Room"][room][type][number]["ip"]
 
     tv = AndroidTV(ip) 
