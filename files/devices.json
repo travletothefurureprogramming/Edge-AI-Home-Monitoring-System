@@ -4,7 +4,7 @@
             "TV":{
                 "1":{
 
-                    "name":"Main_TV",
+                    "name":"Maria_TV",
                     "type":"TV",
                     "ip":"192.168.1.5"
                 }
@@ -25,14 +25,14 @@
             "TV":{
                 "1":{
 
-                    "name":"Bedroom's TV",
+                    "name":"Bedrooms_TV",
                     "type":"TV",
                     "ip":"192.168.1."
                 }
             }
         },
 
-        "Gregory's_Bedroom": {
+        "Gregorys_Bedroom": {
             "lights":{
                 "1":{
 
@@ -68,7 +68,7 @@
             "TV":{
                 "1":{
                     
-                    "name":"Gregory's TV",
+                    "name":"Gregorys_TV",
                     "type":"TV",
                     "ip":"192.168.1."
 
