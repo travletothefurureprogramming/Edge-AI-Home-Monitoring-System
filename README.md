@@ -17,7 +17,7 @@
 * **Core Library:** [AndroidTV-Remote-Controller](https://github.com/Jekso/AndroidTV-Remote-Controller)
 * **Interface Tool:** Android Debug Bridge (ADB)
 * **Environment:** Designed for Linux (Raspberry Pi compatible) / Windows / macOS
-* **Main Hardware:** A old laptop
+* **Main Hardware:** An old laptop
 
 
 ## 📦 Installation
