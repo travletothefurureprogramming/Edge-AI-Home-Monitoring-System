@@ -1,6 +1,6 @@
 # Edge-AI Home Monitoring System
 
-## A privacy-first, edge-AI home automation hub using Linux, Flask, and real-time computer vision to orchestrate smart devices.
+### A privacy-first, edge-AI home automation hub using Linux, Flask, and real-time computer vision to orchestrate smart devices.
 
 ### 🚀 Features
 * Control devices seamlessly via dashboard remotely without port forwarding.
