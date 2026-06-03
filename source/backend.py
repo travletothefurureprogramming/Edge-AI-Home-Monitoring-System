@@ -3,6 +3,10 @@ from flask_cors import CORS
 from control import AndroidTV
 from android_tv_rc.logger import Logger
 import utils
+import ollama
+from control import Led_strip
+import json
+
 
 server = Flask(__name__)
 CORS(server)
@@ -17,6 +21,26 @@ errors = {
    }
 }
 
+
+@server.route("/api/ai", methods=["POST"])
+def handle_ai():
+    content = request.json
+    user_input = content["prompt"]
+    
+    # Χρήση του phi3 για ταχύτητα
+    response = ollama.chat(model='phi3', messages=[
+    {'role': 'system', 'content': 'You are a helpful assistant. Provide extremely concise, short, and direct answers in one or two sentences max.'},
+    {'role': 'user', 'content': user_input}
+])    
+    ai_text = response['message']['content']
+    
+    return jsonify({"response": ai_text}), 200
+
+
+@server.route('/api/devices', methods=['GET'])
+def get_devices():
+    with open('devices_config.json', 'r') as f:
+        return jsonify(json.load(f))
 
 @server.route("/")
 def inferance():
@@ -40,9 +64,9 @@ def communicate_for_errors():
         return jsonify({"status": "error recorded"}), 200
 
 
-@server.route("/api/light",methods=["POST","GET"])
+@server.route("/api/light",methods=["POST"])
 def handle_lights():
-   if request.method == "POST":
+   
     content = request.json
 
     device = content["device"]
@@ -51,36 +75,37 @@ def handle_lights():
     command = content["command"]
 
     Logger.info(f"/api/light -> Received the command {command} for the device {device}. This device is part of the {room} and it is a {type}")
+    
+    led_strip = Led_strip()
+
+    led_strip.command(command)
 
     return jsonify({"status": "success", "message": "Command received"}), 200
    
-   else:  
-      device_status = utils.read_json_file("source/files/device_status.json")["Lights"]
 
-      return jsonify(device_status)
 
 @server.route("/api/tv", methods=["POST"])
 def handle_tv():
     content = request.json
-    
     room = content["room"]
-    type = content["type"]
-    number = content["number"]
+    dev_type = content["type"] # Μετονομασία σε dev_type για να μην συγκρούεται με τη λέξη-κλειδί 'type'
+    number = str(content["number"]) # Μετατροπή σε string για το key του JSON
     command = content["command"]
     device = content["device"]
     
-    data = utils.read_json_file("source/files/devices.json")
-    ip = data["Room"][room][type][number]["ip"]
-
-    tv = AndroidTV(ip) 
+    # Φόρτωση από το αρχείο ρυθμίσεων
+    with open("devices_config.json", "r") as f:
+        data = json.load(f)
     
-    tv.send_command(command, isinstance(command, dict))
-
-    if errors["connection"]["module"]["TV"] is None:
-        Logger.info(f"/api/tv -> Command {command} sent to {device}.")
-        return jsonify({"status": "success", "message": "Command sent successfully"}), 200
-    else:
-        Logger.warning(f"/api/tv -> Error on communication with {device}.")
-        return jsonify({"status": "error", "message": f"Communication with {device} failed."}), 503 # Το 503 είναι καλύτερο για "Service Unavailable"
-
-    
+    try:
+        ip = data["Room"][room][dev_type][number]["ip"]
+        tv = AndroidTV(ip) 
+        tv.send_command(command, isinstance(command, dict))
+        
+        if errors["connection"]["module"]["TV"] is None:
+            Logger.info(f"/api/tv -> Command {command} sent to {device} at {ip}.")
+            return jsonify({"status": "success", "message": "Command sent successfully"}), 200
+        else:
+            return jsonify({"status": "error", "message": "TV communication error"}), 503
+    except KeyError:
+        return jsonify({"status": "error", "message": "Device not found in config"}), 404

@@ -1,0 +1,29 @@
+{
+    "Room": {
+        "maria_room": {
+            "TV": {
+                "1": {
+                    "name": "maria_tv",
+                    "type": "TV",
+                    "ip": "192.168.1.5"
+                }
+            }
+        },
+        "gregory_room": {
+            "TV": {
+                "1": {
+                    "name": "greg_tv",
+                    "type": "TV",
+                    "ip": "192.168.1.11"
+                }
+            },
+            "light": {
+                "1": {
+                    "name": "led_strip",
+                    "type": "light",
+                    "ip": "192.168.1.7"
+                }
+            }
+        }
+    }
+}

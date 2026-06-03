@@ -15,14 +15,10 @@
         }
 
         body { 
-            background: var(--bg); 
-            color: var(--text); 
-            font-family: 'Inter', sans-serif; 
-            margin: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-height: 100vh;
+            background: var(--bg); color: var(--text); 
+            font-family: 'Inter', sans-serif; margin: 0;
+            display: flex; flex-direction: column; 
+            align-items: center; min-height: 100vh;
         }
 
         h1 { margin: 2rem 0; font-weight: 600; letter-spacing: -0.05em; }
@@ -30,100 +26,132 @@
         .container {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 20px;
-            width: 90%;
-            max-width: 800px;
+            gap: 20px; width: 90%; max-width: 800px;
         }
 
         .card { 
-            background: var(--card-bg); 
-            backdrop-filter: blur(10px);
-            padding: 24px; 
-            border-radius: 20px; 
-            border: 1px solid rgba(255,255,255,0.1);
-            text-align: center;
+            background: var(--card-bg); backdrop-filter: blur(10px);
+            padding: 24px; border-radius: 20px; 
+            border: 1px solid rgba(255,255,255,0.1); text-align: center;
         }
 
         h3 { margin-top: 0; font-size: 1.1rem; color: var(--accent); }
 
         button { 
-            background: rgba(255,255,255,0.05);
-            color: white; 
-            border: 1px solid rgba(255,255,255,0.1);
-            padding: 12px 24px; 
-            margin: 5px; 
-            border-radius: 12px; 
-            cursor: pointer; 
+            background: rgba(255,255,255,0.05); color: white; 
+            border: 1px solid rgba(255,255,255,0.1); padding: 10px 15px; 
+            margin: 5px; border-radius: 12px; cursor: pointer; 
             transition: all 0.2s ease;
-            font-weight: 500;
         }
 
         button:hover { background: rgba(255,255,255,0.15); transform: translateY(-2px); }
-        .btn-on:hover { background: #166534; }
-        .btn-off:hover { background: #991b1b; }
+
+        #aiInput {
+            width: 80%; padding: 10px; border-radius: 10px;
+            border: 1px solid var(--accent); background: rgba(255,255,255,0.05);
+            color: white; margin-bottom: 10px;
+        }
+
+        .loader {
+            display: none; border: 4px solid #f3f3f3; border-top: 4px solid var(--accent);
+            border-radius: 50%; width: 20px; height: 20px;
+            animation: spin 1s linear infinite; margin: 10px auto;
+        }
+
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
 
     <h1>Edge AI Dashboard</h1>
 
-    <div class="container">
-        <div class="card">
-            <h3>Led Strip</h3>
-            <button class="btn-on" onclick="sendCommand('light', 'ON')">ON</button>
-            <button class="btn-off" onclick="sendCommand('light', 'OFF')">OFF</button>
+    <div id="dashboard-container" class="container">
+        <div class="card" style="grid-column: 1 / -1;">
+            <h3>AI Assistant</h3>
+            <input type="text" id="aiInput" placeholder="Ask anything...">
+            <button onclick="askAI()">Ask</button>
+            <div id="loader" class="loader"></div>
+            <p id="aiResponse" style="margin-top: 10px; color: var(--accent);"></p>
         </div>
-
-        <div class="card">
-            <h3>Maria TV</h3>
-            <button onclick="sendTV('Maria_TV','Maria_Room','TV','1','power')">Power</button>
-            <button onclick="sendTV('Maria_TV','Maria_Room','TV','1','home')">Home</button>
-            <button onclick="sendTV('Maria_TV','Maria_Room','TV','1','volume_up')">Volume Up</button>
-            <button onclick="sendTV('Maria_TV','Maria_Room','TV','1','volume_down')">Volume Down</button>
         </div>
-
-        <div class="card">
-            <h3>Bedroom's TV</h3>
-            <button onclick="sendTV('Bedrooms_TV','Main_Bedroom','TV','1','power')">Power</button>
-            <button onclick="sendTV('Bedrooms_TV','Main_Bedroom','TV','1','home')">Home</button>
-            <button onclick="sendTV('Bedrooms_TV','Main_Bedroom','TV','1','volume_up')">Volume Up</button>
-            <button onclick="sendTV('Bedrooms_TV','Main_Bedroom','TV','1','volume_dowm')">Volume Down</button>
-        </div>
-
-        <div class="card">
-            <h3>Gregory's TV</h3>
-            <button onclick="sendTV('Gregorys_TV','Gregorys_Bedroom','TV','1','power')">Power</button>
-            <button onclick="sendTV('Gregorys_TV','Gregorys_Bedroom','TV','1','home')">Home</button>
-            <button onclick="sendTV('Gregorys_TV','Gregorys_Bedroom','TV','1','volume_up')">Volume Up</button>
-            <button onclick="sendTV('Gregorys_TV','Gregorys_Bedroom','TV','1','volume_dowm')">Volume Down</button>
-        </div>
-
-    </div>
 
     <script>
-        const API_URL = "http://192.168.1.11:8080";
+        const API_URL = "http://192.168.1.2:8080";
 
-        async function request(endpoint, body) {
+        // Φόρτωση συσκευών από το JSON
+        async function loadDashboard() {
             try {
-                const r = await fetch(`${API_URL}/api/${endpoint}`, {
+                const res = await fetch(`${API_URL}/api/devices`);
+                const data = await res.json();
+                const container = document.getElementById('dashboard-container');
+
+                for (const [roomName, categories] of Object.entries(data.Room)) {
+                    for (const [category, devices] of Object.entries(categories)) {
+                        for (const [id, dev] of Object.entries(devices)) {
+                            const card = document.createElement('div');
+                            card.className = 'card';
+                            card.innerHTML = `<h3>${dev.name}</h3>`;
+
+                            if (category === 'TV') {
+                                const cmds = ['power', 'home', 'volume_up', 'volume_down', 'mute', 'channel_up', 'channel_down'];
+                                cmds.forEach(cmd => {
+                                    card.innerHTML += `<button onclick="sendTV('${dev.name}', '${roomName}', 'TV', '${id}', '${cmd}')">${cmd.toUpperCase()}</button>`;
+                                });
+                            }
+                            container.appendChild(card);
+
+                            if (category === 'light') {
+                                const cmds = ['on', 'off'];
+                                cmds.forEach(cmd => {
+                                    card.innerHTML += `<button onclick="sendlight('${dev.name}', '${roomName}', 'light', '${id}', '${cmd}')">${cmd.toUpperCase()}</button>`;
+                                });
+                            }
+                            container.appendChild(card);
+                        }
+                    }
+                }
+            } catch (err) { console.error("Error loading devices:", err); }
+        }
+
+        // AI Assistant Logic
+        async function askAI() {
+            const loader = document.getElementById('loader');
+            const responseText = document.getElementById('aiResponse');
+            const prompt = document.getElementById('aiInput').value;
+            
+            loader.style.display = "block";
+            responseText.innerText = "Thinking...";
+
+            try {
+                const res = await fetch(`${API_URL}/api/ai`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(body)
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({prompt: prompt})
                 });
-                const data = await r.json();
-                console.log("Success:", data);
-            } catch (err) {
-                console.error("Error:", err);
-            }
+                const data = await res.json();
+                responseText.innerText = data.response;
+            } catch (err) { responseText.innerText = "Error connecting to AI."; }
+            finally { loader.style.display = "none"; }
         }
 
-        function sendCommand(type, cmd) {
-            request(type, { device: "tapo_led_strip", room: "Gregory's_Bedroom", command: cmd, type:type});
+        // TV Control Logic
+        async function sendTV(device, room, type, id, cmd) {
+            await fetch(`${API_URL}/api/tv`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ room: room, type: type, number: id, command: cmd, device: device})
+            });
         }
 
-        function sendTV(device, room, type, number, cmd) {
-            request("tv", { room: room, type: type, number: number, command: cmd, device: device});
+        async function sendlight(device, room, type, id, cmd) {
+            await fetch(`${API_URL}/api/light`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ room: room, type: type, number: id, command: cmd, device: device})
+            });
         }
+
+        window.onload = loadDashboard;
     </script>
 </body>
 </html>

@@ -1,6 +1,11 @@
 from android_tv_rc.android_tv_controller import AndroidTVController
 import utils
+import asyncio
+from tapo import ApiClient
+import os
+from dotenv import load_dotenv, dotenv_values 
 
+load_dotenv()
 
 tv_registry = {}
 
@@ -38,3 +43,33 @@ class AndroidTV:
         else:
             if command["command"] == "channel":
                 device.press_channel_number(str(command["number"]))
+
+
+class Led_strip:
+    def __init__(self):
+     self.tapo_username = os.getenv("TAPO_USERNAME")
+     self.tapo_password = os.getenv("TAPO_PASSWORD")
+
+     data = utils.read_json_file("source/files/devices.json")
+     ip = data["Room"]["Gregorys_Bedroom"]["lights"]["1"]["ip"]
+
+     self.ip_address = ip
+
+     self.client = ApiClient(self.tapo_username, self.tapo_password)
+    
+    async def async_connect(self):
+        self.device = await self.client.l900(self.ip_address)
+
+    async def async_command(self,command):
+        match command:
+            case "on": await self.device.on()
+            case "off": await self.device.off()
+    
+    def connect(self):
+        asyncio.run(self.async_connect())
+    
+    def command(self,command):
+        asyncio.run(self.async_command(command))
+
+        
+
