@@ -6,6 +6,8 @@ import utils
 import ollama
 from control import Led_strip
 import json
+import threading
+import camera
 
 
 server = Flask(__name__)
@@ -35,6 +37,33 @@ def handle_ai():
     ai_text = response['message']['content']
     
     return jsonify({"response": ai_text}), 200
+
+@server.route('/api/security',methods=['POST'])
+def handle_security():
+    content = request.json
+    
+    sequrity_status = content["status"]
+
+    if sequrity_status == "on":
+        threading.Thread(target=camera.start_security).start()
+        return jsonify({"status": "the camera has turned on"}), 200
+
+    else:
+        threading.Thread(target=camera.stop_security).start()
+        return jsonify({"status": "the camera has turned on"}), 200
+
+
+@server.route('/api/security/notification',methods=['POST'])
+def send_notification():
+    content = request.json
+
+    is_person = content["person"]
+
+    if is_person == "yes":
+        print("ALARM")
+        return jsonify({"status": "Person has detected"}), 200
+    return jsonify({"status": "All is ok"}), 200
+
 
 
 @server.route('/api/devices', methods=['GET'])
