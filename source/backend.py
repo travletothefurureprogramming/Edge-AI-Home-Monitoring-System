@@ -64,23 +64,31 @@ def communicate_for_errors():
         return jsonify({"status": "error recorded"}), 200
 
 
-@server.route("/api/light",methods=["POST"])
+@server.route("/api/light", methods=["POST"])
 def handle_lights():
-   
     content = request.json
 
     device = content["device"]
     room = content["room"]
-    type = content["type"]
+    dev_type = content["type"]
     command = content["command"]
+    number = str(content["number"]) 
 
-    Logger.info(f"/api/light -> Received the command {command} for the device {device}. This device is part of the {room} and it is a {type}")
+    Logger.info(f"/api/light -> Received the command {command} for the device {device}. This device is part of the {room} and it is a {dev_type}")
     
-    led_strip = Led_strip()
+    with open("devices_config.json", "r") as f:
+        data = json.load(f)
+    
+    try:
+        ip = data["Room"][room][dev_type][number]["ip"]
+        
+        led_strip = Led_strip(ip)
+        led_strip.command(command)
 
-    led_strip.command(command)
-
-    return jsonify({"status": "success", "message": "Command received"}), 200
+        return jsonify({"status": "success", "message": "Command received"}), 200
+        
+    except KeyError:
+        return jsonify({"status": "error", "message": "Light device not found in config"}), 404
    
 
 
