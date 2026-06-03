@@ -57,10 +57,11 @@ Once the installation and setup are complete, you can start the Edge-AI hub usin
 
 ### 🪟 On Windows
 Navigate to the project directory and double-click the execution script, or run it via terminal:
-```batch
 run.bat
 
-
+### 🐧 On Linux or Mac
+Navigate to the project directory and double-click the execution script, or run it via terminal:
+run.sh
 
 ## 📜 Credits & Licensing
 This project utilizes the AndroidTV-Remote-Controller library by Jekso, which is distributed under the MIT License.
