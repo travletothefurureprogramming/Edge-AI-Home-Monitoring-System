@@ -28,8 +28,14 @@ git clone https://github.com/travletothefurureprogramming/Edge-AI-Home-Monitorin
 
 ### Install the required dependencies:
 
-Bash
-pip install -r requirements.txt
+1. Open setup.bat if you are in windows or setup.sh if you are in linux or mac
+2. Press "Install Dependencies" to install all the requirement python packages
+3. Go to ollama.com and download it.
+4. Press "Download AI Model (Phi3).
+5. Press "Next".
+6. Add your devices(For now it is only suppourt android tv and tapo L900 led strip)
+7. Close the window.
+
 
 ### Install Android SDK platform tools
 
@@ -44,6 +50,17 @@ pip install -r requirements.txt
      Then run `source ~/.bashrc` to apply the changes.
   3. **Windows:** Search for "Edit the system environment variables" in the Start menu, go to **Environment Variables**, select **Path**, click **Edit**, and add the full path to your extracted `platform-tools` folder.
   4. **Verify:** Open a new terminal and type `adb version` to confirm the installation.
+
+## 🏃 How to Run
+
+Once the installation and setup are complete, you can start the Edge-AI hub using the automated execution scripts.
+
+### 🪟 On Windows
+Navigate to the project directory and double-click the execution script, or run it via terminal:
+```batch
+run.bat
+
+
 
 ## 📜 Credits & Licensing
 This project utilizes the AndroidTV-Remote-Controller library by Jekso, which is distributed under the MIT License.
