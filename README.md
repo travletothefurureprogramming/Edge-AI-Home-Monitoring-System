@@ -2,8 +2,7 @@
 
 ### A privacy-first, edge-AI home automation hub using Linux, Flask, and real-time control to orchestrate smart devices.
 
-<img width="1919" height="1019" alt="Screenshot 2026-06-02 161514" src="https://github.com/user-attachments/assets/7124a22d-f178-4773-baee-44437cc92437" />
-
+<img width="1912" height="968" alt="Screenshot 2026-06-03 172605" src="https://github.com/user-attachments/assets/1977c347-7d0e-4ddf-a71f-89956ec50f26" />
 
 ## 🚀 Features
 * Control devices seamlessly via dashboard remotely without port forwarding.
