@@ -4,11 +4,9 @@ cd "$(dirname "$0")"
 
 source ../.venv/bin/activate
 
-mkdir -p files
-
 curl -fsSL https://ollama.com/install.sh | sh
 
-: > files/.env
+: > .env
 
 pip install customtkinter
 

@@ -63,6 +63,14 @@ run.bat
 Navigate to the project directory and double-click the execution script, or run it via terminal:
 run.sh
 
+## How to use it
+
+### On web browser
+Open the adress of the server on port 8080.
+
+### Via app
+Open the App.py to communicate with the chatbot from your computer.
+
 ## 📜 Credits & Licensing
 This project utilizes the AndroidTV-Remote-Controller library by Jekso, which is distributed under the MIT License.
 

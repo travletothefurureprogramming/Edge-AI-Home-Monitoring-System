@@ -1,4 +1,3 @@
-import ollama
 import customtkinter as ctk
 import utils
 import threading
@@ -32,115 +31,12 @@ class App(ctk.CTk):
 
        self.awnser_box.delete('1.0', ctk.END)
 
-       if "tv" in message.lower():
-           if "on" in message.lower():
-               if "maria" in message.lower():
-                 self.awnser_box.insert(ctk.END,"Okay I will turn on maria's TV")
-                 utils.send_tv({
-                    "device":"Maria_TV",
-                    "room":"Maria_Room",
-                    "number":"1",
-                    "type":"TV",
-                    "command":"on"
-                 })
-               elif "tv box" in message.lower():
-                 self.awnser_box.insert(ctk.END,"Okay I will turn on tv box")
-                 utils.send_tv({
-                    "device":"Bedrooms_TV",
-                    "room":"Main_Bedroom",
-                    "number":"1",
-                    "type":"TV",
-                    "command":"on"
-                 })
 
-           elif "off" in message.lower():
-              if "maria" in message.lower():
-                 self.awnser_box.insert(ctk.END,"Okay I will turn off maria's TV")
-                 utils.send_tv({
-                    "device":"Maria_TV",
-                    "room":"Maria_Room",
-                    "number":"1",
-                    "type":"TV",
-                    "command":"off"
-                 })
-              elif "tv box" in message.lower():
-                 self.awnser_box.insert(ctk.END,"Okay I will turn off tv box")
-                 utils.send_tv({
-                    "device":"Bedrooms_TV",
-                    "room":"Main_Bedroom",
-                    "number":"1",
-                    "type":"TV",
-                    "command":"on"
-                 })
+       prompt = {"prompt":message}
 
-           elif "channel up" in message.lower():
-              if "maria" in message.lower():
-                 self.awnser_box.insert(ctk.END,"Okay I will change channel on maria's TV")
-                 utils.send_tv({
-                    "device":"Maria_TV",
-                    "room":"Maria_Room",
-                    "number":"1",
-                    "type":"TV",
-                    "command":"channel_up"
-                 })
-              elif "tv box" in message.lower():
-                 self.awnser_box.insert(ctk.END,"Okay I will change channel on tv box")
-                 utils.send_tv({
-                    "device":"Bedrooms_TV",
-                    "room":"Main_Bedroom",
-                    "number":"1",
-                    "type":"TV",
-                    "command":"channel_up"
-                 })
+       response = utils.send_ai(prompt)["response"]
 
-           elif "channel down" in message.lower():
-              if "maria" in message.lower():
-                 self.awnser_box.insert(ctk.END,"Okay I will change channel on maria's TV")
-                 utils.send_tv({
-                    "device":"Maria_TV",
-                    "room":"Maria_Room",
-                    "number":"1",
-                    "type":"TV",
-                    "command":"channel_down"
-                 })
-              elif "tv box" in message.lower():
-                 self.awnser_box.insert(ctk.END,"Okay I will change channel on tv box")
-                 utils.send_tv({
-                    "device":"Bedrooms_TV",
-                    "room":"Main_Bedroom",
-                    "number":"1",
-                    "type":"TV",
-                    "command":"channel_down"
-                 })
-
-              elif "led strip" in message.lower():
-               if "on" in message.lower():
-                 self.awnser_box.insert(ctk.END,"Okay I will turn on led strip")
-                 utils.send_tv({
-                    "device":"tapo_led_strip",
-                    "room":"Gregorys_Bedroom",
-                    "number":"1",
-                    "type":"lights",
-                    "command":"on"
-                 })
-              
-               elif "off" in message.lower():
-                  self.awnser_box.insert(ctk.END,"Okay I will turn off led strip")
-                  utils.send_tv({
-                    "device":"tapo_led_strip",
-                    "room":"Gregorys_Bedroom",
-                    "number":"1",
-                    "type":"lights",
-                    "command":"off"
-                 })
-
-
-       else:       
-        prompt = {"prompt":message}
-
-        response = utils.send_ai(prompt)["response"]
-
-        self.awnser_box.insert(ctk.END,response['message']['content'])
+       self.awnser_box.insert(ctk.END,response['message']['content'])
 
 
 
