@@ -1,14 +1,13 @@
 import backend
 from android_tv_rc.logger import Logger
 import threading
+import os
 
 def run_server():
- backend.server.run("0.0.0.0",8080,debug=True)
- 
+    try:
+        backend.server.run("0.0.0.0", 8080, debug=True)
+    except Exception as e:
+        Logger.error(f"An error has occurred on the server: {e}")
 
-
-try:
- run_server()
-
-except:
- Logger.error("An error has occured on the server!")
+if __name__ == "__main__":
+    run_server()

@@ -10,7 +10,7 @@ class App(ctk.CTk):
        self.geometry("850x600")
 
 
-       self.title = "AI HOME SYSTEM"
+       self.title("AI HOME SYSTEM")
 
        self.main_label = ctk.CTkLabel(self,text="AI HOME SYSTEM", font=('Times New Roman', 25))
        self.main_label.pack(side='top', anchor='center')
@@ -113,10 +113,10 @@ class App(ctk.CTk):
                     "command":"channel_down"
                  })
 
-       elif "led strip" in message.lower():
-          if "on" in message.lower():
-             self.awnser_box.insert(ctk.END,"Okay I will turn on led strip")
-             utils.send_tv({
+              elif "led strip" in message.lower():
+               if "on" in message.lower():
+                 self.awnser_box.insert(ctk.END,"Okay I will turn on led strip")
+                 utils.send_tv({
                     "device":"tapo_led_strip",
                     "room":"Gregorys_Bedroom",
                     "number":"1",
@@ -124,9 +124,9 @@ class App(ctk.CTk):
                     "command":"on"
                  })
               
-          elif "off" in message.lower():
-             self.awnser_box.insert(ctk.END,"Okay I will turn off led strip")
-             utils.send_tv({
+               elif "off" in message.lower():
+                  self.awnser_box.insert(ctk.END,"Okay I will turn off led strip")
+                  utils.send_tv({
                     "device":"tapo_led_strip",
                     "room":"Gregorys_Bedroom",
                     "number":"1",
@@ -136,7 +136,9 @@ class App(ctk.CTk):
 
 
        else:       
-        response = ollama.chat(model='phi3', messages=[{'role': 'user', 'content': message}])
+        prompt = {"prompt":message}
+
+        response = utils.send_ai(prompt)["response"]
 
         self.awnser_box.insert(ctk.END,response['message']['content'])
 
