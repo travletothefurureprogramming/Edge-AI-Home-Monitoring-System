@@ -1,6 +1,6 @@
 from flask import Flask, request,jsonify,render_template
 from flask_cors import CORS
-from control import AndroidTV
+from control import AndroidTV, LG_TV
 from android_tv_rc.logger import Logger
 import utils
 import ollama
@@ -160,24 +160,35 @@ def handle_led_strip():
 def handle_tv():
     content = request.json
     room = content["room"]
-    dev_type = content["type"] # Μετονομασία σε dev_type για να μην συγκρούεται με τη λέξη-κλειδί 'type'
-    number = str(content["number"]) # Μετατροπή σε string για το key του JSON
+    dev_type = content["type"] 
+    number = str(content["number"]) 
     command = content["command"]
     device = content["device"]
     
-    # Φόρτωση από το αρχείο ρυθμίσεων
     with open("devices_config.json", "r") as f:
         data = json.load(f)
     
     try:
         ip = data["Room"][room][dev_type][number]["ip"]
-        tv = AndroidTV(ip) 
-        tv.send_command(command, isinstance(command, dict))
+        if dev_type == "android_tv":
+         tv = AndroidTV(ip) 
+         tv.send_command(command, isinstance(command, dict))
         
-        if errors["connection"]["module"]["TV"] is None:
+         if errors["connection"]["module"]["TV"] is None:
             Logger.info(f"/api/tv -> Command {command} sent to {device} at {ip}.")
             return jsonify({"status": "success", "message": "Command sent successfully"}), 200
-        else:
+         else:
             return jsonify({"status": "error", "message": "TV communication error"}), 503
+        elif dev_type == "lg_tv":
+            tv = LG_TV(ip)
+
+            tv.execute_command(command)
+            
+            Logger.info(f"/api/tv -> Command {command} sent to {device} at {ip}.")
+
+            return jsonify({"status": "success", "message": "Command sent successfully"}), 200
+
+ 
+
     except KeyError:
         return jsonify({"status": "error", "message": "Device not found in config"}), 404

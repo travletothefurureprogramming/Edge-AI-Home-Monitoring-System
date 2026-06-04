@@ -4,6 +4,9 @@ import asyncio
 from tapo import ApiClient
 import os
 from dotenv import load_dotenv, dotenv_values 
+from pywebostv.connection import WebOSClient
+from pywebostv.controls import MediaControl, SystemControl, InputControl
+import json
 
 load_dotenv(".env")
 
@@ -113,3 +116,90 @@ class Tapo_Smart_Bulbs:
     
     def command(self,command):
         asyncio.run(self.async_execute_command(command))
+
+
+class LG_TV:
+   def __init__(self,ip):
+      self.STORE_FILE = "lg_store.json"
+      self.store = self.load_from_your_custom_storage() if not self.your_custom_storage_is_empty() else {}
+
+      self.ip = ip
+
+      self.client = WebOSClient(ip,secure=True)  
+
+      self.connect()
+
+      self.register()
+
+      self.media = MediaControl(self.client)
+      self.system = SystemControl(self.client)
+      self.inputc = InputControl(self.client)
+
+
+   def your_custom_storage_is_empty(self):
+    return not os.path.exists(self.STORE_FILE)
+
+   def load_from_your_custom_storage(self):
+    with open(self.STORE_FILE, "r") as f:
+        return json.load(f)
+
+   def persist_to_your_custom_storage(self,store):
+    with open(self.STORE_FILE, "w") as f:
+        json.dump(store, f) 
+  
+   def connect(self):
+      self.client.connect()
+
+   def register(self):
+    for status in self.client.register(self.store):
+     if status == WebOSClient.PROMPTED:
+        print("Please accept the connect on the TV!")
+     elif status == WebOSClient.REGISTERED:
+        print("Registration successful!")
+
+     self.persist_to_your_custom_storage(self.store)
+
+   def play(self):
+      self.media.play()
+   
+   def pause(self):
+      self.media.pause()
+   
+   def stop(self):
+      self.media.stop()
+   
+   def rewind(self):
+      self.media.rewind()
+   
+   def fast_forward(self):
+      self.media.fast_forward()
+   
+   def volume_up(self):
+      self.media.volume_up()
+
+   def volume_down(self):
+      self.media.volume_down()
+   
+   def set_volume(self,level):
+      self.media.set_volume(level)
+   
+   def mute(self,mute:bool):
+      self.media.mute(mute)
+   
+   def on(self):
+      self.system.power_on()
+   
+   def off(self):
+      self.system.power_off()
+
+   def execute_command(self,command):
+      match command:
+         case "play": self.play()
+         case "pause": self.pause()
+         case "stop": self.stop()
+         case "rewind": self.rewind()
+         case "fast_forward": self.fast_forward()
+         case "volume_up": self.volume_up()
+         case "volume_down": self.volume_down()
+         case "on": self.on()
+         case "off": self.off()

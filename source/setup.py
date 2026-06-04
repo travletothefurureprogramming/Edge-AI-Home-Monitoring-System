@@ -30,7 +30,7 @@ class App(ctk.CTk):
 
     def update_env_file(self, key, value):
         """Ενημερώνει ή προσθέτει ένα key-value pair στο .env αρχείο χωρίς να διαγράφει τα υπόλοιπα."""
-        env_path = "source/.env"
+        env_path = ".env"
         
         # Διασφάλιση ότι ο φάκελος υπάρχει
         os.makedirs(os.path.dirname(env_path), exist_ok=True)
