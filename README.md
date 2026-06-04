@@ -29,6 +29,7 @@
 
 * LG TV:
 - WEB OS 6+
+(Coming Soon)
 
 ## 🛠 Tech Stack
 
