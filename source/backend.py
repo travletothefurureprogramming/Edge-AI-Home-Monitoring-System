@@ -8,6 +8,7 @@ from control import Led_strip
 import json
 import threading
 import camera
+import bot
 
 
 server = Flask(__name__)
@@ -46,11 +47,13 @@ def handle_security():
 
     if sequrity_status == "on":
         threading.Thread(target=camera.start_security).start()
+        bot.send_telegram_message("The camera has turned on")
         return jsonify({"status": "the camera has turned on"}), 200
 
     else:
         threading.Thread(target=camera.stop_security).start()
-        return jsonify({"status": "the camera has turned on"}), 200
+        threading.Thread(target=bot.send_telegram_message("The camera has turned off")).start()
+        return jsonify({"status": "the camera has turned off"}), 200
 
 
 @server.route('/api/security/notification',methods=['POST'])
@@ -61,7 +64,9 @@ def send_notification():
 
     if is_person == "yes":
         print("ALARM")
+        bot.send_telegram_message("ALARM!!!!!!! PERSON DETECTED ALARM PERSON DETECTED!!!!!!")
         return jsonify({"status": "Person has detected"}), 200
+    
     return jsonify({"status": "All is ok"}), 200
 
 

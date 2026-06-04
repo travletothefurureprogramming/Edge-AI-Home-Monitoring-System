@@ -2,6 +2,7 @@ import backend
 from android_tv_rc.logger import Logger
 import threading
 import os
+import bot
 
 def run_server():
     try:
@@ -10,4 +11,5 @@ def run_server():
         Logger.error(f"An error has occurred on the server: {e}")
 
 if __name__ == "__main__":
+    threading.Thread(target=bot.main_bot_loop).start()
     run_server()

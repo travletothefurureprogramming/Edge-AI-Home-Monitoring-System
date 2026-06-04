@@ -2,9 +2,13 @@ import cv2
 import ultralytics
 import random
 import utils
+import time
 
 # Φόρτωση YOLOv8
 yolo = ultralytics.YOLO("yolov8s.pt")
+
+# Global μεταβλητή για τον έλεγχο του loop από άλλα modules (π.χ. backend)
+is_running = False
 
 def getColours(cls_num):
     """Generate unique colors for each class ID"""
@@ -12,17 +16,30 @@ def getColours(cls_num):
     return tuple(random.randint(0, 255) for _ in range(3))
 
 def start_security():
+    global is_running
+    
+    # Αν τρέχει ήδη, μην ξανανοίγεις δεύτερη κάμερα
+    if is_running:
+        print("Η ασφάλεια τρέχει ήδη!")
+        return
+        
     videoCap = cv2.VideoCapture(0)
-    person_detected = False
+    if not videoCap.isOpened():
+        print("Σφάλμα: Δεν είναι δυνατή η πρόσβαση στην κάμερα.")
+        return
 
-    while True:
+    is_running = True
+    person_detected = False
+    print("Το σύστημα Edge-AI Monitoring ξεκίνησε...")
+
+    while is_running:
         ret, frame = videoCap.read()
         if not ret:
+            print("Αποτυχία λήψης frame από την κάμερα.")
             break
 
         # YOLO tracking
         results = yolo.track(frame, stream=True)
-
         detected_person_now = False
 
         for result in results:
@@ -52,27 +69,35 @@ def start_security():
                         2
                     )
 
-        # Στείλε ειδοποίηση ΜΟΝΟ όταν εμφανιστεί άνθρωπος
+        # Στείλε ειδοποίηση ΜΟΝΟ όταν εμφανιστεί για πρώτη φορά άνθρωπος
         if detected_person_now and not person_detected:
             utils.send_security_notification({"person": "yes"})
             person_detected = True
 
-        # Αν δεν υπάρχει άνθρωπος στο frame, reset
+        # Αν δεν υπάρχει άνθρωπος στο frame, reset για την επόμενη ειδοποίηση
         if not detected_person_now:
             person_detected = False
 
         # Εμφάνιση εικόνας
-        cv2.imshow("Camera", frame)
+        cv2.imshow("Edge-AI Camera Monitoring", frame)
 
-        # Έξοδος με 'q'
+        # Έξοδος με 'q' από το πληκτρολόγιο
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
 
+    # Σωστό κλείσιμο και αποδέσμευση της κάμερας
+    print("Τερματισμός κάμερας και αποδέσμευση πόρων...")
+    is_running = False
     videoCap.release()
     cv2.destroyAllWindows()
+    
+    # Μερικές φορές στα Windows/Linux χρειάζεται ένα μικρό waitKey για να κλείσει όντως το UI
+    cv2.waitKey(1) 
 
 def stop_security():
-    cv2.destroyAllWindows()
+    global is_running
+    print("Λήψη εντολής για κλείσιμο της ασφάλειας...")
+    is_running = False  # Αυτό θα σπάσει το while loop στο επόμενο iteration
 
 if __name__ == "__main__":
     start_security()
