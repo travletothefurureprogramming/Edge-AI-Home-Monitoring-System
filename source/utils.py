@@ -16,6 +16,9 @@ def send_tv(content):
 def send_light(content):
     requests.post("http://192.168.1.2:8080/api/light", json=content)
 
+def send_led_strip(content):
+    requests.post("http://192.168.1.2:8080/api/led_strip", json=content)
+
 def send_ai(content):
     return requests.post("http://192.168.1.2:8080/api/ai", json=content)
 

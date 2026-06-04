@@ -86,8 +86,11 @@ def execute_device_command(room, dev_type, dev_id, dev_name, action):
     """Στέλνει το σωστό αίτημα στο Flask backend ανάλογα με τον τύπο της συσκευής"""
     if dev_type.lower() == "tv":
         endpoint = f"{BACKEND_URL}/api/tv"
-    else:
+    elif dev_type.lower() == "light":
         endpoint = f"{BACKEND_URL}/api/light"
+    else:
+        endpoint = f"{BACKEND_URL}/api/led_strip"
+
 
     if action in ["άναψε", "on", "open", "άνοιξε"]:
         command_str = "power" if dev_type.lower() == "tv" else "on"

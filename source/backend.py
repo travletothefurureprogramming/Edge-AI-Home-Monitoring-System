@@ -4,7 +4,7 @@ from control import AndroidTV
 from android_tv_rc.logger import Logger
 import utils
 import ollama
-from control import Led_strip
+from control import Led_strip,Tapo_Smart_Bulbs
 import json
 import threading
 import camera
@@ -98,6 +98,35 @@ def communicate_for_errors():
         return jsonify({"status": "error recorded"}), 200
 
 
+@server.route("/api/led_strip", methods=["POST"])
+def handle_lights():
+    content = request.json
+
+    device = content["device"]
+    room = content["room"]
+    dev_type = content["type"]
+    command = content["command"]
+    number = str(content["number"]) 
+
+    Logger.info(f"/api/led_strip -> Received the command {command} for the device {device}. This device is part of the {room} and it is a {dev_type}")
+    
+    with open("devices_config.json", "r") as f:
+        data = json.load(f)
+    
+    try:
+        ip = data["Room"][room][dev_type][number]["ip"]
+        
+        
+        led_strip = Led_strip(ip)
+        led_strip.command(command)
+
+        return jsonify({"status": "success", "message": "Command received"}), 200
+        
+    except KeyError:
+        return jsonify({"status": "error", "message": "Light device not found in config"}), 404
+    
+
+
 @server.route("/api/light", methods=["POST"])
 def handle_lights():
     content = request.json
@@ -116,8 +145,9 @@ def handle_lights():
     try:
         ip = data["Room"][room][dev_type][number]["ip"]
         
-        led_strip = Led_strip(ip)
-        led_strip.command(command)
+        
+        smart_bulb = (ip)
+        smart_bulb.command(command)
 
         return jsonify({"status": "success", "message": "Command received"}), 200
         

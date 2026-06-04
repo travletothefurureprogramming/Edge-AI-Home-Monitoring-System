@@ -45,17 +45,24 @@ class AndroidTV:
                 device.press_channel_number(str(command["number"]))
 
 
-class Led_strip:
-    def __init__(self,ip):
+class Tapo_Led_strip:
+    def __init__(self,ip,device):
      self.tapo_username = os.getenv("TAPO_USERNAME")
      self.tapo_password = os.getenv("TAPO_PASSWORD")
 
      self.ip_address = ip
+     self.device = device
 
      self.client = ApiClient(self.tapo_username, self.tapo_password)
-    
+
     async def async_connect(self):
-        self.device = await self.client.l900(self.ip_address)
+        if self.device == "l900":
+         self.device = await self.client.l900(self.ip_address)
+        elif self.device == "l920":
+         self.device = await self.client.l920(self.ip_address)
+        elif self.device == "l930":
+         self.device = await self.client.l930(self.ip_address)
+
 
     async def async_execute_command(self, command):
         device = await self.client.l900(self.ip_address)
@@ -70,4 +77,39 @@ class Led_strip:
         asyncio.run(self.async_execute_command(command))
 
         
+class Tapo_Smart_Bulbs:
+    def __init__(self,ip,device):
+     self.tapo_username = os.getenv("TAPO_USERNAME")
+     self.tapo_password = os.getenv("TAPO_PASSWORD")
 
+     self.ip_address = ip
+     self.device = device
+
+     self.client = ApiClient(self.tapo_username, self.tapo_password)
+
+    async def async_connect(self):
+        if self.device == "l510":
+         self.device = await self.client.l510(self.ip_address)
+        elif self.device == "l520":
+         self.device = await self.client.l520(self.ip_address)  
+        elif self.device == "l520":
+         self.device = await self.client.l530(self.ip_address)
+        elif self.device == "l535":
+         self.device = await self.client.l535(self.ip_address)
+        elif self.device == "l610":
+         self.device = await self.client.l610(self.ip_address)
+        elif self.device == "l630":
+         self.device = await self.client.l630(self.ip_address)
+        
+
+    async def async_execute_command(self, command):
+        device = await self.client.l900(self.ip_address)
+        match command:
+            case "on": await device.on()
+            case "off": await device.off()
+    
+    def connect(self):
+        asyncio.run(self.async_connect())
+    
+    def command(self,command):
+        asyncio.run(self.async_execute_command(command))
