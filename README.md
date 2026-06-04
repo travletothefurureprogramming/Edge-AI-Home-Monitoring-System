@@ -24,7 +24,11 @@
 - L610
 - L630
 
-* Android Tv
+* Android Tv:
+- Android 8+
+
+* LG TV:
+- WEB OS 6+
 
 ## 🛠 Tech Stack
 
