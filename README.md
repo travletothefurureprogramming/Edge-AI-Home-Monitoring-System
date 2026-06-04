@@ -9,6 +9,22 @@
 * Real time control using a smart assistant
 * Edge AI for communication and commands.
 
+## Suppourted Devices
+
+* Tapo Led Strips: 
+- L900
+- L920
+- L930
+
+* Tapo Light Bulbs:
+- L510
+- L520
+- L530
+- L535
+- L610
+- L630
+
+* Android Tv
 
 ## 🛠 Tech Stack
 
