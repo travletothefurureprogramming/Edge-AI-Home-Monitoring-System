@@ -103,7 +103,7 @@ class App(ctk.CTk):
         self.room_entry = ctk.CTkEntry(self.container, placeholder_text="Room Name")
         self.room_entry.pack(pady=5)
         
-        self.type_combobox = ctk.CTkComboBox(self.container, values=["TV", "light"], command=self.on_type_change)
+        self.type_combobox = ctk.CTkComboBox(self.container, values=["TV", "light", "led_strip"], command=self.on_type_change)
         self.type_combobox.pack(pady=5)
         
         self.name_entry = ctk.CTkEntry(self.container, placeholder_text="Device Name")
@@ -123,7 +123,7 @@ class App(ctk.CTk):
         ctk.CTkButton(self.container, text="Back", fg_color="gray", command=self.show_install_frame).pack(pady=5)
 
     def on_type_change(self, choice):
-        if choice == "light":
+        if choice == "light" or choice == "led_strip":
             self.creds_frame.pack(pady=5)
         else:
             self.creds_frame.pack_forget()

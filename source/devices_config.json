@@ -1,32 +1,57 @@
 {
     "Room": {
-        "maria_room": {
-            "TV": {
+        "gregory_room": {
+            "light": {
                 "1": {
-                    "name": "maria_tv",
-                    "type": "TV",
-                    "ip": "192.168.1.5"
+                    "name": "Led_Bulb1",
+                    "type": "light",
+                    "ip": "192.168.1.10",
+                    "username": "gregiosifidis2@gmail.com",
+                    "password": "greg11mar@"
+                },
+                "2": {
+                    "name": "Led_Bulb2",
+                    "type": "light",
+                    "ip": "192.168.1.10",
+                    "username": "gregiosifidis2@gmail.com",
+                    "password": "greg11mar@"
+                },
+                "3": {
+                    "name": "Led_Bulb3",
+                    "type": "light",
+                    "ip": "192.168.1.10",
+                    "username": "gregiosifidis2@gmail.com",
+                    "password": "greg11mar@"
+                },
+                "4": {
+                    "name": "Led_Bulb4",
+                    "type": "light",
+                    "ip": "192.168.1.10",
+                    "username": "gregiosifidis2@gmail.com",
+                    "password": "greg11mar@"
                 }
             }
         },
-        "gregory_room": {
-            "TV": {
+        "greg_room": {
+            "led_strip": {
                 "1": {
-                    "name": "greg_tv",
-                    "type": "TV",
-                    "ip": "192.168.1.11"
+                    "name": "gaming_led_strip",
+                    "type": "led_strip",
+                    "ip": "192.168.1.13"
                 }
             },
             "light": {
                 "1": {
-                    "name": "led_strip",
+                    "name": "smart_bulb",
                     "type": "light",
-                    "ip": "192.168.1.13"
+                    "ip": "192.168.1.14",
+                    "username": "gregiosifidis2@gmail.com",
+                    "password": "greg11mar@"
                 },
                 "2": {
-                    "name": "tapo_ledstrip",
+                    "name": "smart_bulb2",
                     "type": "light",
-                    "ip": "192.168.1.13",
+                    "ip": "192.168.1.15",
                     "username": "gregiosifidis2@gmail.com",
                     "password": "greg11mar@"
                 }

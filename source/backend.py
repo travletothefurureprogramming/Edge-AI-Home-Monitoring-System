@@ -4,7 +4,7 @@ from control import AndroidTV
 from android_tv_rc.logger import Logger
 import utils
 import ollama
-from control import Led_strip,Tapo_Smart_Bulbs
+from control import Tapo_Led_strip, Tapo_Smart_Bulbs
 import json
 import threading
 import camera
@@ -117,7 +117,7 @@ def handle_lights():
         ip = data["Room"][room][dev_type][number]["ip"]
         
         
-        led_strip = Led_strip(ip)
+        led_strip = Tapo_Led_strip(ip)
         led_strip.command(command)
 
         return jsonify({"status": "success", "message": "Command received"}), 200
@@ -128,7 +128,7 @@ def handle_lights():
 
 
 @server.route("/api/light", methods=["POST"])
-def handle_lights():
+def handle_led_strip():
     content = request.json
 
     device = content["device"]
@@ -146,7 +146,7 @@ def handle_lights():
         ip = data["Room"][room][dev_type][number]["ip"]
         
         
-        smart_bulb = (ip)
+        smart_bulb = Tapo_Smart_Bulbs(ip)
         smart_bulb.command(command)
 
         return jsonify({"status": "success", "message": "Command received"}), 200
