@@ -19,6 +19,7 @@
 * Tapo Light Bulbs:
 - L510
 - L520
+- L530
 - L535
 - L610
 - L630
