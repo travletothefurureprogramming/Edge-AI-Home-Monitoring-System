@@ -1,0 +1,22 @@
+{
+    "Room": {
+        "living_room": {
+            "lg_tv": {
+                "1": {
+                    "name": "LG",
+                    "type": "lg_tv",
+                    "ip": "192.168.1.3"
+                }
+            }
+        },
+        "maria_bedroom": {
+            "android_tv": {
+                "1": {
+                    "name": "AndroidTv",
+                    "type": "android_tv",
+                    "ip": "192.168.1.5"
+                }
+            }
+        }
+    }
+}
