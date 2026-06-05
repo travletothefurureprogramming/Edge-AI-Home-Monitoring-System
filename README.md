@@ -120,6 +120,11 @@ You can use the following commands:
 * To send a command for device: [command] [device]. For example: Turn on lg_tv.
 * To turn on/off camera: turn on/off camera.(Server camera, If the camera is on and it see a person, you will receive notifications in telegram).
 
+### Tailscale
+You can download and setup tailscale to have remote access on the server:
+
+* You must select to use tailscale ip on setup and type the ip manualy
+
 ## 📜 Credits & Licensing
 This project utilizes the AndroidTV-Remote-Controller library by Jekso, which is distributed under the MIT License.
 
