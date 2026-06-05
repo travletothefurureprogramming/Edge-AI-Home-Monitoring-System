@@ -57,6 +57,16 @@ class App(ctk.CTk):
         with open(env_path, "w") as f:
             f.writelines(lines)
 
+    def update_install_frame(self):
+        """Εμφανίζει ή κρύβει το Entry ανάλογα με το Checkbox, διατηρώντας τη σειρά."""
+        if self.tailscale_var.get():
+            # Κρύβουμε προσωρινά το Next για να μπει το Entry από πάνω του
+            self.next_btn.pack_forget()
+            self.tailscale_entry.pack(pady=10)
+            self.next_btn.pack(pady=10)
+        else:
+            self.tailscale_entry.pack_forget()
+
     def show_install_frame(self):
         for widget in self.container.winfo_children():
             widget.destroy()
@@ -79,18 +89,36 @@ class App(ctk.CTk):
         self.server_chk.pack(pady=20)
         # --------------------------------
         
-        next_btn = ctk.CTkButton(
+        self.tailscale_var = ctk.BooleanVar(value=False)
+        self.tailscale_chk = ctk.CTkCheckBox(
+            self.container, 
+            text="Do you have tailscale?", 
+            variable=self.tailscale_var,
+            command=self.update_install_frame
+        )
+        self.tailscale_chk.pack(pady=20)
+
+        # ΔΙΟΡΘΩΣΗ: Αλλαγή parent από self σε self.container και προσθήκη placeholder
+        self.tailscale_entry = ctk.CTkEntry(self.container, placeholder_text="Enter Tailscale IP", width=200)
+
+        # ΔΙΟΡΘΩΣΗ: Μετατροπή σε self.next_btn για πρόσβαση από την update_install_frame
+        self.next_btn = ctk.CTkButton(
             self.container, 
             text="Next: Telegram Setup", 
             fg_color="teal", 
             command=self.handle_next_step
         )
-        next_btn.pack(pady=10)
+        self.next_btn.pack(pady=10)
 
     def handle_next_step(self):
         """Αποθηκεύει την IP αν επιλέχθηκε ως server και προχωράει στο Telegram frame."""
         if self.is_server_var.get():
             server_ip = self.get_local_ip()
+            self.update_env_file("SERVER_IP", server_ip)
+            print(f"Saved Server IP ({server_ip}) to .env")
+        
+        elif self.tailscale_var.get():
+            server_ip = self.tailscale_entry.get().strip()
             self.update_env_file("SERVER_IP", server_ip)
             print(f"Saved Server IP ({server_ip}) to .env")
         

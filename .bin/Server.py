@@ -43,8 +43,8 @@ errors = {
 
 TOKEN = os.getenv("TELEGRAM_TOKEN")
 CHAT_ID = os.getenv("CHAT_ID")
-
-BACKEND_URL = "http://127.0.0.1:8080"
+BACKEND_IP = os.getenv("SERVER_IP")
+BACKEND_URL = f"{BACKEND_IP}:8080"
 
 yolo = ultralytics.YOLO(os.path.join(BASE_DIR, "yolov8s.pt"))
 
@@ -741,7 +741,7 @@ def handle_tv():
 
 def run_server():
     try:
-        server.run("0.0.0.0", 8080, debug=True)
+        server.run(BACKEND_IP, 8080, debug=True)
     except Exception as e:
         Logger.error(f"An error has occurred on the server: {e}")
 
