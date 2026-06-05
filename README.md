@@ -54,7 +54,7 @@ git clone https://github.com/travletothefurureprogramming/Edge-AI-Home-Monitorin
 3. Go to ollama.com and download it.
 4. Press "Download AI Model (Phi3).
 5. Press "Next".
-6. Add your devices(For now it is only suppourt android tv and tapo L900 led strip)
+6. Add your devices (For LG TV you must have powered on the tv and press yes)
 7. Close the window.
 
 
