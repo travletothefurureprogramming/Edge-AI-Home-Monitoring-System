@@ -55,7 +55,7 @@ PyAudio==0.2.14
 pycparser==3.0
 pydantic==2.13.4
 pydantic_core==2.46.4
-pygame==2.6.1
+pygame>=2.6.1
 Pygments==2.20.0
 pyinstaller==6.20.0
 pyinstaller-hooks-contrib==2026.5

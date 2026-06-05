@@ -13,7 +13,7 @@ if %errorlevel% neq 0 (
 
 type nul > .env
 
-pip install customtkinter
+pip install customtkinter cowsay rich requests tapo dotenv pywebostv
 
 python "setup.py"
 
