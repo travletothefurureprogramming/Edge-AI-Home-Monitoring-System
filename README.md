@@ -48,14 +48,15 @@ Bash
 git clone https://github.com/travletothefurureprogramming/Edge-AI-Home-Monitoring-System/
 
 ### Install the required dependencies:
-
-1. Open setup.bat if you are in windows or setup.sh if you are in linux or mac
-2. Press "Install Dependencies" to install all the requirement python packages
-3. Go to ollama.com and download it.
-4. Press "Download AI Model (Phi3).
-5. Press "Next".
-6. Add your devices (For LG TV you must have powered on the tv and press yes)
-7. Close the window.
+1. Download and Install [Visual Studio Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/)
+2. Download and Install [Python 3.11](https://www.python.org/downloads/)
+4. Download and Install [Download SDK Platform-Tools](https://developer.android.com/tools/releases/platform-tools). Then follow the steps below to add it to path.
+5. Open setup.bat if you are in windows or setup.sh if you are in linux or mac
+6. Press "Install Dependencies" to install all the requirement python packages and ollama if you dont have it already.
+7. Press "Download AI Model (Phi3).
+8. Press "Next".
+9. Add your devices (For LG TV you must have powered on the tv and press yes)
+10. Close the window.
 
 
 ### Install Android SDK platform tools
@@ -77,12 +78,10 @@ git clone https://github.com/travletothefurureprogramming/Edge-AI-Home-Monitorin
 Once the installation and setup are complete, you can start the Edge-AI hub using the automated execution scripts.
 
 ### 🪟 On Windows
-Navigate to the project directory and double-click the execution script, or run it via terminal:
-run.bat
+Navigate to the project directory open .bin folder double-click the execution script run.bat
 
 ### 🐧 On Linux or Mac
-Navigate to the project directory and double-click the execution script, or run it via terminal:
-run.sh
+Cooming soon!
 
 ## How to use it
 
@@ -91,6 +90,9 @@ Open the adress of the server on port 8080.
 
 ### Via app
 Open the App.py to communicate with the chatbot from your computer.
+
+### Using Telegram
+Cooming Soon!
 
 ## 📜 Credits & Licensing
 This project utilizes the AndroidTV-Remote-Controller library by Jekso, which is distributed under the MIT License.
