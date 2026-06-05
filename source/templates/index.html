@@ -92,13 +92,25 @@
                             card.className = 'card';
                             card.innerHTML = `<h3>${dev.name}</h3>`;
 
-                            if (category === 'TV') {
-                                const cmds = ['power', 'home', 'volume_up', 'volume_down', 'mute', 'channel_up', 'channel_down'];
+                            if (category === 'lg_tv') {
+                                const cmds = ['on', 'off', 'home', 'volume_up', 'volume_down', 'play', 'pause', 'stop', 'rewind', 'fast_forward'];
                                 cmds.forEach(cmd => {
-                                    card.innerHTML += `<button onclick="sendTV('${dev.name}', '${roomName}', 'TV', '${id}', '${cmd}')">${cmd.toUpperCase()}</button>`;
+                                    card.innerHTML += `<button onclick="sendTV('${dev.name}', '${roomName}', 'lg_tv', '${id}', '${cmd}')">${cmd.toUpperCase()}</button>`;
                                 });
                             }
                             container.appendChild(card);
+
+                            
+                            if (category === 'android_tv') {
+                                const cmds = ['power', 'home', 'volume_up', 'volume_down'];
+                                cmds.forEach(cmd => {
+                                    card.innerHTML += `<button onclick="sendTV('${dev.name}', '${roomName}', 'android_tv', '${id}', '${cmd}')">${cmd.toUpperCase()}</button>`;
+                                });
+                            }
+                            container.appendChild(card);
+
+
+                            
 
                             if (category === 'light') {
                                 const cmds = ['on', 'off'];

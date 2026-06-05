@@ -117,89 +117,79 @@ class Tapo_Smart_Bulbs:
     def command(self,command):
         asyncio.run(self.async_execute_command(command))
 
-
 class LG_TV:
-   def __init__(self,ip):
-      self.STORE_FILE = "lg_store.json"
-      self.store = self.load_from_your_custom_storage() if not self.your_custom_storage_is_empty() else {}
+    def __init__(self, ip):
+        self.STORE_FILE = os.path.join(os.path.dirname(__file__), "lg_store.json")
 
-      self.ip = ip
+        self.store = self.load_from_your_custom_storage() if not self.your_custom_storage_is_empty() else {}
 
-      self.client = WebOSClient(ip,secure=True)  
+        self.ip = ip
+        self.client = WebOSClient(ip, secure=True)
 
-      self.connect()
+        self.connect()
+        self.register()
 
-      self.register()
+        self.media = MediaControl(self.client)
+        self.system = SystemControl(self.client)
+        self.inputc = InputControl(self.client)
 
-      self.media = MediaControl(self.client)
-      self.system = SystemControl(self.client)
-      self.inputc = InputControl(self.client)
+    def your_custom_storage_is_empty(self):
+     # Άδειο αν δεν υπάρχει ή έχει μέγεθος 0
+     return not os.path.exists(self.STORE_FILE) or os.path.getsize(self.STORE_FILE) == 0
 
 
-   def your_custom_storage_is_empty(self):
-    return not os.path.exists(self.STORE_FILE)
+    def load_from_your_custom_storage(self):
+     try:
+        with open(self.STORE_FILE, "r", encoding="utf-8") as f:
+            return json.load(f)
+     except (json.JSONDecodeError, FileNotFoundError):
+        # Αν το JSON είναι άδειο ή χαλασμένο → ξεκινάμε από την αρχή
+        return {}
 
-   def load_from_your_custom_storage(self):
-    with open(self.STORE_FILE, "r") as f:
-        return json.load(f)
 
-   def persist_to_your_custom_storage(self,store):
-    with open(self.STORE_FILE, "w") as f:
-        json.dump(store, f) 
-  
-   def connect(self):
-      self.client.connect()
+    def persist_to_your_custom_storage(self, store):
+        with open(self.STORE_FILE, "w") as f:
+            json.dump(store, f)
 
-   def register(self):
-    for status in self.client.register(self.store):
-     if status == WebOSClient.PROMPTED:
-        print("Please accept the connect on the TV!")
-     elif status == WebOSClient.REGISTERED:
-        print("Registration successful!")
+    def connect(self):
+        self.client.connect()
 
-     self.persist_to_your_custom_storage(self.store)
+    def register(self):
 
-   def play(self):
-      self.media.play()
-   
-   def pause(self):
-      self.media.pause()
-   
-   def stop(self):
-      self.media.stop()
-   
-   def rewind(self):
-      self.media.rewind()
-   
-   def fast_forward(self):
-      self.media.fast_forward()
-   
-   def volume_up(self):
-      self.media.volume_up()
 
-   def volume_down(self):
-      self.media.volume_down()
-   
-   def set_volume(self,level):
-      self.media.set_volume(level)
-   
-   def mute(self,mute:bool):
-      self.media.mute(mute)
-   
-   def on(self):
-      self.system.power_on()
-   
-   def off(self):
-      self.system.power_off()
+        for status in self.client.register(self.store):
+            if status == WebOSClient.PROMPTED:
+                print("Please accept the connect on the TV!")
+            elif status == WebOSClient.REGISTERED:
+                print("Registration successful!")
 
-   def execute_command(self,command):
-      match command:
-         case "play": self.play()
-         case "pause": self.pause()
-         case "stop": self.stop()
-         case "rewind": self.rewind()
-         case "fast_forward": self.fast_forward()
-         case "volume_up": self.volume_up()
-         case "volume_down": self.volume_down()
-         case "on": self.on()
-         case "off": self.off()
+        # Αποθήκευση ΜΟΝΟ μετά το REGISTERED
+        self.persist_to_your_custom_storage(self.store)
+
+    # --- MEDIA ---
+    def play(self): self.media.play()
+    def pause(self): self.media.pause()
+    def stop(self): self.media.stop()
+    def rewind(self): self.media.rewind()
+    def fast_forward(self): self.media.fast_forward()
+    def volume_up(self): self.media.volume_up()
+    def volume_down(self): self.media.volume_down()
+    def set_volume(self, level): self.media.set_volume(level)
+    def mute(self, mute: bool): self.media.mute(mute)
+
+    # --- POWER ---
+    def on(self): self.system.power_on()
+    def off(self): self.system.power_off()
+
+    # --- COMMAND ROUTER ---
+    def execute_command(self, command):
+        match command:
+            case "play": self.play()
+            case "pause": self.pause()
+            case "stop": self.stop()
+            case "rewind": self.rewind()
+            case "fast_forward": self.fast_forward()
+            case "volume_up": self.volume_up()
+            case "volume_down": self.volume_down()
+            case "on": self.on()
+            case "off": self.off()

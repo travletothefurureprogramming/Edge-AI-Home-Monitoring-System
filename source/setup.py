@@ -4,6 +4,7 @@ import threading
 import json
 import os
 import socket  # Χρησιμοποιείται για να βρούμε την IP του μηχανήματος
+from control import LG_TV
 
 class App(ctk.CTk):
     def __init__(self):
@@ -29,30 +30,32 @@ class App(ctk.CTk):
             return "127.0.0.1"
 
     def update_env_file(self, key, value):
-        """Ενημερώνει ή προσθέτει ένα key-value pair στο .env αρχείο χωρίς να διαγράφει τα υπόλοιπα."""
-        env_path = ".env"
-        
-        # Διασφάλιση ότι ο φάκελος υπάρχει
-        os.makedirs(os.path.dirname(env_path), exist_ok=True)
-        
-        lines = []
-        key_found = False
-        
-        if os.path.exists(env_path):
-            with open(env_path, "r") as f:
-                lines = f.readlines()
-        
-        for i, line in enumerate(lines):
-            if line.strip().startswith(f"{key}="):
-                lines[i] = f'\n{key}="{value}"\n'
-                key_found = True
-                break
-                
-        if not key_found:
-            lines.append(f'\n{key}="{value}"\n')
-            
-        with open(env_path, "w") as f:
-            f.writelines(lines)
+     """Ενημερώνει ή προσθέτει ένα key-value pair στο .env αρχείο χωρίς να διαγράφει τα υπόλοιπα."""
+     env_path = ".env"
+
+     # Δημιουργεί φάκελο ΜΟΝΟ αν υπάρχει directory στο path
+     dir_path = os.path.dirname(env_path)
+     if dir_path:
+        os.makedirs(dir_path, exist_ok=True)
+
+     lines = []
+     key_found = False
+
+     if os.path.exists(env_path):
+        with open(env_path, "r") as f:
+            lines = f.readlines()
+
+     for i, line in enumerate(lines):
+        if line.strip().startswith(f"{key}="):
+            lines[i] = f'\n{key}="{value}"\n'
+            key_found = True
+            break
+
+     if not key_found:
+        lines.append(f'\n{key}="{value}"\n')
+
+     with open(env_path, "w") as f:
+        f.writelines(lines)
 
     def show_install_frame(self):
         for widget in self.container.winfo_children():
@@ -99,11 +102,12 @@ class App(ctk.CTk):
             widget.destroy()
 
         ctk.CTkLabel(self.container, text="Register New Device", font=("Arial", 16)).pack(pady=10)
+        ctk.CTkLabel(self.container, text="*In type light and ledstrip refers to tapo see more on our github readme", font=("Arial", 12)).pack()
         
         self.room_entry = ctk.CTkEntry(self.container, placeholder_text="Room Name")
         self.room_entry.pack(pady=5)
         
-        self.type_combobox = ctk.CTkComboBox(self.container, values=["TV", "light", "led_strip"], command=self.on_type_change)
+        self.type_combobox = ctk.CTkComboBox(self.container, values=["android_tv", "light", "led_strip", "lg_tv"], command=self.on_type_change)
         self.type_combobox.pack(pady=5)
         
         self.name_entry = ctk.CTkEntry(self.container, placeholder_text="Device Name")
@@ -143,6 +147,9 @@ class App(ctk.CTk):
             # Χρήση της νέας ασφαλούς μεθόδου για να μην σβήνεται το SERVER_IP
             self.update_env_file("TAPO_USERNAME", device_data["username"])
             self.update_env_file("TAPO_PASSWORD", device_data["password"])
+
+        if dev_type == "lg_tv":
+            lg_tv = LG_TV(ip)
 
         file_path = "devices_config.json"
         data = {"Room": {}}

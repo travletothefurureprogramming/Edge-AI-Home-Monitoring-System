@@ -1,59 +1,20 @@
 {
     "Room": {
-        "gregory_room": {
-            "light": {
+        "living_room": {
+            "lg_tv": {
                 "1": {
-                    "name": "Led_Bulb1",
-                    "type": "light",
-                    "ip": "192.168.1.10",
-                    "username": "gregiosifidis2@gmail.com",
-                    "password": "greg11mar@"
-                },
-                "2": {
-                    "name": "Led_Bulb2",
-                    "type": "light",
-                    "ip": "192.168.1.10",
-                    "username": "gregiosifidis2@gmail.com",
-                    "password": "greg11mar@"
-                },
-                "3": {
-                    "name": "Led_Bulb3",
-                    "type": "light",
-                    "ip": "192.168.1.10",
-                    "username": "gregiosifidis2@gmail.com",
-                    "password": "greg11mar@"
-                },
-                "4": {
-                    "name": "Led_Bulb4",
-                    "type": "light",
-                    "ip": "192.168.1.10",
-                    "username": "gregiosifidis2@gmail.com",
-                    "password": "greg11mar@"
+                    "name": "LG",
+                    "type": "lg_tv",
+                    "ip": "192.168.1.3"
                 }
             }
         },
-        "greg_room": {
-            "led_strip": {
+        "maria_bedroom": {
+            "android_tv": {
                 "1": {
-                    "name": "gaming_led_strip",
-                    "type": "led_strip",
-                    "ip": "192.168.1.13"
-                }
-            },
-            "light": {
-                "1": {
-                    "name": "smart_bulb",
-                    "type": "light",
-                    "ip": "192.168.1.14",
-                    "username": "gregiosifidis2@gmail.com",
-                    "password": "greg11mar@"
-                },
-                "2": {
-                    "name": "smart_bulb2",
-                    "type": "light",
-                    "ip": "192.168.1.15",
-                    "username": "gregiosifidis2@gmail.com",
-                    "password": "greg11mar@"
+                    "name": "AndroidTv",
+                    "type": "android_tv",
+                    "ip": "192.168.1.5"
                 }
             }
         }

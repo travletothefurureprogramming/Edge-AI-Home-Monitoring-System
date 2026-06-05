@@ -183,7 +183,7 @@ def handle_tv():
             tv = LG_TV(ip)
 
             tv.execute_command(command)
-            
+
             Logger.info(f"/api/tv -> Command {command} sent to {device} at {ip}.")
 
             return jsonify({"status": "success", "message": "Command sent successfully"}), 200
