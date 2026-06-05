@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Edge AI Home Dashboard</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght=300;400;600&display=swap" rel="stylesheet">
     
     <style>
         :root {
@@ -46,7 +46,7 @@
 
         button:hover { background: rgba(255,255,255,0.15); transform: translateY(-2px); }
 
-        #aiInput {
+        input[type="text"] {
             width: 80%; padding: 10px; border-radius: 10px;
             border: 1px solid var(--accent); background: rgba(255,255,255,0.05);
             color: white; margin-bottom: 10px;
@@ -58,6 +58,12 @@
             animation: spin 1s linear infinite; margin: 10px auto;
         }
 
+        /* Ρυθμίσεις για το Setup Card */
+        #api-setup-card {
+            margin-bottom: 20px;
+            border: 1px solid rgba(56, 189, 248, 0.4);
+        }
+
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
@@ -65,32 +71,83 @@
 
     <h1>Edge AI Dashboard</h1>
 
-    <div id="dashboard-container" class="container">
+    <div class="container" style="max-width: 800px; width: 90%; margin-bottom: 20px;">
+        <div id="api-setup-card" class="card">
+            <h3 id="api-status-title">Σύνδεση με τον Server</h3>
+            <input type="text" id="apiUrlInput" placeholder="π.χ. http://192.168.1.2:8080" value="http://192.168.1.2:8080">
+            <button onclick="saveApiUrl()">Αποθήκευση & Σύνδεση</button>
+        </div>
+    </div>
+
+    <div id="dashboard-container" class="container" style="display: none;">
         <div class="card" style="grid-column: 1 / -1;">
             <h3>AI Assistant</h3>
             <input type="text" id="aiInput" placeholder="Ask anything...">
             <button onclick="askAI()">Ask</button>
+            <button onclick="resetApiUrl()" style="float: right; font-size: 0.8rem; opacity: 0.6;">Αλλαγή URL</button>
             <div id="loader" class="loader"></div>
             <p id="aiResponse" style="margin-top: 10px; color: var(--accent);"></p>
         </div>
-        </div>
+    </div>
 
     <script>
-        const API_URL = "http://192.168.1.2:8080";
+        let API_URL = "";
+
+        // Έλεγχος κατά την είσοδο στη σελίδα
+        function checkApiUrl() {
+            const savedUrl = localStorage.getItem('edge_ai_api_url');
+            if (savedUrl) {
+                API_URL = savedUrl;
+                document.getElementById('api-setup-card').style.display = 'none';
+                document.getElementById('dashboard-container').style.display = 'grid';
+                loadDashboard();
+            } else {
+                document.getElementById('api-setup-card').style.display = 'block';
+                document.getElementById('dashboard-container').style.display = 'none';
+            }
+        }
+
+        // Αποθήκευση του URL στο LocalStorage
+        function saveApiUrl() {
+            let inputUrl = document.getElementById('apiUrlInput').value.trim();
+            if (!inputUrl) {
+                alert("Παρακαλώ εισάγετε ένα έγκυρο URL.");
+                return;
+            }
+            // Αφαίρεση του trailing slash αν υπάρχει για να μην χαλάει τα endpoints
+            if (inputUrl.endsWith('/')) {
+                inputUrl = inputUrl.slice(0, -1);
+            }
+            
+            localStorage.setItem('edge_ai_api_url', inputUrl);
+            checkApiUrl();
+        }
+
+        // Διαγραφή URL για αλλαγή IP
+        function resetApiUrl() {
+            localStorage.removeItem('edge_ai_api_url');
+            location.reload();
+        }
 
         // Φόρτωση συσκευών από το JSON
         async function loadDashboard() {
             try {
                 const res = await fetch(`${API_URL}/api/devices`);
+                if (!res.ok) throw new Error("Server error");
                 const data = await res.json();
                 const container = document.getElementById('dashboard-container');
+
+                // Καθαρισμός παλιών καρτών (εκτός από την κάρτα του AI Assistant)
+                const aiCard = container.firstElementChild;
+                container.innerHTML = '';
+                container.appendChild(aiCard);
 
                 for (const [roomName, categories] of Object.entries(data.Room)) {
                     for (const [category, devices] of Object.entries(categories)) {
                         for (const [id, dev] of Object.entries(devices)) {
                             const card = document.createElement('div');
                             card.className = 'card';
-                            card.innerHTML = `<h3>${dev.name}</h3>`;
+                            card.innerHTML = `<h3>${dev.name} <span style="font-size:0.8rem; opacity:0.5;">(${roomName})</span></h3>`;
 
                             if (category === 'lg_tv') {
                                 const cmds = ['on', 'off', 'home', 'volume_up', 'volume_down', 'play', 'pause', 'stop', 'rewind', 'fast_forward'];
@@ -98,8 +155,6 @@
                                     card.innerHTML += `<button onclick="sendTV('${dev.name}', '${roomName}', 'lg_tv', '${id}', '${cmd}')">${cmd.toUpperCase()}</button>`;
                                 });
                             }
-                            container.appendChild(card);
-
                             
                             if (category === 'android_tv') {
                                 const cmds = ['power', 'home', 'volume_up', 'volume_down'];
@@ -107,10 +162,6 @@
                                     card.innerHTML += `<button onclick="sendTV('${dev.name}', '${roomName}', 'android_tv', '${id}', '${cmd}')">${cmd.toUpperCase()}</button>`;
                                 });
                             }
-                            container.appendChild(card);
-
-
-                            
 
                             if (category === 'light') {
                                 const cmds = ['on', 'off'];
@@ -118,7 +169,6 @@
                                     card.innerHTML += `<button onclick="sendlight('${dev.name}', '${roomName}', 'light', '${id}', '${cmd}')">${cmd.toUpperCase()}</button>`;
                                 });
                             }
-                            container.appendChild(card);
 
                             if (category === 'led_strip') {
                                 const cmds = ['on','off'];
@@ -126,14 +176,17 @@
                                     card.innerHTML += `<button onclick="sendled_strip('${dev.name}', '${roomName}', 'light', '${id}', '${cmd}')">${cmd.toUpperCase()}</button>`;
                                 });
                             }
+
+                            // Το appendChild μπήκε σωστά ΕΞΩ από τα IFs για να μην διπλασιάζει κάρτες
                             container.appendChild(card);
-
-
-                            
                         }
                     }
                 }
-            } catch (err) { console.error("Error loading devices:", err); }
+            } catch (err) { 
+                console.error("Error loading devices:", err); 
+                alert("Αδυναμία σύνδεσης στον Server. Ελέγξτε αν το URL είναι σωστό ή αν ο server τρέχει.");
+                resetApiUrl();
+            }
         }
 
         // AI Assistant Logic
@@ -182,7 +235,8 @@
             });
         }
 
-        window.onload = loadDashboard;
+        // Εκκίνηση ελέγχου με το που φορτώσει το παράθυρο
+        window.onload = checkApiUrl;
     </script>
 </body>
 </html>

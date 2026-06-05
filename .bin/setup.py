@@ -187,6 +187,8 @@ class App(ctk.CTk):
         self.user_entry.pack(pady=2)
         self.pass_entry = ctk.CTkEntry(self.creds_frame, placeholder_text="Tapo Password", show="*")
         self.pass_entry.pack(pady=2)
+        self.model = ctk.CTkEntry(self.creds_frame, placeholder_text="Devvice Model")
+        self.model.pack(pady=2)
 
         ctk.CTkButton(self.container, text="Save Device", command=self.save_to_json).pack(pady=15)
         
@@ -200,16 +202,20 @@ class App(ctk.CTk):
             self.creds_frame.pack_forget()
 
     def save_to_json(self):
-        room = self.room_entry.get()
+        room = self.room_entry.get().strip()
         dev_type = self.type_combobox.get()
-        name = self.name_entry.get()
-        ip = self.ip_entry.get()
+        name = self.name_entry.get().strip()
+        ip = self.ip_entry.get().strip()
         
         device_data = {"name": name, "type": dev_type, "ip": ip}
         
-        if dev_type == "light":
-            device_data["username"] = self.user_entry.get()
-            device_data["password"] = self.pass_entry.get()
+        # Έλεγχος αν η συσκευή είναι Tapo (light ή led_strip)
+        if dev_type == "light" or dev_type == "led_strip":
+            device_data["username"] = self.user_entry.get().strip()
+            device_data["password"] = self.pass_entry.get().strip()
+            
+            # ΕΔΩ: Το "model" αποθηκεύεται ΜΟΝΟ αν είναι light ή led_strip
+            device_data["model"] = self.model.get().strip()
 
             self.update_env_file("TAPO_USERNAME", device_data["username"])
             self.update_env_file("TAPO_PASSWORD", device_data["password"])
@@ -222,15 +228,18 @@ class App(ctk.CTk):
         
         if os.path.exists(file_path):
             with open(file_path, "r") as f:
-                try: data = json.load(f)
-                except: pass
+                try: 
+                    data = json.load(f)
+                except: 
+                    pass
 
         if room not in data["Room"]: data["Room"][room] = {}
         if dev_type not in data["Room"][room]: data["Room"][room][dev_type] = {}
-        
+
+        # Αποθήκευση της συσκευής (δουλεύει σωστά για όλους τους τύπους συσκευών)
         new_id = str(len(data["Room"][room][dev_type]) + 1)
         data["Room"][room][dev_type][new_id] = device_data
-
+        
         with open(file_path, "w") as f:
             json.dump(data, f, indent=4)
         

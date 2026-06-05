@@ -653,6 +653,7 @@ def handle_lights():
     dev_type = content["type"]
     command = content["command"]
     number = str(content["number"]) 
+    model = content["model"]
 
     Logger.info(f"/api/led_strip -> Received the command {command} for the device {device}. This device is part of the {room} and it is a {dev_type}")
     
@@ -663,7 +664,7 @@ def handle_lights():
         ip = data["Room"][room][dev_type][number]["ip"]
         
         
-        led_strip = Tapo_Led_strip(ip)
+        led_strip = Tapo_Led_strip(ip,model)
         led_strip.command(command)
 
         return jsonify({"status": "success", "message": "Command received"}), 200
@@ -681,7 +682,9 @@ def handle_led_strip():
     room = content["room"]
     dev_type = content["type"]
     command = content["command"]
-    number = str(content["number"]) 
+    number = str(content["number"])
+    model = content["model"]
+ 
 
     Logger.info(f"/api/light -> Received the command {command} for the device {device}. This device is part of the {room} and it is a {dev_type}")
     
@@ -692,7 +695,7 @@ def handle_led_strip():
         ip = data["Room"][room][dev_type][number]["ip"]
         
         
-        smart_bulb = Tapo_Smart_Bulbs(ip)
+        smart_bulb = Tapo_Smart_Bulbs(ip,model)
         smart_bulb.command(command)
 
         return jsonify({"status": "success", "message": "Command received"}), 200
