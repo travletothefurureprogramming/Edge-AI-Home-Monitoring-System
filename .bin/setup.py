@@ -9,7 +9,7 @@ from control import LG_TV
 class App(ctk.CTk):
     def __init__(self):
         super().__init__()
-        self.geometry("400x580")  # Μικρή αύξηση στο ύψος για να χωρέσει το checkbox
+        self.geometry("400x600")  # Μικρή αύξηση στο ύψος για άνεση στα frames
         self.title("Edge AI Setup Wizard")
 
         self.container = ctk.CTkFrame(self)
@@ -30,32 +30,32 @@ class App(ctk.CTk):
             return "127.0.0.1"
 
     def update_env_file(self, key, value):
-     """Ενημερώνει ή προσθέτει ένα key-value pair στο .env αρχείο χωρίς να διαγράφει τα υπόλοιπα."""
-     env_path = ".env"
+        """Ενημερώνει ή προσθέτει ένα key-value pair στο .env αρχείο χωρίς να διαγράφει τα υπόλοιπα."""
+        env_path = ".env"
 
-     # Δημιουργεί φάκελο ΜΟΝΟ αν υπάρχει directory στο path
-     dir_path = os.path.dirname(env_path)
-     if dir_path:
-        os.makedirs(dir_path, exist_ok=True)
+        # Δημιουργεί φάκελο ΜΟΝΟ αν υπάρχει directory στο path
+        dir_path = os.path.dirname(env_path)
+        if dir_path:
+            os.makedirs(dir_path, exist_ok=True)
 
-     lines = []
-     key_found = False
+        lines = []
+        key_found = False
 
-     if os.path.exists(env_path):
-        with open(env_path, "r") as f:
-            lines = f.readlines()
+        if os.path.exists(env_path):
+            with open(env_path, "r") as f:
+                lines = f.readlines()
 
-     for i, line in enumerate(lines):
-        if line.strip().startswith(f"{key}="):
-            lines[i] = f'\n{key}="{value}"\n'
-            key_found = True
-            break
+        for i, line in enumerate(lines):
+            if line.strip().startswith(f"{key}="):
+                lines[i] = f'{key}="{value}"\n'
+                key_found = True
+                break
 
-     if not key_found:
-        lines.append(f'\n{key}="{value}"\n')
+        if not key_found:
+            lines.append(f'{key}="{value}"\n')
 
-     with open(env_path, "w") as f:
-        f.writelines(lines)
+        with open(env_path, "w") as f:
+            f.writelines(lines)
 
     def show_install_frame(self):
         for widget in self.container.winfo_children():
@@ -79,22 +79,59 @@ class App(ctk.CTk):
         self.server_chk.pack(pady=20)
         # --------------------------------
         
-        # Διόρθωση εδώ: Απευθείας pack στο κουμπί
         next_btn = ctk.CTkButton(
             self.container, 
-            text="Next: Add Devices", 
+            text="Next: Telegram Setup", 
             fg_color="teal", 
             command=self.handle_next_step
         )
         next_btn.pack(pady=10)
 
     def handle_next_step(self):
-        """Αποθηκεύει την IP αν επιλέχθηκε ως server και προχωράει στο επόμενο frame."""
+        """Αποθηκεύει την IP αν επιλέχθηκε ως server και προχωράει στο Telegram frame."""
         if self.is_server_var.get():
             server_ip = self.get_local_ip()
             self.update_env_file("SERVER_IP", server_ip)
             print(f"Saved Server IP ({server_ip}) to .env")
         
+        self.show_telegram_frame()
+
+    def show_telegram_frame(self):
+        """Νέο Step για την εισαγωγή των Telegram Credentials."""
+        for widget in self.container.winfo_children():
+            widget.destroy()
+
+        ctk.CTkLabel(self.container, text="Telegram Notification Setup", font=("Arial", 20, "bold")).pack(pady=20)
+        ctk.CTkLabel(self.container, text="Enter your Bot Token and Chat ID to receive alerts.", font=("Arial", 11), text_color="gray").pack(pady=5)
+
+        self.telegram_token_entry = ctk.CTkEntry(self.container, placeholder_text="Telegram Bot Token", width=250)
+        self.telegram_token_entry.pack(pady=10)
+
+        self.telegram_chat_id_entry = ctk.CTkEntry(self.container, placeholder_text="Telegram Chat ID", width=250)
+        self.telegram_chat_id_entry.pack(pady=10)
+
+        save_tg_btn = ctk.CTkButton(
+            self.container, 
+            text="Next: Add Devices", 
+            fg_color="teal", 
+            command=self.save_telegram_and_continue
+        )
+        save_tg_btn.pack(pady=20)
+
+        back_btn = ctk.CTkButton(self.container, text="Back", fg_color="gray", command=self.show_install_frame)
+        back_btn.pack(pady=5)
+
+    def save_telegram_and_continue(self):
+        """Αποθηκεύει τα Telegram tokens στο .env και συνεχίζει στις συσκευές."""
+        token = self.telegram_token_entry.get().strip()
+        chat_id = self.telegram_chat_id_entry.get().strip()
+
+        if token:
+            self.update_env_file("TELEGRAM_TOKEN", token)
+        if chat_id:
+            self.update_env_file("TELEGRAM_CHAT_ID", chat_id)
+
+        print("Telegram configuration saved to .env")
         self.show_devices_frame()
 
     def show_devices_frame(self):
@@ -124,7 +161,9 @@ class App(ctk.CTk):
         self.pass_entry.pack(pady=2)
 
         ctk.CTkButton(self.container, text="Save Device", command=self.save_to_json).pack(pady=15)
-        ctk.CTkButton(self.container, text="Back", fg_color="gray", command=self.show_install_frame).pack(pady=5)
+        
+        # Το Back επιστρέφει πλέον στο Telegram Setup
+        ctk.CTkButton(self.container, text="Back", fg_color="gray", command=self.show_telegram_frame).pack(pady=5)
 
     def on_type_change(self, choice):
         if choice == "light" or choice == "led_strip":
@@ -144,7 +183,6 @@ class App(ctk.CTk):
             device_data["username"] = self.user_entry.get()
             device_data["password"] = self.pass_entry.get()
 
-            # Χρήση της νέας ασφαλούς μεθόδου για να μην σβήνεται το SERVER_IP
             self.update_env_file("TAPO_USERNAME", device_data["username"])
             self.update_env_file("TAPO_PASSWORD", device_data["password"])
 

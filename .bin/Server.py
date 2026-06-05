@@ -18,10 +18,15 @@ import random
 import time
 import sys
 
+
+
 if getattr(sys, 'frozen', False):
     BASE_DIR = os.path.dirname(sys.executable) # Αν τρέχει ως .exe
 else:
     BASE_DIR = os.path.dirname(os.path.abspath(__file__)) # Αν τρέχει ως .py
+
+load_dotenv(os.path.join(BASE_DIR, ".env"))
+
 
 server = Flask(__name__)
 CORS(server)
@@ -36,8 +41,8 @@ errors = {
    }
 }
 
-TOKEN = "8998096928:AAHfxCOWoZ8Um032pdqhyuKk9IN3YNolYmk"
-CHAT_ID = "8532508249"
+TOKEN = os.getenv("TELEGRAM_TOKEN")
+CHAT_ID = os.getenv("CHAT_ID")
 
 BACKEND_URL = "http://127.0.0.1:8080"
 
@@ -45,7 +50,6 @@ yolo = ultralytics.YOLO(os.path.join(BASE_DIR, "yolov8s.pt"))
 
 is_running = False
 
-load_dotenv(os.path.join(BASE_DIR, ".env"))
 
 tv_registry = {}
 

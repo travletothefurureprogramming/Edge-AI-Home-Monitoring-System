@@ -51,12 +51,15 @@ git clone https://github.com/travletothefurureprogramming/Edge-AI-Home-Monitorin
 1. Download and Install [Visual Studio Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/)
 2. Download and Install [Python 3.11](https://www.python.org/downloads/)
 4. Download and Install [Download SDK Platform-Tools](https://developer.android.com/tools/releases/platform-tools). Then follow the steps below to add it to path.
+5. Install Telegram, Create an account and then create a bot [Download here](https://telegram.org/) and learn more below
 5. Open setup.bat if you are in windows or setup.sh if you are in linux or mac
 6. Press "Install Dependencies" to install all the requirement python packages and ollama if you dont have it already.
 7. Press "Download AI Model (Phi3).
 8. Press "Next".
-9. Add your devices (For LG TV you must have powered on the tv and press yes)
-10. Close the window.
+9. Add your telegram bot token and chat id.
+10. Press "Next"
+11. Add your devices (For LG TV you must have powered on the tv and press yes)
+12. Close the window.
 
 
 ### Install Android SDK platform tools
@@ -72,6 +75,25 @@ git clone https://github.com/travletothefurureprogramming/Edge-AI-Home-Monitorin
      Then run `source ~/.bashrc` to apply the changes.
   3. **Windows:** Search for "Edit the system environment variables" in the Start menu, go to **Environment Variables**, select **Path**, click **Edit**, and add the full path to your extracted `platform-tools` folder.
   4. **Verify:** Open a new terminal and type `adb version` to confirm the installation.
+
+### 🤖 Telegram Bot Configuration
+Your system needs a Bot Token and a Chat ID to send real-time alerts.
+
+1. Step 1: Get your Bot Token
+* Open Telegram and search for @BotFather (official verified bot).
+
+* Send /newbot and follow the prompts to choose a Name and a unique Username ending in _bot (e.g., my_edge_ai_bot).
+
+* Copy the HTTP API Token provided. This is your TELEGRAM_TOKEN.
+
+* Crucial: Click the link to your new bot (e.g., t.me/your_bot) and press START.
+
+2. Step 2: Get your Chat ID
+* Search for @GetMyIDBot or @userinfobot in Telegram.
+
+* Press START.
+
+* Copy the numerical value next to Id. This is your TELEGRAM_CHAT_ID.
 
 ## 🏃 How to Run
 
