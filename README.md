@@ -114,7 +114,11 @@ Open the adress of the server on port 8080.
 Open the App.py to communicate with the chatbot from your computer.
 
 ### Using Telegram
-Cooming Soon!
+You can use the following commands: 
+
+* To give you a list of devices and dev types: devices.
+* To send a command for device: [command] [device]. For example: Turn on lg_tv.
+* To turn on/off camera: turn on/off camera.(Server camera, If the camera is on and it see a person, you will receive notifications in telegram).
 
 ## 📜 Credits & Licensing
 This project utilizes the AndroidTV-Remote-Controller library by Jekso, which is distributed under the MIT License.
