@@ -106,7 +106,7 @@
                         }
                         
                         else if (category === 'android_tv') {
-                            const cmds = ['power', 'home', 'volume_up', 'volume_down'];
+                            const cmds = ['power', 'home', 'volume_up', 'volume_down','mute','channel_up','channel_down'];
                             cmds.forEach(cmd => {
                                 card.innerHTML += `<button onclick="sendTV('${dev.name}', '${roomName}', 'android_tv', '${id}', '${cmd}')">${cmd.toUpperCase()}</button>`;
                             });

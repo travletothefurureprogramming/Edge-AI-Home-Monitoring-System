@@ -549,6 +549,9 @@ class LG_TV:
     def set_volume(self, level): self.media.set_volume(level)
     def mute(self, mute: bool): self.media.mute(mute)
 
+    #--INPUT--
+    def home(self): self.system.home()
+
     # --- POWER ---
     def on(self): self.system.power_on()
     def off(self): self.system.power_off()
@@ -565,6 +568,8 @@ class LG_TV:
             case "volume_down": self.volume_down()
             case "on": self.on()
             case "off": self.off()
+            case "home": self.home()
+        
 
 
 
