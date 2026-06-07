@@ -29,8 +29,8 @@
 - P105
 - P110
 - P300
-- 304
-- 306
+- P304
+- P306
 
 * Android Tv
 * Android Tv:
