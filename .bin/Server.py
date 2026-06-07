@@ -21,9 +21,9 @@ import sys
 
 
 if getattr(sys, 'frozen', False):
-    BASE_DIR = os.path.dirname(sys.executable) # Αν τρέχει ως .exe
+    BASE_DIR = os.path.dirname(sys.executable) 
 else:
-    BASE_DIR = os.path.dirname(os.path.abspath(__file__)) # Αν τρέχει ως .py
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 load_dotenv(os.path.join(BASE_DIR, ".env"))
 
@@ -123,11 +123,9 @@ def start_security():
                     cls = int(box.cls[0])
                     class_name = class_names[cls]
 
-                    # Αν βρέθηκε άνθρωπος
                     if class_name == "person":
                         detected_person_now = True
 
-                    # Σχεδίαση bounding box
                     x1, y1, x2, y2 = map(int, box.xyxy[0])
                     colour = getColours(cls)
 
@@ -142,35 +140,29 @@ def start_security():
                         2
                     )
 
-        # Στείλε ειδοποίηση ΜΟΝΟ όταν εμφανιστεί για πρώτη φορά άνθρωπος
         if detected_person_now and not person_detected:
             send_security_notification({"person": "yes"})
             person_detected = True
 
-        # Αν δεν υπάρχει άνθρωπος στο frame, reset για την επόμενη ειδοποίηση
         if not detected_person_now:
             person_detected = False
 
-        # Εμφάνιση εικόνας
         cv2.imshow("Edge-AI Camera Monitoring", frame)
 
-        # Έξοδος με 'q' από το πληκτρολόγιο
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
 
-    # Σωστό κλείσιμο και αποδέσμευση της κάμερας
     print("Τερματισμός κάμερας και αποδέσμευση πόρων...")
     is_running = False
     videoCap.release()
     cv2.destroyAllWindows()
     
-    # Μερικές φορές στα Windows/Linux χρειάζεται ένα μικρό waitKey για να κλείσει όντως το UI
     cv2.waitKey(1) 
 
 def stop_security():
     global is_running
     print("Λήψη εντολής για κλείσιμο της ασφάλειας...")
-    is_running = False  # Αυτό θα σπάσει το while loop στο επόμενο iteration
+    is_running = False  
 
 
 
@@ -191,7 +183,7 @@ def send_telegram_message(message):
 def check_for_messages(offset=None):
     url = f"https://api.telegram.org/bot{TOKEN}/getUpdates"
     payload = {
-        "timeout": 30,  # Long polling timeout
+        "timeout": 30,  
         "offset": offset
     }
     try:
@@ -205,7 +197,7 @@ def check_for_messages(offset=None):
 
 def load_devices_config():
     """Φορτώνει δυναμικά το αρχείο ρυθμίσεων συσκευών"""
-    config_path = os.path.join(BASE_DIR, "devices_config.json") # <-- Αλλαγή εδώ
+    config_path = os.path.join(BASE_DIR, "devices_config.json") 
     if not os.path.exists(config_path):
         print(f"Σφάλμα: Το αρχείο {config_path} δεν βρέθηκε.")
         return None
@@ -225,7 +217,6 @@ def get_devices_list_message():
     msg = "📱 *Λίστα Εγγεγραμμένων Συσκευών:*\n\n"
     
     for room_name, dev_types in config["Room"].items():
-        # Μορφοποίηση ονόματος δωματίου (π.χ. maria_room -> Maria Room)
         room_title = room_name.replace("_", " ").title()
         msg += f"🏠 *{room_title}:*\n"
         
@@ -235,7 +226,6 @@ def get_devices_list_message():
                 has_devices = True
                 dev_name = dev_info.get("name", "Άγνωστο")
                 
-                # Επιλογή κατάλληλου Emoji
                 emoji = "📺" if dev_type.lower() == "tv" else "💡"
                 
                 msg += f"  {emoji} `{dev_name}` (Τύπος: {dev_type})\n"
@@ -354,12 +344,10 @@ def main_bot_loop():
                 print(f"Νέο μήνυμα από εσένα: {message_text}")
                 command = message_text.lower().strip()
                 
-                # 1. Έλεγχος για εμφάνιση λίστας συσκευών
                 if command in ["συσκευές", "συσκευες", "devices", "/devices"]:
                     reply_list = get_devices_list_message()
                     send_telegram_message(reply_list)
                 
-                # 2. Ειδική διαχείριση για την κάμερα ασφαλείας
                 elif "άνοιξε την κάμερα" in command or "camera on" in command:
                     send_security({"status":"on"})
                     send_telegram_message("📹 Το σύστημα ασφαλείας και η κάμερα ενεργοποιήθηκαν.")
@@ -374,7 +362,6 @@ def main_bot_loop():
                    send_telegram_message(response['message']['content'])
 
                 
-                # 3. Δυναμικός έλεγχος όλων των άλλων συσκευών από το JSON
                 else:
                     reply = parse_and_execute(message_text)
                     send_telegram_message(reply)
@@ -506,7 +493,6 @@ class LG_TV:
         self.inputc = InputControl(self.client)
 
     def your_custom_storage_is_empty(self):
-     # Άδειο αν δεν υπάρχει ή έχει μέγεθος 0
      return not os.path.exists(self.STORE_FILE) or os.path.getsize(self.STORE_FILE) == 0
 
 
@@ -515,7 +501,6 @@ class LG_TV:
         with open(self.STORE_FILE, "r", encoding="utf-8") as f:
             return json.load(f)
      except (json.JSONDecodeError, FileNotFoundError):
-        # Αν το JSON είναι άδειο ή χαλασμένο → ξεκινάμε από την αρχή
         return {}
 
 
@@ -535,7 +520,6 @@ class LG_TV:
             elif status == WebOSClient.REGISTERED:
                 print("Registration successful!")
 
-        # Αποθήκευση ΜΟΝΟ μετά το REGISTERED
         self.persist_to_your_custom_storage(self.store)
 
     # --- MEDIA ---
@@ -578,7 +562,6 @@ def handle_ai():
     content = request.json
     user_input = content["prompt"]
     
-    # Χρήση του phi3 για ταχύτητα
     response = ollama.chat(model='phi3', messages=[
     {'role': 'system', 'content': 'You are a helpful assistant. Provide extremely concise, short, and direct answers in one or two sentences max.'},
     {'role': 'user', 'content': user_input}

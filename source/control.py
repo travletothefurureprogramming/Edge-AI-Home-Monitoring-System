@@ -190,7 +190,6 @@ class LG_TV:
         self.inputc = InputControl(self.client)
 
     def your_custom_storage_is_empty(self):
-     # Άδειο αν δεν υπάρχει ή έχει μέγεθος 0
      return not os.path.exists(self.STORE_FILE) or os.path.getsize(self.STORE_FILE) == 0
 
 
@@ -199,7 +198,6 @@ class LG_TV:
         with open(self.STORE_FILE, "r", encoding="utf-8") as f:
             return json.load(f)
      except (json.JSONDecodeError, FileNotFoundError):
-        # Αν το JSON είναι άδειο ή χαλασμένο → ξεκινάμε από την αρχή
         return {}
 
 
@@ -219,7 +217,6 @@ class LG_TV:
             elif status == WebOSClient.REGISTERED:
                 print("Registration successful!")
 
-        # Αποθήκευση ΜΟΝΟ μετά το REGISTERED
         self.persist_to_your_custom_storage(self.store)
 
     # --- MEDIA ---

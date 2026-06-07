@@ -3,13 +3,13 @@ import subprocess
 import threading
 import json
 import os
-import socket  # Χρησιμοποιείται για να βρούμε την IP του μηχανήματος
+import socket  
 from control import LG_TV
 
 class App(ctk.CTk):
     def __init__(self):
         super().__init__()
-        self.geometry("400x600")  # Μικρή αύξηση στο ύψος για άνεση στα frames
+        self.geometry("400x600")  
         self.title("Edge AI Setup Wizard")
 
         self.container = ctk.CTkFrame(self)
@@ -20,7 +20,6 @@ class App(ctk.CTk):
     def get_local_ip(self):
         """Επιστρέφει την τοπική IP διεύθυνση αυτού του μηχανήματος."""
         try:
-            # Δημιουργούμε ένα ψεύτικο UDP socket για να βρούμε το primary interface IP
             s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
             s.connect(("8.8.8.8", 80))
             local_ip = s.getsockname()[0]
@@ -33,7 +32,6 @@ class App(ctk.CTk):
         """Ενημερώνει ή προσθέτει ένα key-value pair στο .env αρχείο χωρίς να διαγράφει τα υπόλοιπα."""
         env_path = ".env"
 
-        # Δημιουργεί φάκελο ΜΟΝΟ αν υπάρχει directory στο path
         dir_path = os.path.dirname(env_path)
         if dir_path:
             os.makedirs(dir_path, exist_ok=True)
@@ -60,7 +58,6 @@ class App(ctk.CTk):
     def update_install_frame(self):
         """Εμφανίζει ή κρύβει το Entry ανάλογα με το Checkbox, διατηρώντας τη σειρά."""
         if self.tailscale_var.get():
-            # Κρύβουμε προσωρινά το Next για να μπει το Entry από πάνω του
             self.next_btn.pack_forget()
             self.tailscale_entry.pack(pady=10)
             self.next_btn.pack(pady=10)
@@ -79,7 +76,6 @@ class App(ctk.CTk):
         self.model_btn = ctk.CTkButton(self.container, text="Download AI Model (Phi3)", command=self.model_thread)
         self.model_btn.pack(pady=10)
         
-        # --- Checkbox για τον Server ---
         self.is_server_var = ctk.BooleanVar(value=False)
         self.server_chk = ctk.CTkCheckBox(
             self.container, 
@@ -87,7 +83,6 @@ class App(ctk.CTk):
             variable=self.is_server_var
         )
         self.server_chk.pack(pady=20)
-        # --------------------------------
         
         self.tailscale_var = ctk.BooleanVar(value=False)
         self.tailscale_chk = ctk.CTkCheckBox(
@@ -98,10 +93,8 @@ class App(ctk.CTk):
         )
         self.tailscale_chk.pack(pady=20)
 
-        # ΔΙΟΡΘΩΣΗ: Αλλαγή parent από self σε self.container και προσθήκη placeholder
         self.tailscale_entry = ctk.CTkEntry(self.container, placeholder_text="Enter Tailscale IP", width=200)
 
-        # ΔΙΟΡΘΩΣΗ: Μετατροπή σε self.next_btn για πρόσβαση από την update_install_frame
         self.next_btn = ctk.CTkButton(
             self.container, 
             text="Next: Telegram Setup", 
@@ -172,7 +165,7 @@ class App(ctk.CTk):
         self.room_entry = ctk.CTkEntry(self.container, placeholder_text="Room Name")
         self.room_entry.pack(pady=5)
         
-        self.type_combobox = ctk.CTkComboBox(self.container, values=["android_tv", "light", "led_strip", "lg_tv"], command=self.on_type_change)
+        self.type_combobox = ctk.CTkComboBox(self.container, values=["android_tv", "light", "led_strip", "smart_plug", "lg_tv"], command=self.on_type_change)
         self.type_combobox.pack(pady=5)
         
         self.name_entry = ctk.CTkEntry(self.container, placeholder_text="Device Name")
@@ -181,7 +174,6 @@ class App(ctk.CTk):
         self.ip_entry = ctk.CTkEntry(self.container, placeholder_text="IP Address")
         self.ip_entry.pack(pady=5)
 
-        # Container για credentials (εμφανίζεται μόνο για lights)
         self.creds_frame = ctk.CTkFrame(self.container, fg_color="transparent")
         self.user_entry = ctk.CTkEntry(self.creds_frame, placeholder_text="Tapo Username")
         self.user_entry.pack(pady=2)
@@ -192,7 +184,6 @@ class App(ctk.CTk):
 
         ctk.CTkButton(self.container, text="Save Device", command=self.save_to_json).pack(pady=15)
         
-        # Το Back επιστρέφει πλέον στο Telegram Setup
         ctk.CTkButton(self.container, text="Back", fg_color="gray", command=self.show_telegram_frame).pack(pady=5)
 
     def on_type_change(self, choice):
@@ -209,12 +200,10 @@ class App(ctk.CTk):
         
         device_data = {"name": name, "type": dev_type, "ip": ip}
         
-        # Έλεγχος αν η συσκευή είναι Tapo (light ή led_strip)
-        if dev_type == "light" or dev_type == "led_strip":
+        if dev_type == "light" or dev_type == "led_strip" or dev_type == "smart_plug":
             device_data["username"] = self.user_entry.get().strip()
             device_data["password"] = self.pass_entry.get().strip()
             
-            # ΕΔΩ: Το "model" αποθηκεύεται ΜΟΝΟ αν είναι light ή led_strip
             device_data["model"] = self.model.get().strip()
 
             self.update_env_file("TAPO_USERNAME", device_data["username"])
@@ -236,7 +225,6 @@ class App(ctk.CTk):
         if room not in data["Room"]: data["Room"][room] = {}
         if dev_type not in data["Room"][room]: data["Room"][room][dev_type] = {}
 
-        # Αποθήκευση της συσκευής (δουλεύει σωστά για όλους τους τύπους συσκευών)
         new_id = str(len(data["Room"][room][dev_type]) + 1)
         data["Room"][room][dev_type][new_id] = device_data
         

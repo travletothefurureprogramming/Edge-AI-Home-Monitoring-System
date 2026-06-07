@@ -24,6 +24,14 @@
 - L610
 - L630
 
+* Tapo Smart Plugs:
+- P100
+- P105
+- P110
+- P300
+- 304
+- 306
+
 * Android Tv
 * Android Tv:
 - Android 8+

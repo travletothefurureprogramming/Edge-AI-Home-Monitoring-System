@@ -7,7 +7,6 @@ import utils
 TOKEN = "8998096928:AAHfxCOWoZ8Um032pdqhyuKk9IN3YNolYmk"
 CHAT_ID = "8532508249"
 
-# Διεύθυνση του Flask backend σου (άλλαξέ το αν τρέχει σε άλλη πόρτα/IP)
 BACKEND_URL = "http://127.0.0.1:8080"
 
 def send_telegram_message(message):
@@ -27,7 +26,7 @@ def send_telegram_message(message):
 def check_for_messages(offset=None):
     url = f"https://api.telegram.org/bot{TOKEN}/getUpdates"
     payload = {
-        "timeout": 30,  # Long polling timeout
+        "timeout": 30,  
         "offset": offset
     }
     try:
@@ -61,7 +60,6 @@ def get_devices_list_message():
     msg = "📱 *Λίστα Εγγεγραμμένων Συσκευών:*\n\n"
     
     for room_name, dev_types in config["Room"].items():
-        # Μορφοποίηση ονόματος δωματίου (π.χ. maria_room -> Maria Room)
         room_title = room_name.replace("_", " ").title()
         msg += f"🏠 *{room_title}:*\n"
         
@@ -71,7 +69,6 @@ def get_devices_list_message():
                 has_devices = True
                 dev_name = dev_info.get("name", "Άγνωστο")
                 
-                # Επιλογή κατάλληλου Emoji
                 emoji = "📺" if dev_type.lower() == "tv" else "💡"
                 
                 msg += f"  {emoji} `{dev_name}` (Τύπος: {dev_type})\n"
@@ -179,12 +176,10 @@ def main_bot_loop():
                 print(f"Νέο μήνυμα από εσένα: {message_text}")
                 command = message_text.lower().strip()
                 
-                # 1. Έλεγχος για εμφάνιση λίστας συσκευών
                 if command in ["συσκευές", "συσκευες", "devices", "/devices"]:
                     reply_list = get_devices_list_message()
                     send_telegram_message(reply_list)
                 
-                # 2. Ειδική διαχείριση για την κάμερα ασφαλείας
                 elif "άνοιξε την κάμερα" in command or "camera on" in command:
                     utils.send_security({"status":"on"})
                     send_telegram_message("📹 Το σύστημα ασφαλείας και η κάμερα ενεργοποιήθηκαν.")
@@ -199,7 +194,6 @@ def main_bot_loop():
                    send_telegram_message(response['message']['content'])
 
                 
-                # 3. Δυναμικός έλεγχος όλων των άλλων συσκευών από το JSON
                 else:
                     reply = parse_and_execute(message_text)
                     send_telegram_message(reply)

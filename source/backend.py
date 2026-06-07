@@ -4,7 +4,7 @@ from control import AndroidTV, LG_TV
 from android_tv_rc.logger import Logger
 import utils
 import ollama
-from control import Tapo_Led_strip, Tapo_Smart_Bulbs
+from control import Tapo_Led_strip, Tapo_Smart_Bulbs, Tapo_Smart_Plugs
 import json
 import threading
 import camera
@@ -30,7 +30,6 @@ def handle_ai():
     content = request.json
     user_input = content["prompt"]
     
-    # Χρήση του phi3 για ταχύτητα
     response = ollama.chat(model='phi3', messages=[
     {'role': 'system', 'content': 'You are a helpful assistant. Provide extremely concise, short, and direct answers in one or two sentences max.'},
     {'role': 'user', 'content': user_input}
@@ -99,7 +98,7 @@ def communicate_for_errors():
 
 
 @server.route("/api/led_strip", methods=["POST"])
-def handle_lights():
+def handle_led_strip():
     content = request.json
 
     device = content["device"]
@@ -129,7 +128,7 @@ def handle_lights():
 
 
 @server.route("/api/light", methods=["POST"])
-def handle_led_strip():
+def handle_lights():
     content = request.json
 
     device = content["device"]
@@ -194,3 +193,32 @@ def handle_tv():
 
     except KeyError:
         return jsonify({"status": "error", "message": "Device not found in config"}), 404
+    
+
+@server.route("/api/plug", methods=["POST"])
+def handle_smart_plugs():
+    content = request.json
+
+    device = content["device"]
+    room = content["room"]
+    dev_type = content["type"]
+    command = content["command"]
+    number = str(content["number"]) 
+    model = content["model"]
+
+    Logger.info(f"/api/plug -> Received the command {command} for the device {device}. This device is part of the {room} and it is a {dev_type}")
+    
+    with open("devices_config.json", "r") as f:
+        data = json.load(f)
+    
+    try:
+        ip = data["Room"][room][dev_type][number]["ip"]
+        
+        
+        smart_bulb = Tapo_Smart_Plugs(ip,model)
+        smart_bulb.command(command)
+
+        return jsonify({"status": "success", "message": "Command received"}), 200
+        
+    except KeyError:
+        return jsonify({"status": "error", "message": "Plug device not found in config"}), 404
