@@ -9,3 +9,4 @@ source/lg_store.json
 source/devices_config.json
 .venv/
 *.json
+/.vscode

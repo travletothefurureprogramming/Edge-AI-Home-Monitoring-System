@@ -117,6 +117,87 @@ class Tapo_Smart_Bulbs:
     def command(self,command):
         asyncio.run(self.async_execute_command(command))
 
+class Tapo_Smart_Plugs:
+    def __init__(self,ip,device):
+     self.tapo_username = os.getenv("TAPO_USERNAME")
+     self.tapo_password = os.getenv("TAPO_PASSWORD")
+
+     self.ip_address = ip
+     self.device = device
+
+     self.client = ApiClient(self.tapo_username, self.tapo_password)
+
+    async def async_connect(self):
+        if self.device == "p100":
+         self.device = await self.client.p100(self.ip_address)
+        elif self.device == "p105":
+         self.device = await self.client.p105(self.ip_address)  
+        elif self.device == "p115":
+         self.device = await self.client.p115(self.ip_address)
+        elif self.device == "p110":
+         self.device = await self.client.p110(self.ip_address)
+        elif self.device == "P300":
+         self.device = await self.client.p300(self.ip_address)
+        elif self.device == "p306":
+         self.device = await self.client.p306(self.ip_address)
+        elif self.device == "p304":
+         self.device = await self.client.p304(self.ip_address)
+        
+        
+
+    async def async_execute_command(self, command):
+        device = await self.client.l900(self.ip_address)
+        match command:
+            case "on": await device.on()
+            case "off": await device.off()
+    
+    def connect(self):
+        asyncio.run(self.async_connect())
+    
+    def command(self,command):
+        asyncio.run(self.async_execute_command(command))
+
+class Tapo_Smart_Plugs:
+    def __init__(self,ip,device):
+     self.tapo_username = os.getenv("TAPO_USERNAME")
+     self.tapo_password = os.getenv("TAPO_PASSWORD")
+
+     self.ip_address = ip
+     self.device = device
+
+     self.client = ApiClient(self.tapo_username, self.tapo_password)
+
+    async def async_connect(self):
+        if self.device == "p100":
+         self.device = await self.client.p100(self.ip_address)
+        elif self.device == "p105":
+         self.device = await self.client.p105(self.ip_address)  
+        elif self.device == "p115":
+         self.device = await self.client.p115(self.ip_address)
+        elif self.device == "p110":
+         self.device = await self.client.p110(self.ip_address)
+        elif self.device == "P300":
+         self.device = await self.client.p300(self.ip_address)
+        elif self.device == "p306":
+         self.device = await self.client.p306(self.ip_address)
+        elif self.device == "p304":
+         self.device = await self.client.p304(self.ip_address)
+         
+        
+        
+
+    async def async_execute_command(self, command):
+        device = await self.client.l900(self.ip_address)
+        match command:
+            case "on": await device.on()
+            case "off": await device.off()
+    
+    def connect(self):
+        asyncio.run(self.async_connect())
+    
+    def command(self,command):
+        asyncio.run(self.async_execute_command(command))
+
 class LG_TV:
     def __init__(self, ip):
         self.STORE_FILE = os.path.join(os.path.dirname(__file__), "lg_store.json")
