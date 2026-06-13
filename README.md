@@ -33,10 +33,10 @@
 - P306
 
 * **Philips Hue Lights:**
-- All devices you have connected with Philips Hue Bridge
+- All lights-bulbs or led_strips you have connected with Philips Hue Bridge
 
 * **Yeelight:**
-- All devices wich suppourt Wi-Fi control.
+- All lights-bulbs wich suppourt Wi-Fi control.
 
 * **Android Tv:**
 - Android 8+
