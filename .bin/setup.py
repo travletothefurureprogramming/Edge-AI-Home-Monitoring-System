@@ -164,7 +164,7 @@ class App(ctk.CTk):
         self.room_entry = ctk.CTkEntry(self.container, placeholder_text="Room Name")
         self.room_entry.pack(pady=5)
         
-        self.type_combobox = ctk.CTkComboBox(self.container, values=["android_tv", "tapo_light", "tapo_led_strip", "tapo_smart_plug", "phue_light", "phue_led_strip", "lg_tv"], command=self.on_type_change)
+        self.type_combobox = ctk.CTkComboBox(self.container, values=["android_tv", "tapo_light", "tapo_led_strip", "tapo_smart_plug", "phue_light", "phue_led_strip", "yeelight", "lg_tv"], command=self.on_type_change)
         self.type_combobox.pack(pady=5)
         
         self.name_entry = ctk.CTkEntry(self.container, placeholder_text="Device Name")

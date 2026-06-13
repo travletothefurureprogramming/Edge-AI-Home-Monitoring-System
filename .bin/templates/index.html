@@ -133,6 +133,13 @@
                             });
                         }
 
+                        else if (category === 'yeelight') {
+                            const cmds = ['on', 'off'];
+                            cmds.forEach(cmd => {
+                                card.innerHTML += `<button onclick="sendyeelight('${dev.name}', '${roomName}', 'yeelight', '${id}','${cmd}')">${cmd.toUpperCase()}</button>`;
+                            });
+                        }
+
                         container.appendChild(card);
                     }
                 }
@@ -195,6 +202,14 @@
 
     async function sendphue_light(device, room, type, id, cmd) {
         await fetch(`${API_URL}/api/phue_light`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ room: room, type: type, number: id, command: cmd, device: device})
+        });
+    }
+
+    async function sendyeelight(device, room, type, id, cmd) {
+        await fetch(`${API_URL}/api/yeelight`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ room: room, type: type, number: id, command: cmd, device: device})

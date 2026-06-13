@@ -18,6 +18,7 @@ import random
 import time
 import sys
 from phue import Bridge
+from yeelight import Bulb
 
 
 if getattr(sys, 'frozen', False):
@@ -73,6 +74,9 @@ def send_tapo_led_strip(content):
 
 def send_phue_light(content):
     requests.post("http://192.168.1.2:8080/api/phue_light", json=content)
+
+def send_yeelight(content):
+    requests.post("http://192.168.1.2:8080/api/yeelight", json=content)
 
 def send_ai(content):
     return requests.post("http://192.168.1.2:8080/api/ai", json=content)
@@ -575,6 +579,22 @@ class LG_TV:
             case "home": self.home()
         
 
+class Yeelight:
+    def __init__(self, ip):
+        self.bulb = Bulb(ip)
+
+    def on(self):
+        self.bulb.turn_on()
+
+    def off(self):
+        self.bulb.turn_off()
+
+    def command(self,command):
+        if command == "on":
+            self.on()
+        elif command == "off":
+            self.off()
+
 
 
 @server.route("/api/ai", methods=["POST"])
@@ -712,6 +732,37 @@ def handle_tapo_led_strip():
         return jsonify({"status": "error", "message": "Tapo_light device not found in config"}), 404
    
 
+@server.route("/api/yeelight", methods=["POST"])
+def handle_yeelight():
+    content = request.json
+
+    device = content["device"]
+    room = content["room"]
+    dev_type = content["type"]
+    command = content["command"]
+    number = str(content["number"])
+
+    
+    Logger.info(f"/api/yeelight -> Received the command {command} for the device {device}. This device is part of the {room} and it is a {dev_type}")
+    
+    with open("devices_config.json", "r") as f:
+        data = json.load(f)
+
+
+    try:
+        ip = data["Room"][room][dev_type][number]["ip"]
+        id = data["Room"][room][dev_type][number]["id"]
+        
+        
+        yeelight = Yeelight(ip)
+        yeelight.command(command,id)
+
+        return jsonify({"status": "success", "message": "Command received"}), 200
+        
+    except KeyError:
+        return jsonify({"status": "error", "message": "Yeelight device not found in config"}), 404
+    
+
 @server.route("/api/phue_light", methods=["POST"])
 def handle_phue_lights():
     content = request.json
@@ -741,8 +792,6 @@ def handle_phue_lights():
         
     except KeyError:
         return jsonify({"status": "error", "message": "Phue_Light device not found in config"}), 404
-    
-
 
 @server.route("/api/tv", methods=["POST"])
 def handle_tv():

@@ -8,6 +8,7 @@ from pywebostv.connection import WebOSClient
 from pywebostv.controls import MediaControl, SystemControl, InputControl
 import json
 from phue import Bridge
+from yeelight import Bulb
 
 load_dotenv(".env")
 
@@ -205,3 +206,19 @@ class Phue:
     def turn_off(self,number):
         self.bridge.set_light(number, 'off', True)
 
+
+class Yeelight:
+    def __init__(self, ip):
+        self.bulb = Bulb(ip)
+
+    def on(self):
+        self.bulb.turn_on()
+
+    def off(self):
+        self.bulb.turn_off()
+
+    def command(self,command):
+        if command == "on":
+            self.on()
+        elif command == "off":
+            self.off()
