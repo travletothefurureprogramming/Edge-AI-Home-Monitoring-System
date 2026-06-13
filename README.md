@@ -11,12 +11,12 @@
 
 ## Suppourted Devices
 
-* Tapo Led Strips: 
+* **Tapo Led Strips:**
 - L900
 - L920
 - L930
 
-* Tapo Light Bulbs:
+* **Tapo Light Bulbs:**
 - L510
 - L520
 - L530
@@ -24,7 +24,7 @@
 - L610
 - L630
 
-* Tapo Smart Plugs:
+* **Tapo Smart Plugs:**
 - P100
 - P105
 - P110
@@ -32,14 +32,13 @@
 - P304
 - P306
 
-* Philips Hue Lights:
+* **Philips Hue Lights:**
 - All devices you have connected with Philips Hue Bridge
 
-* Android Tv
-* Android Tv:
+* **Android Tv:**
 - Android 8+
 
-* LG TV:
+* **LG TV:**
 - WEB OS 6+
 
 ## 🛠 Tech Stack
