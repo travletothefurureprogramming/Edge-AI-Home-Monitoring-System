@@ -4,7 +4,7 @@ import threading
 import json
 import os
 import socket  
-from control import LG_TV
+from control import LG_TV, Phue
 
 class App(ctk.CTk):
     def __init__(self):
@@ -160,12 +160,11 @@ class App(ctk.CTk):
             widget.destroy()
 
         ctk.CTkLabel(self.container, text="Register New Device", font=("Arial", 16)).pack(pady=10)
-        ctk.CTkLabel(self.container, text="*In type light and ledstrip refers to tapo see more on our github readme", font=("Arial", 12)).pack()
         
         self.room_entry = ctk.CTkEntry(self.container, placeholder_text="Room Name")
         self.room_entry.pack(pady=5)
         
-        self.type_combobox = ctk.CTkComboBox(self.container, values=["android_tv", "light", "led_strip", "smart_plug", "lg_tv"], command=self.on_type_change)
+        self.type_combobox = ctk.CTkComboBox(self.container, values=["android_tv", "tapo_light", "tapo_led_strip", "tapo_smart_plug", "phue_light", "phue_led_strip", "lg_tv"], command=self.on_type_change)
         self.type_combobox.pack(pady=5)
         
         self.name_entry = ctk.CTkEntry(self.container, placeholder_text="Device Name")
@@ -182,15 +181,25 @@ class App(ctk.CTk):
         self.model = ctk.CTkEntry(self.creds_frame, placeholder_text="Devvice Model")
         self.model.pack(pady=2)
 
+        self.phue_frame = ctk.CTkFrame(self.container, fg_color="transparent")
+        self.id_entry = ctk.CTkEntry(self.phue_frame, placeholder_text="ID of phue device")
+        self.id_entry.pack(pady=2)
+    
         ctk.CTkButton(self.container, text="Save Device", command=self.save_to_json).pack(pady=15)
-        
+
         ctk.CTkButton(self.container, text="Back", fg_color="gray", command=self.show_telegram_frame).pack(pady=5)
 
     def on_type_change(self, choice):
-        if choice == "light" or choice == "led_strip":
+        if choice == "tapo_light" or choice == "tapo_led_strip" or choice == "tapo_smart_plug":
             self.creds_frame.pack(pady=5)
         else:
             self.creds_frame.pack_forget()
+
+        if choice == "phue_light" or choice == "phue_led_strip":
+            self.phue_frame.pack(pady=5)
+        else:
+            self.phue_frame.pack_forget()
+
 
     def save_to_json(self):
         room = self.room_entry.get().strip()
@@ -208,9 +217,17 @@ class App(ctk.CTk):
 
             self.update_env_file("TAPO_USERNAME", device_data["username"])
             self.update_env_file("TAPO_PASSWORD", device_data["password"])
+        
+
+        if dev_type == "phue_light" or dev_type == "phue_led_strip":
+            device_data["id"] = self.id_entry.get().strip()
+
 
         if dev_type == "lg_tv":
             lg_tv = LG_TV(ip)
+        
+        if dev_type == "phue_light" or "phue_led_strip":
+            phue = Phue(ip)
 
         file_path = "devices_config.json"
         data = {"Room": {}}

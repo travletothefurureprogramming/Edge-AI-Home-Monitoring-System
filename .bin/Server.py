@@ -17,7 +17,7 @@ import ultralytics
 import random
 import time
 import sys
-
+from phue import Bridge
 
 
 if getattr(sys, 'frozen', False):
@@ -62,15 +62,17 @@ def read_json_file(file):
 def send_to_server(content):
     requests.post("http://192.168.1.2:8080/api/communicate", json=content)
 
-
 def send_tv(content):
     requests.post("http://192.168.1.2:8080/api/tv", json=content)
 
-def send_light(content):
-    requests.post("http://192.168.1.2:8080/api/light", json=content)
+def send_tapo_light(content):
+    requests.post("http://192.168.1.2:8080/api/tapo_light", json=content)
 
-def send_led_strip(content):
-    requests.post("http://192.168.1.2:8080/api/led_strip", json=content)
+def send_tapo_led_strip(content):
+    requests.post("http://192.168.1.2:8080/api/tapo_led_strip", json=content)
+
+def send_phue_light(content):
+    requests.post("http://192.168.1.2:8080/api/phue_light", json=content)
 
 def send_ai(content):
     return requests.post("http://192.168.1.2:8080/api/ai", json=content)
@@ -146,8 +148,6 @@ def start_security():
 
         if not detected_person_now:
             person_detected = False
-
-        cv2.imshow("Edge-AI Camera Monitoring", frame)
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
@@ -242,10 +242,10 @@ def execute_device_command(room, dev_type, dev_id, dev_name, action):
         endpoint = f"{BACKEND_URL}/api/tv"
     elif dev_type.lower() == "android_tv":
         endpoint = f"{BACKEND_URL}/api/tv"
-    elif dev_type.lower() == "light":
-        endpoint = f"{BACKEND_URL}/api/light"
+    elif dev_type.lower() == "tapo_light":
+        endpoint = f"{BACKEND_URL}/api/tapo_light"
     else:
-        endpoint = f"{BACKEND_URL}/api/led_strip"
+        endpoint = f"{BACKEND_URL}/api/tapo_led_strip"
 
 
     if action in ["άναψε", "on", "open", "άνοιξε"]:
@@ -384,6 +384,28 @@ def get_tv_controller(ip):
             return None
     return tv_registry[ip]
 
+
+class Phue:
+    def __init__(self,ip):
+        self.bridge = Bridge(ip)
+
+        self.bridge.connect()
+    
+    def turn_on(self,number):
+        self.bridge.set_light(number, 'on', True)
+
+    def turn_off(self,number):
+        self.bridge.set_light(number, 'off', True)
+
+    def command(self,command,number):
+        if command == "on":
+            self.turn_on(number)
+        elif command == "off":
+            self.turn_off(number)
+
+
+
+
 class AndroidTV:
     def __init__(self, ip):
         self.ip = ip
@@ -427,10 +449,9 @@ class Tapo_Led_strip:
 
 
     async def async_execute_command(self, command):
-        device = await self.client.l900(self.ip_address)
         match command:
-            case "on": await device.on()
-            case "off": await device.off()
+            case "on": await self.device.on()
+            case "off": await self.device.off()
     
     def connect(self):
         asyncio.run(self.async_connect())
@@ -465,10 +486,9 @@ class Tapo_Smart_Bulbs:
         
 
     async def async_execute_command(self, command):
-        device = await self.client.l900(self.ip_address)
         match command:
-            case "on": await device.on()
-            case "off": await device.off()
+            case "on": await self.device.on()
+            case "off": await self.device.off()
     
     def connect(self):
         asyncio.run(self.async_connect())
@@ -632,8 +652,8 @@ def communicate_for_errors():
         return jsonify({"status": "error recorded"}), 200
 
 
-@server.route("/api/led_strip", methods=["POST"])
-def handle_lights():
+@server.route("/api/tapo_led_strip", methods=["POST"])
+def handle_tapo_lights():
     content = request.json
 
     device = content["device"]
@@ -643,7 +663,7 @@ def handle_lights():
     number = str(content["number"]) 
     model = content["model"]
 
-    Logger.info(f"/api/led_strip -> Received the command {command} for the device {device}. This device is part of the {room} and it is a {dev_type}")
+    Logger.info(f"/api/tapo_led_strip -> Received the command {command} for the device {device}. This device is part of the {room} and it is a {dev_type}")
     
     with open("devices_config.json", "r") as f:
         data = json.load(f)
@@ -658,12 +678,12 @@ def handle_lights():
         return jsonify({"status": "success", "message": "Command received"}), 200
         
     except KeyError:
-        return jsonify({"status": "error", "message": "Light device not found in config"}), 404
+        return jsonify({"status": "error", "message": "Tapo_light device not found in config"}), 404
     
 
 
-@server.route("/api/light", methods=["POST"])
-def handle_led_strip():
+@server.route("/api/tapo_light", methods=["POST"])
+def handle_tapo_led_strip():
     content = request.json
 
     device = content["device"]
@@ -674,7 +694,7 @@ def handle_led_strip():
     model = content["model"]
  
 
-    Logger.info(f"/api/light -> Received the command {command} for the device {device}. This device is part of the {room} and it is a {dev_type}")
+    Logger.info(f"/api/tapo_light -> Received the command {command} for the device {device}. This device is part of the {room} and it is a {dev_type}")
     
     with open("devices_config.json", "r") as f:
         data = json.load(f)
@@ -689,8 +709,39 @@ def handle_led_strip():
         return jsonify({"status": "success", "message": "Command received"}), 200
         
     except KeyError:
-        return jsonify({"status": "error", "message": "Light device not found in config"}), 404
+        return jsonify({"status": "error", "message": "Tapo_light device not found in config"}), 404
    
+
+@server.route("/api/phue_light", methods=["POST"])
+def handle_phue_lights():
+    content = request.json
+
+    device = content["device"]
+    room = content["room"]
+    dev_type = content["type"]
+    command = content["command"]
+    number = str(content["number"])
+
+    
+    Logger.info(f"/api/phue_light -> Received the command {command} for the device {device}. This device is part of the {room} and it is a {dev_type}")
+    
+    with open("devices_config.json", "r") as f:
+        data = json.load(f)
+
+
+    try:
+        ip = data["Room"][room][dev_type][number]["ip"]
+        id = data["Room"][room][dev_type][number]["id"]
+        
+        
+        phue_bridge = Phue(ip)
+        phue_bridge.command(command,id)
+
+        return jsonify({"status": "success", "message": "Command received"}), 200
+        
+    except KeyError:
+        return jsonify({"status": "error", "message": "Phue_Light device not found in config"}), 404
+    
 
 
 @server.route("/api/tv", methods=["POST"])

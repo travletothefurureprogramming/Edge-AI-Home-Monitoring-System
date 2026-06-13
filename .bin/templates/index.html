@@ -112,22 +112,27 @@
                             });
                         }
 
-                        else if (category === 'light') {
+                        else if (category === 'tapo_light') {
                             const cmds = ['on', 'off'];
                             cmds.forEach(cmd => {
-                                card.innerHTML += `<button onclick="sendlight('${dev.name}', '${roomName}', 'light', '${id}', '${cmd}')">${cmd.toUpperCase()}</button>`;
+                                card.innerHTML += `<button onclick="sendtapo_light('${dev.name}', '${roomName}', 'tapo_light', '${id}', '${cmd}')">${cmd.toUpperCase()}</button>`;
                             });
                         }
 
-                        else if (category === 'led_strip') {
+                        else if (category === 'tapo_led_strip') {
                             const cmds = ['on', 'off'];
                             cmds.forEach(cmd => {
-                                // Διορθώθηκε: Περνάμε 'led_strip' ως dev_type για να μην σκάει το backend
-                                card.innerHTML += `<button onclick="sendled_strip('${dev.name}', '${roomName}', 'led_strip', '${id}', '${cmd}')">${cmd.toUpperCase()}</button>`;
+                                card.innerHTML += `<button onclick="sendtapo_led_strip('${dev.name}', '${roomName}', 'tapo_led_strip', '${id}', '${cmd}')">${cmd.toUpperCase()}</button>`;
                             });
                         }
 
-                        // ΕΔΩ ΜΠΑΙΝΕΙ ΤΟ APPEND: Μία φορά, αφού έχει χτιστεί πλήρως η κάρτα!
+                        else if (category === 'phue_light') {
+                            const cmds = ['on', 'off'];
+                            cmds.forEach(cmd => {
+                                card.innerHTML += `<button onclick="sendphue_light('${dev.name}', '${roomName}', 'phue_light', '${id}','${cmd}')">${cmd.toUpperCase()}</button>`;
+                            });
+                        }
+
                         container.appendChild(card);
                     }
                 }
@@ -172,16 +177,24 @@
         });
     }
 
-    async function sendlight(device, room, type, id, cmd) {
-        await fetch(`${API_URL}/api/light`, {
+    async function sendtapo_light(device, room, type, id, cmd) {
+        await fetch(`${API_URL}/api/tapo_light`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ room: room, type: type, number: id, command: cmd, device: device})
         });
     }
 
-    async function sendled_strip(device, room, type, id, cmd) {
-        await fetch(`${API_URL}/api/led_strip`, {
+    async function sendtapo_led_strip(device, room, type, id, cmd) {
+        await fetch(`${API_URL}/api/tapo_led_strip`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ room: room, type: type, number: id, command: cmd, device: device})
+        });
+    }
+
+    async function sendphue_light(device, room, type, id, cmd) {
+        await fetch(`${API_URL}/api/phue_light`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ room: room, type: type, number: id, command: cmd, device: device})

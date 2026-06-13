@@ -7,6 +7,7 @@ from dotenv import load_dotenv, dotenv_values
 from pywebostv.connection import WebOSClient
 from pywebostv.controls import MediaControl, SystemControl, InputControl
 import json
+from phue import Bridge
 
 load_dotenv(".env")
 
@@ -190,3 +191,17 @@ class LG_TV:
             case "volume_down": self.volume_down()
             case "on": self.on()
             case "off": self.off()
+
+
+class Phue:
+    def __init__(self,ip):
+        self.bridge = Bridge(ip)
+
+        self.bridge.connect()
+    
+    def turn_on(self,number):
+        self.bridge.set_light(number, 'on', True)
+
+    def turn_off(self,number):
+        self.bridge.set_light(number, 'off', True)
+
