@@ -32,6 +32,9 @@
 - P304
 - P306
 
+* Philips Hue Lights:
+- All devices you have connected with Philips Hue Bridge
+
 * Android Tv
 * Android Tv:
 - Android 8+
@@ -65,7 +68,7 @@ git clone https://github.com/travletothefurureprogramming/Edge-AI-Home-Monitorin
 8. Press "Next".
 9. Add your telegram bot token and chat id.
 10. Press "Next"
-11. Add your devices (For LG TV you must have powered on the tv and press yes)
+11. Add your devices (For LG TV you must have powered on the tv and press yes. For Philips Hue devices you must have pressed the button.)
 12. Close the window.
 
 
