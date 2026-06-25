@@ -60,106 +60,153 @@ tv_registry = {}
 
 
 def read_json_file(file):
- with open(file, 'r') as f:
-    data = json.load(f)
-    return data
+ try:
+    with open(file, 'r') as f:
+        data = json.load(f)
+        return data
+ except:
+     return jsonify({"response":"Failed to read json file."})
 
 def send_to_server(content):
-    requests.post("http://192.168.1.2:8080/api/communicate", json=content)
+    try:
+        requests.post("http://192.168.1.2:8080/api/communicate", json=content, timeout=5)
+    except Exception as error:
+        Logger.error(f"An error has occured during the attemp to send the message to server. Error:{error}")
 
 def send_tv(content):
-    requests.post("http://192.168.1.2:8080/api/tv", json=content)
+    try:
+        requests.post("http://192.168.1.2:8080/api/tv", json=content, timeout=5)
+    except Exception as error:
+        Logger.error(f"An error has occured during the attemp to send the message to tv api endpoint. Error:{error}")
 
 def send_tapo_light(content):
-    requests.post("http://192.168.1.2:8080/api/tapo_light", json=content)
+    try:
+        requests.post("http://192.168.1.2:8080/api/tapo_light", json=content, timeout=5)
+    except Exception as error:
+        Logger.error(f"An error has occured during the attemp to send the message to tapo light api endpoint. Error:{error}")
 
 def send_tapo_led_strip(content):
-    requests.post("http://192.168.1.2:8080/api/tapo_led_strip", json=content)
+    try:
+        requests.post("http://192.168.1.2:8080/api/tapo_led_strip", json=content, timeout=5)
+    except Exception as error:
+        Logger.error(f"An error has occured during the attemp to send the message to tapo ledsript api endpoint. Error:{error}")
 
 def send_phue_light(content):
-    requests.post("http://192.168.1.2:8080/api/phue_light", json=content)
+    try:
+        requests.post("http://192.168.1.2:8080/api/phue_light", json=content, timeout=5)
+    except Exception as error:
+        Logger.error(f"An error has occured during the attemp to send the message to phue light api endpoint. Error:{error}")
 
 def send_yeelight(content):
-    requests.post("http://192.168.1.2:8080/api/yeelight", json=content)
+    try:
+        requests.post("http://192.168.1.2:8080/api/yeelight", json=content, timeout=5)
+    except Exception as error:
+        Logger.error(f"An error has occured during the attemp to send the message to yeelight api endpoint. Error:{error}")
 
 def send_ai(content):
-    return requests.post("http://192.168.1.2:8080/api/ai", json=content)
+    try:
+        return requests.post("http://192.168.1.2:8080/api/ai", json=content, timeout=5)
+    except Exception as error:
+        Logger.error(f"An error has occured during the attemp to send the message to AI api endpoint. Error:{error}")
 
 def send_security_notification(content):
-    return requests.post("http://192.168.1.2:8080/api/security/notification", json=content)
+    try:
+        return requests.post("http://192.168.1.2:8080/api/security/notification", json=content, timeout=5)
+    except Exception as error:
+        Logger.error(f"An error has occured during the attemp to send security notification. Error:{error}")
 
 def send_security(content):
-    return requests.post("http://192.168.1.2:8080/api/security", json=content)
-
-
+    try:
+        return requests.post("http://192.168.1.2:8080/api/security", json=content, timeout=5)
+    except Exception as error:
+        Logger.error(f"An error has occured during the attemp to send the message to security api endpoint. Error:{error}")
 
 
 def getColours(cls_num):
-    """Generate unique colors for each class ID"""
-    random.seed(cls_num)
-    return tuple(random.randint(0, 255) for _ in range(3))
+    try:
+      random.seed(cls_num)
+      return tuple(random.randint(0, 255) for _ in range(3))
+    except:
+        return "Failed to generate the colour"
+    
 
 def start_security():
     global is_running
     
     if is_running:
-        print("Η ασφάλεια τρέχει ήδη!")
+        print("Security already running!")
         return
         
     videoCap = cv2.VideoCapture(0)
     if not videoCap.isOpened():
-        print("Σφάλμα: Δεν είναι δυνατή η πρόσβαση στην κάμερα.")
+        print("Error: The connection with camera has failed")
         return
 
     is_running = True
     person_detected = False
-    print("Το σύστημα Edge-AI Monitoring ξεκίνησε...")
+    print("The Edge-AI Monitoring System has started")
 
     while is_running:
         ret, frame = videoCap.read()
         if not ret:
-            print("Αποτυχία λήψης frame από την κάμερα.")
+            print("Failed to receive frame from the camera")
+            break
+        try:   
+            results = yolo.track(frame, stream=True)
+            detected_person_now = False
+
+            for result in results:
+                class_names = result.names
+
+                for box in result.boxes:
+                    if box.conf[0] > 0.4:
+                        cls = int(box.cls[0])
+                        class_name = class_names[cls]
+
+                        if class_name == "person":
+                            detected_person_now = True
+
+                        x1, y1, x2, y2 = map(int, box.xyxy[0])
+                        colour = getColours(cls)
+
+                        cv2.rectangle(frame, (x1, y1), (x2, y2), colour, 2)
+                        cv2.putText(
+                            frame,
+                            f"{class_name} {float(box.conf[0]):.2f}",
+                            (x1, max(y1 - 10, 20)),
+                            cv2.FONT_HERSHEY_SIMPLEX,
+                            0.6,
+                            colour,
+                            2
+                        )
+
+            if detected_person_now and not person_detected:
+                try:
+                    send_security_notification({"person": "yes"})
+                    person_detected = True
+                except Exception as e:
+                    Logger.error(f"Unexpected notification error: {e}")
+                    continue
+
+            if not detected_person_now:
+                person_detected = False
+
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                break
+
+        except FileNotFoundError as e:
+            Logger.error(f"YOLO model not found: {e}")
             break
 
-        results = yolo.track(frame, stream=True)
-        detected_person_now = False
+        except RuntimeError as e:
+            Logger.error(f"YOLO runtime error: {e}")
+            continue
 
-        for result in results:
-            class_names = result.names
+        except Exception as e:
+            Logger.error(f"Unexpected YOLO error: {e}")
+            continue
 
-            for box in result.boxes:
-                if box.conf[0] > 0.4:
-                    cls = int(box.cls[0])
-                    class_name = class_names[cls]
-
-                    if class_name == "person":
-                        detected_person_now = True
-
-                    x1, y1, x2, y2 = map(int, box.xyxy[0])
-                    colour = getColours(cls)
-
-                    cv2.rectangle(frame, (x1, y1), (x2, y2), colour, 2)
-                    cv2.putText(
-                        frame,
-                        f"{class_name} {float(box.conf[0]):.2f}",
-                        (x1, max(y1 - 10, 20)),
-                        cv2.FONT_HERSHEY_SIMPLEX,
-                        0.6,
-                        colour,
-                        2
-                    )
-
-        if detected_person_now and not person_detected:
-            send_security_notification({"person": "yes"})
-            person_detected = True
-
-        if not detected_person_now:
-            person_detected = False
-
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            break
-
-    print("Τερματισμός κάμερας και αποδέσμευση πόρων...")
+    print("Shutdown camera")
     is_running = False
     videoCap.release()
     cv2.destroyAllWindows()
@@ -168,7 +215,7 @@ def start_security():
 
 def stop_security():
     global is_running
-    print("Λήψη εντολής για κλείσιμο της ασφάλειας...")
+    print("Receive command to close security")
     is_running = False  
 
 
@@ -181,11 +228,11 @@ def send_telegram_message(message):
         "parse_mode": "Markdown" 
     }
     try:
-        response = requests.post(url, json=payload)
+        response = requests.post(url, json=payload, timeout=5)
         if response.status_code != 200:
-            print(f"Σφάλμα αποστολής: {response.text}")
+            print(f"Error during send: {response.text}")
     except Exception as e:
-        print(f"Αποτυχία σύνδεσης κατά την αποστολή: {e}")
+        print(f"Failed in connection: {e}")
 
 def check_for_messages(offset=None):
     url = f"https://api.telegram.org/bot{TOKEN}/getUpdates"
@@ -199,29 +246,27 @@ def check_for_messages(offset=None):
             data = response.json()
             return data.get("result", [])
     except Exception as e:
-        print(f"Σφάλμα κατά τη λήψη μηνυμάτων: {e}")
+        print(f"An error has occured during the receive of messages: {e}")
     return []
 
 def load_devices_config():
-    """Φορτώνει δυναμικά το αρχείο ρυθμίσεων συσκευών"""
     config_path = os.path.join(BASE_DIR, "devices_config.json") 
     if not os.path.exists(config_path):
-        print(f"Σφάλμα: Το αρχείο {config_path} δεν βρέθηκε.")
+        print(f"Error: The file {config_path} not found.")
         return None
     try:
         with open(config_path, "r", encoding="utf-8") as f:
             return json.load(f)
     except Exception as e:
-        print(f"Σφάλμα κατά το διάβασμα του json: {e}")
+        print(f"An error has occured during the read of json: {e}")
         return None
 
 def get_devices_list_message():
-    """Διαβάζει το αρχείο και επιστρέφει μια μορφοποιημένη λίστα συσκευών"""
     config = load_devices_config()
     if not config or "Room" not in config:
-        return "❌ Δεν μπόρεσα να φορτώσω τις ρυθμίσεις των συσκευών για τη λίστα."
+        return "Failed to load the devices configure from the list.."
 
-    msg = "📱 *Λίστα Εγγεγραμμένων Συσκευών:*\n\n"
+    msg = "List of subsribed Devices:*\n\n"
     
     for room_name, dev_types in config["Room"].items():
         room_title = room_name.replace("_", " ").title()
@@ -231,20 +276,19 @@ def get_devices_list_message():
         for dev_type, devices in dev_types.items():
             for dev_id, dev_info in devices.items():
                 has_devices = True
-                dev_name = dev_info.get("name", "Άγνωστο")
+                dev_name = dev_info.get("name", "Uknown")
                 
                 emoji = "📺" if dev_type.lower() == "tv" else "💡"
                 
-                msg += f"  {emoji} `{dev_name}` (Τύπος: {dev_type})\n"
+                msg += f"  {emoji} `{dev_name}` (Type: {dev_type})\n"
         
         if not has_devices:
-            msg += "  _(Δεν βρέθηκαν συσκευές)_\n"
+            msg += "  _(Devices Not Found)_\n"
         msg += "\n"
         
     return msg
 
 def execute_device_command(room, dev_type, dev_id, dev_name, action):
-    """Στέλνει το σωστό αίτημα στο Flask backend ανάλογα με τον τύπο της συσκευής"""
     if dev_type.lower() == "lg_tv":
         endpoint = f"{BACKEND_URL}/api/tv"
     elif dev_type.lower() == "android_tv":
@@ -279,19 +323,18 @@ def execute_device_command(room, dev_type, dev_id, dev_name, action):
     }
 
     try:
-        response = requests.post(endpoint, json=payload)
+        response = requests.post(endpoint, json=payload, timeout=5)
         if response.status_code == 200:
-            return True, f"Η εντολή *{command_str}* στάλθηκε επιτυχώς στη συσκευή *{dev_name}* στο δωμάτιο *{room}*."
+            return True, f"The command *{command_str}* has send succesfully in the device: *{dev_name}* in the room: *{room}*."
         else:
-            return False, f"Το backend επέστρεψε σφάλμα: {response.text}"
+            return False, f"The backend has returned an error: {response.text}"
     except Exception as e:
-        return False, f"Αποτυχία σύνδεσης με το backend: {e}"
+        return False, f"Failed to connect with backend: {e}"
 
 def parse_and_execute(command_text):
-    """Αναλύει το κείμενο με βάση το αρχείο json και εκτελεί την εντολή"""
     config = load_devices_config()
     if not config or "Room" not in config:
-        return "Δεν μπόρεσα να φορτώσω τις ρυθμίσεις των συσκευών."
+        return "Error during the loading of the devices."
 
     command_lower = command_text.lower()
     
@@ -324,10 +367,10 @@ def parse_and_execute(command_text):
                     success, output_msg = execute_device_command(room_name, dev_type, dev_id, dev_info.get("name"), action)
                     return output_msg
 
-    return "Δεν βρήκα κάποια συσκευή στο αρχείο ρυθμίσεων που να ταιριάζει με την εντολή σου."
+    return "I didn't find any device in the configuration file that matches your command."
 
 def main_bot_loop():
-    print("Το Telegram Bot ξεκίνησε και ακούει για μηνύματα...")
+    print("The telegram bot has started and it receives messages...")
     last_update_id = None
     
     initial_updates = check_for_messages()
@@ -345,10 +388,10 @@ def main_bot_loop():
                 sender_id = str(update["message"]["chat"]["id"])
                 
                 if sender_id != CHAT_ID:
-                    print(f"Αγνοήθηκε μήνυμα από άγνωστο Chat ID: {sender_id}")
+                    print(f"A message has ingored becuase of uknown sender ID: {sender_id}")
                     continue
                 
-                print(f"Νέο μήνυμα από εσένα: {message_text}")
+                print(f"A new message from you: {message_text}")
                 command = message_text.lower().strip()
                 
                 if command in ["συσκευές", "συσκευες", "devices", "/devices"]:
@@ -357,16 +400,28 @@ def main_bot_loop():
                 
                 elif "άνοιξε την κάμερα" in command or "camera on" in command:
                     send_security({"status":"on"})
-                    send_telegram_message("📹 Το σύστημα ασφαλείας και η κάμερα ενεργοποιήθηκαν.")
+                    send_telegram_message("Monitoring system and camera has turned on.")
                 elif "κλείσε την κάμερα" in command or "camera off" in command:
                     send_security({"status":"off"})
-                    send_telegram_message("🛑 Το σύστημα ασφαλείας απενεργοποιήθηκε.")
+                    send_telegram_message("Security system has turned off.")
 
                 elif "/ai" in command:
-                   
-                   prompt = {"prompt":command}
-                   response = send_ai(prompt).json()
-                   send_telegram_message(response["response"])
+                   try:
+                        prompt = {"prompt":command}
+                        response = send_ai(prompt).json()
+                        send_telegram_message(response["response"])
+                   except TypeError as e:
+                        return jsonify({"response": f"Bad Request: {e}"}), 400
+
+                   except ConnectionError as e:
+                        return jsonify({"response": f"Service Unavailable: {e}"}), 503
+
+                   except KeyError as e:
+                        return jsonify({"response": f"Missing field: {e}"}), 400
+
+                   except Exception as e:
+                        Logger.error(f"Unexpected error in /api/ai: {e}")
+                        return jsonify({"response": "Internal Server Error"}), 500
 
                 
                 else:
@@ -381,14 +436,29 @@ def main_bot_loop():
 def get_tv_controller(ip):
     global tv_registry
     if ip not in tv_registry:
-        print(f"Δημιουργία νέου connection για {ip}...")
+        print(f"Creation of new connetction for {ip}...")
         controller = AndroidTVController(ip)
-        if controller.connect():
-            tv_registry[ip] = controller
-            send_to_server({"module": "TV", "type": "connection", "error": None, "action": "reset"})
-        else:
-            send_to_server({"module": "TV", "type": "connection", "error": f"Failed {ip}"})
-            return None
+        try:
+            if controller.connect():
+                tv_registry[ip] = controller
+                send_to_server({"module": "TV", "type": "connection", "error": None, "action": "reset"})
+            else:
+                send_to_server({"module": "TV", "type": "connection", "error": f"Failed {ip}"})
+                return None
+        
+        except TypeError as e:
+            return f"Bad Request: {e}"
+    
+        except ConnectionError as e:
+            return f"Service Unavailable: {e}"
+        
+        except KeyError as e:
+            return f"Missing field: {e}"
+        
+        except Exception as e:
+            Logger.error(f"Unexpected error in /api/devices: {e}")
+            return "Internal Server Error"
+        
     return tv_registry[ip]
 
 
@@ -517,6 +587,8 @@ class Tapo_Led_strip:
 
      self.client = ApiClient(self.tapo_username, self.tapo_password)
 
+     self.connect()
+
     async def async_connect(self):
         if self.device == "l900":
          self.device = await self.client.l900(self.ip_address)
@@ -547,6 +619,8 @@ class Tapo_Smart_Bulbs:
      self.device = device
 
      self.client = ApiClient(self.tapo_username, self.tapo_password)
+
+     self.connect()
 
     async def async_connect(self):
         if self.device == "l510":
@@ -669,54 +743,118 @@ class Yeelight:
 
 @server.route("/api/ai", methods=["POST"])
 def handle_ai():
-    content = request.json
-    user_input = content["prompt"]
+    try:
+        content = request.json
+        user_input = content["prompt"]
     
-    response = ollama.chat(model='phi3', messages=[
-    {'role': 'system', 'content': 'You are a helpful assistant. Provide extremely concise, short, and direct answers in one or two sentences max.'},
-    {'role': 'user', 'content': user_input}
-])    
-    ai_text = response['message']['content']
+        response = ollama.chat(model='phi3', messages=[
+        {'role': 'system', 'content': 'You are a helpful assistant. Provide extremely concise, short, and direct answers in one or two sentences max.'},
+        {'role': 'user', 'content': user_input}
+        ])   
+
+        ai_text = response['message']['content']
+        
+        return jsonify({"response": ai_text}), 200
+
+    except TypeError as e:
+        return jsonify({"response": f"Bad Request: {e}"}), 400
+
+    except ConnectionError as e:
+        return jsonify({"response": f"Service Unavailable: {e}"}), 503
+
+    except KeyError as e:
+        return jsonify({"response": f"Missing field: {e}"}), 400
+
+    except Exception as e:
+        Logger.error(f"Unexpected error in /api/ai: {e}")
+        return jsonify({"response": "Internal Server Error"}), 500
     
-    return jsonify({"response": ai_text}), 200
 
 @server.route('/api/security',methods=['POST'])
 def handle_security():
-    content = request.json
+    try:
+        content = request.json
     
-    sequrity_status = content["status"]
+        sequrity_status = content["status"]
 
-    if sequrity_status == "on":
-        threading.Thread(target=start_security).start()
-        send_telegram_message("The camera has turned on")
-        return jsonify({"status": "the camera has turned on"}), 200
+        if sequrity_status == "on":
+            threading.Thread(target=start_security).start()
+            send_telegram_message("The camera has turned on")
+            return jsonify({"status": "the camera has turned on"}), 200
 
-    else:
-        threading.Thread(target=stop_security).start()
-        threading.Thread(target=send_telegram_message, args=("The camera has turned off",)).start()
-        return jsonify({"status": "the camera has turned off"}), 200
+        else:
+            threading.Thread(target=stop_security).start()
+            threading.Thread(target=send_telegram_message, args=("The camera has turned off",)).start()
+            return jsonify({"status": "the camera has turned off"}), 200
+    
+    except TypeError as e:
+        return jsonify({"response": f"Bad Request: {e}"}), 400 
+    
+    except ConnectionError as e:
+        return jsonify({"response": f"Service Unavailable: {e}"}), 503
+    
+    except KeyError as e:
+        return jsonify({"response": f"Missing field: {e}"}), 400
+    
+    except Exception as e:
+        Logger.error(f"Unexpected error in /api/security: {e}")
+        return jsonify({"response": "Internal Server Error"}), 500
+    
 
 
 @server.route('/api/security/notification',methods=['POST'])
 def send_notification():
-    content = request.json
+    try:
+        content = request.json
 
-    is_person = content["person"]
+        is_person = content["person"]
 
-    if is_person == "yes":
-        print("ALARM")
-        send_telegram_message("ALARM!!!!!!! PERSON DETECTED ALARM PERSON DETECTED!!!!!!")
-        return jsonify({"status": "Person has detected"}), 200
+        if is_person == "yes":
+            print("ALARM")
+            send_telegram_message("ALARM!!!!!!! PERSON DETECTED ALARM PERSON DETECTED!!!!!!")
+            return jsonify({"status": "Person has detected"}), 200
+        
+        return jsonify({"status": "All is ok"}), 200
     
-    return jsonify({"status": "All is ok"}), 200
+    except TypeError as e:
+        return jsonify({"response": f"Bad Request: {e}"}), 400 
+    
+    except ConnectionError as e:
+        return jsonify({"response": f"Service Unavailable: {e}"}), 503
+    
+    except KeyError as e:
+        return jsonify({"response": f"Missing field: {e}"}), 400
+    
+    except Exception as e:
+        Logger.error(f"Unexpected error in /api/security/notification: {e}")
+        return jsonify({"response": "Internal Server Error"}), 500
+
 
 
 
 @server.route('/api/devices', methods=['GET'])
 def get_devices():
-    config_path = os.path.join(BASE_DIR, 'devices_config.json')
-    with open(config_path, 'r', encoding="utf-8") as f:
-        return jsonify(json.load(f))
+    try:
+        config_path = os.path.join(BASE_DIR, 'devices_config.json')
+        if os.path.exists(config_path):
+            with open(config_path, 'r', encoding="utf-8") as f:
+                return jsonify(json.load(f))
+        else:
+            return jsonify({"response": f"Missing file"}), 400 
+    
+    except TypeError as e:
+        return jsonify({"response": f"Bad Request: {e}"}), 400 
+    
+    except ConnectionError as e:
+        return jsonify({"response": f"Service Unavailable: {e}"}), 503
+    
+    except KeyError as e:
+        return jsonify({"response": f"Missing field: {e}"}), 400
+    
+    except Exception as e:
+        Logger.error(f"Unexpected error in /api/devices: {e}")
+        return jsonify({"response": "Internal Server Error"}), 500
+
 
 @server.route("/")
 def inferance():
@@ -727,19 +865,33 @@ def inferance():
 
 @server.route("/api/communicate", methods=["POST"])
 def communicate_for_errors():
-    data = request.json
-    module = data["module"]  
-    error = data["error"]   
-    err_type = data["type"]  
-    action = data.get("action", "report") 
+    try:
+        data = request.json
+        module = data["module"]  
+        error = data["error"]   
+        err_type = data["type"]  
+        action = data.get("action", "report") 
 
-    if action == "reset":
-        errors[err_type]["module"][module] = None
-        Logger.info(f"Error reset for {module}")
-        return jsonify({"status": "success", "message": "Error cleared"}), 200
-    else:
-        errors[err_type]["module"][module] = error
-        return jsonify({"status": "error recorded"}), 200
+        if action == "reset":
+            errors[err_type]["module"][module] = None
+            Logger.info(f"Error reset for {module}")
+            return jsonify({"status": "success", "message": "Error cleared"}), 200
+        else:
+            errors[err_type]["module"][module] = error
+            return jsonify({"status": "error recorded"}), 200
+    
+    except TypeError as e:
+        return jsonify({"response": f"Bad Request: {e}"}), 400 
+    
+    except ConnectionError as e:
+        return jsonify({"response": f"Service Unavailable: {e}"}), 503
+    
+    except KeyError as e:
+        return jsonify({"response": f"Missing field: {e}"}), 400
+    
+    except Exception as e:
+        Logger.error(f"Unexpected error in /api/communicate: {e}")
+        return jsonify({"response": "Internal Server Error"}), 500
 
 @server.route("/system")
 def monitor_dashboard():
@@ -748,228 +900,398 @@ def monitor_dashboard():
 
 @server.route("/api/system", methods=["GET"])
 def return_system_info():
-    system_info = {
-        "cpu": Server_Monitor.get_cpu(),
-        "ram": Server_Monitor.get_ram(),
-        "disk": Server_Monitor.get_disk_usage(),
-        "net_sent": Server_Monitor.net_sent,
-        "net_recv": Server_Monitor.net_recv,
-        "volume":Server_Monitor.get_volume(),
-        "battery":Server_Monitor.get_battery(),
-        "uptime":Server_Monitor.get_uptime()
-    }
-    return jsonify(system_info)
+    try:
+        system_info = {
+            "cpu": Server_Monitor.get_cpu(),
+            "ram": Server_Monitor.get_ram(),
+            "disk": Server_Monitor.get_disk_usage(),
+            "net_sent": Server_Monitor.net_sent,
+            "net_recv": Server_Monitor.net_recv,
+            "volume":Server_Monitor.get_volume(),
+            "battery":Server_Monitor.get_battery(),
+            "uptime":Server_Monitor.get_uptime()
+        }
+        return jsonify(system_info)
+    
+    except TypeError as e:
+        return jsonify({"response": f"Bad Request: {e}"}), 400 
+    
+    except ConnectionError as e:
+        return jsonify({"response": f"Service Unavailable: {e}"}), 503
+    
+    except KeyError as e:
+        return jsonify({"response": f"Missing field: {e}"}), 400
+    
+    except Exception as e:
+        Logger.error(f"Unexpected error in /api/system: {e}")
+        return jsonify({"response": "Internal Server Error"}), 500
 
 
 @server.route("/api/system/actions/sleep", methods=["POST"])
 def sleep_api():
-    data = request.json
-    if data.get("action") == "sleep":
-        Server_Monitor.sleep_pc()
-    return jsonify({"message": "ok", "status": 200})
+    try:
+        data = request.json
+        if data.get("action") == "sleep":
+            Server_Monitor.sleep_pc()
+        return jsonify({"message": "ok", "status": 200})
+        
+    except TypeError as e:
+        return jsonify({"response": f"Bad Request: {e}"}), 400 
+    
+    except ConnectionError as e:
+        return jsonify({"response": f"Service Unavailable: {e}"}), 503
+    
+    except KeyError as e:
+        return jsonify({"response": f"Missing field: {e}"}), 400
+    
+    except Exception as e:
+        Logger.error(f"Unexpected error in /api/system/actions/sleep: {e}")
+        return jsonify({"response": "Internal Server Error"}), 500
 
 @server.route("/api/system/actions/volume", methods=["GET","POST"])
 def volume_api():
     if request.method == "GET":
-        return jsonify({"volume":int(Server_Monitor.get_volume())}) 
+        try:
+            return jsonify({"volume":int(Server_Monitor.get_volume())})
+         
+        except TypeError as e:
+            return jsonify({"response": f"Bad Request: {e}"}), 400 
+    
+        except ConnectionError as e:
+            return jsonify({"response": f"Service Unavailable: {e}"}), 503
+        
+        except KeyError as e:
+            return jsonify({"response": f"Missing field: {e}"}), 400
+        
+        except Exception as e:
+            Logger.error(f"Unexpected error in /api/ai: {e}")
+            return jsonify({"response": "Internal Server Error"}), 500
+        
     else:
-        data = request.json
-        if data.get("action") == "increase":
-            Server_Monitor.increase_volume()
-        else:
-            Server_Monitor.decrease_volume()
-        return jsonify({"message": "ok", "status": 200})
+        try:
+            data = request.json
+            if data.get("action") == "increase":
+                Server_Monitor.increase_volume()
+            else:
+                Server_Monitor.decrease_volume()
+            return jsonify({"message": "ok", "status": 200})
+        
+        except TypeError as e:
+            return jsonify({"response": f"Bad Request: {e}"}), 400 
+    
+        except ConnectionError as e:
+            return jsonify({"response": f"Service Unavailable: {e}"}), 503
+        
+        except KeyError as e:
+            return jsonify({"response": f"Missing field: {e}"}), 400
+        
+        except Exception as e:
+            Logger.error(f"Unexpected error in /api/system/actions/volume: {e}")
+            return jsonify({"response": "Internal Server Error"}), 500
+
 
 @server.route("/api/system/actions/shutdown", methods=["POST"])
 def shutdown_api():
-    data = request.json
-    if data.get("action") == "shutdown":
-        Server_Monitor.shutdown_pc()
-    return jsonify({"message": "ok", "status": 200})
+    try:
+        data = request.json
+        if data.get("action") == "shutdown":
+            Server_Monitor.shutdown_pc()
+        return jsonify({"message": "ok", "status": 200})
+    
+    except TypeError as e:
+        return jsonify({"response": f"Bad Request: {e}"}), 400 
+    
+    except ConnectionError as e:
+        return jsonify({"response": f"Service Unavailable: {e}"}), 503
+    
+    except KeyError as e:
+        return jsonify({"response": f"Missing field: {e}"}), 400
+    
+    except Exception as e:
+        Logger.error(f"Unexpected error in /api/system/actions/shutdown: {e}")
+        return jsonify({"response": "Internal Server Error"}), 500
 
 
 @server.route("/api/system/actions/restart", methods=["POST"])
 def restart_api():
-    data = request.json
-    if data.get("action") == "restart":
-        Server_Monitor.restart_pc()
-    return jsonify({"message": "ok", "status": 200})
+    try:
+        data = request.json
+        if data.get("action") == "restart":
+            Server_Monitor.restart_pc()
+        return jsonify({"message": "ok", "status": 200})
+        
+    except TypeError as e:
+        return jsonify({"response": f"Bad Request: {e}"}), 400 
+    
+    except ConnectionError as e:
+        return jsonify({"response": f"Service Unavailable: {e}"}), 503
+    
+    except KeyError as e:
+        return jsonify({"response": f"Missing field: {e}"}), 400
+    
+    except Exception as e:
+        Logger.error(f"Unexpected error in /api/system/actions/restart: {e}")
+        return jsonify({"response": "Internal Server Error"}), 500
+
 
 @server.route("/api/system/processes", methods=["GET"])
 def get_processes():
-    processes = []
-    for proc in psutil.process_iter():
-        with proc.oneshot():
-            try:
-                mem = proc.memory_info().rss / (1024 * 1024)
-                processes.append({
-                    "pid": proc.pid,
-                    "name": proc.name(),
-                    "mem": round(mem, 2)
-                })
-            except (psutil.NoSuchProcess, psutil.AccessDenied):
-                continue
+    try:
+        processes = []
+        for proc in psutil.process_iter():
+            with proc.oneshot():
+                try:
+                    mem = proc.memory_info().rss / (1024 * 1024)
+                    processes.append({
+                        "pid": proc.pid,
+                        "name": proc.name(),
+                        "mem": round(mem, 2)
+                    })
+                except (psutil.NoSuchProcess, psutil.AccessDenied):
+                    continue
+        
+        top_procs = sorted(processes, key=lambda x: x['mem'], reverse=True)[:10]
+        return jsonify(top_procs)
     
-    top_procs = sorted(processes, key=lambda x: x['mem'], reverse=True)[:10]
-    return jsonify(top_procs)
+    except TypeError as e:
+        return jsonify({"response": f"Bad Request: {e}"}), 400 
+    
+    except ConnectionError as e:
+        return jsonify({"response": f"Service Unavailable: {e}"}), 503
+    
+    except KeyError as e:
+        return jsonify({"response": f"Missing field: {e}"}), 400
+    
+    except Exception as e:
+        Logger.error(f"Unexpected error in /api/system/processes: {e}")
+        return jsonify({"response": "Internal Server Error"}), 500
 
 @server.route("/api/tapo_led_strip", methods=["POST"])
-def handle_tapo_lights():
-    content = request.json
-
-    device = content["device"]
-    room = content["room"]
-    dev_type = content["type"]
-    command = content["command"]
-    number = str(content["number"]) 
-    model = content["model"]
-
-    Logger.info(f"/api/tapo_led_strip -> Received the command {command} for the device {device}. This device is part of the {room} and it is a {dev_type}")
-    
-    with open("devices_config.json", "r") as f:
-        data = json.load(f)
-    
+def handle_tapo_led_strip():
     try:
-        ip = data["Room"][room][dev_type][number]["ip"]
-        
-        
-        led_strip = Tapo_Led_strip(ip,model)
-        led_strip.command(command)
+        content = request.json
 
-        return jsonify({"status": "success", "message": "Command received"}), 200
+        device = content["device"]
+        room = content["room"]
+        dev_type = content["type"]
+        command = content["command"]
+        number = str(content["number"]) 
+        model = content["model"]
+
+        Logger.info(f"/api/tapo_led_strip -> Received the command {command} for the device {device}. This device is part of the {room} and it is a {dev_type}")
         
-    except KeyError:
-        return jsonify({"status": "error", "message": "Tapo_light device not found in config"}), 404
+        with open("devices_config.json", "r") as f:
+            data = json.load(f)
+        
+        try:
+            ip = data["Room"][room][dev_type][number]["ip"]
+            
+            
+            led_strip = Tapo_Led_strip(ip,model)
+            led_strip.command(command)
+
+            return jsonify({"status": "success", "message": "Command received"}), 200
+            
+        except KeyError:
+            return jsonify({"status": "error", "message": "Tapo_led_strip device not found in config"}), 404
     
+    except TypeError as e:
+        return jsonify({"response": f"Bad Request: {e}"}), 400 
+    
+    except ConnectionError as e:
+        return jsonify({"response": f"Service Unavailable: {e}"}), 503
+    
+    except KeyError as e:
+        return jsonify({"response": f"Missing field: {e}"}), 400
+    
+    except Exception as e:
+        Logger.error(f"Unexpected error in /api/tapo_led_strip: {e}")
+        return jsonify({"response": "Internal Server Error"}), 500
 
 
 @server.route("/api/tapo_light", methods=["POST"])
-def handle_tapo_led_strip():
-    content = request.json
-
-    device = content["device"]
-    room = content["room"]
-    dev_type = content["type"]
-    command = content["command"]
-    number = str(content["number"])
-    model = content["model"]
- 
-
-    Logger.info(f"/api/tapo_light -> Received the command {command} for the device {device}. This device is part of the {room} and it is a {dev_type}")
-    
-    with open("devices_config.json", "r") as f:
-        data = json.load(f)
-    
+def handle_tapo_light():
     try:
-        ip = data["Room"][room][dev_type][number]["ip"]
-        
-        
-        smart_bulb = Tapo_Smart_Bulbs(ip,model)
-        smart_bulb.command(command)
+        content = request.json
 
-        return jsonify({"status": "success", "message": "Command received"}), 200
+        device = content["device"]
+        room = content["room"]
+        dev_type = content["type"]
+        command = content["command"]
+        number = str(content["number"])
+        model = content["model"]
+    
+
+        Logger.info(f"/api/tapo_light -> Received the command {command} for the device {device}. This device is part of the {room} and it is a {dev_type}")
         
-    except KeyError:
-        return jsonify({"status": "error", "message": "Tapo_light device not found in config"}), 404
+        with open("devices_config.json", "r") as f:
+            data = json.load(f)
+        
+        try:
+            ip = data["Room"][room][dev_type][number]["ip"]
+            
+            
+            smart_bulb = Tapo_Smart_Bulbs(ip,model)
+            smart_bulb.command(command)
+
+            return jsonify({"status": "success", "message": "Command received"}), 200
+            
+        except KeyError:
+            return jsonify({"status": "error", "message": "Tapo_light device not found in config"}), 404
+    
+    except TypeError as e:
+        return jsonify({"response": f"Bad Request: {e}"}), 400 
+    
+    except ConnectionError as e:
+        return jsonify({"response": f"Service Unavailable: {e}"}), 503
+    
+    except KeyError as e:
+        return jsonify({"response": f"Missing field: {e}"}), 400
+    
+    except Exception as e:
+        Logger.error(f"Unexpected error in /api/tapo_light: {e}")
+        return jsonify({"response": "Internal Server Error"}), 500
    
 
 @server.route("/api/yeelight", methods=["POST"])
 def handle_yeelight():
-    content = request.json
-
-    device = content["device"]
-    room = content["room"]
-    dev_type = content["type"]
-    command = content["command"]
-    number = str(content["number"])
-
-    
-    Logger.info(f"/api/yeelight -> Received the command {command} for the device {device}. This device is part of the {room} and it is a {dev_type}")
-    
-    with open("devices_config.json", "r") as f:
-        data = json.load(f)
-
-
     try:
-        ip = data["Room"][room][dev_type][number]["ip"]
-        id = data["Room"][room][dev_type][number]["id"]
-        
-        
-        yeelight = Yeelight(ip)
-        yeelight.command(command)
+        content = request.json
 
-        return jsonify({"status": "success", "message": "Command received"}), 200
+        device = content["device"]
+        room = content["room"]
+        dev_type = content["type"]
+        command = content["command"]
+        number = str(content["number"])
+
         
-    except KeyError:
-        return jsonify({"status": "error", "message": "Yeelight device not found in config"}), 404
+        Logger.info(f"/api/yeelight -> Received the command {command} for the device {device}. This device is part of the {room} and it is a {dev_type}")
+        
+        with open("devices_config.json", "r") as f:
+            data = json.load(f)
+
+
+        try:
+            ip = data["Room"][room][dev_type][number]["ip"]
+            id = data["Room"][room][dev_type][number]["id"]
+            
+            
+            yeelight = Yeelight(ip)
+            yeelight.command(command)
+
+            return jsonify({"status": "success", "message": "Command received"}), 200
+            
+        except KeyError:
+            return jsonify({"status": "error", "message": "Yeelight device not found in config"}), 404
     
+    except TypeError as e:
+        return jsonify({"response": f"Bad Request: {e}"}), 400 
+    
+    except ConnectionError as e:
+        return jsonify({"response": f"Service Unavailable: {e}"}), 503
+    
+    except KeyError as e:
+        return jsonify({"response": f"Missing field: {e}"}), 400
+    
+    except Exception as e:
+        Logger.error(f"Unexpected error in /api/yeelight: {e}")
+        return jsonify({"response": "Internal Server Error"}), 500
+
 
 @server.route("/api/phue_light", methods=["POST"])
 def handle_phue_lights():
-    content = request.json
+    try:    
+        content = request.json
 
-    device = content["device"]
-    room = content["room"]
-    dev_type = content["type"]
-    command = content["command"]
-    number = str(content["number"])
+        device = content["device"]
+        room = content["room"]
+        dev_type = content["type"]
+        command = content["command"]
+        number = str(content["number"])
 
+        
+        Logger.info(f"/api/phue_light -> Received the command {command} for the device {device}. This device is part of the {room} and it is a {dev_type}")
+        
+        with open("devices_config.json", "r") as f:
+            data = json.load(f)
+
+
+        try:
+            ip = data["Room"][room][dev_type][number]["ip"]
+            id = data["Room"][room][dev_type][number]["id"]
+            
+            
+            phue_bridge = Phue(ip)
+            phue_bridge.command(command,id)
+
+            return jsonify({"status": "success", "message": "Command received"}), 200
+            
+        except KeyError:
+            return jsonify({"status": "error", "message": "Phue_Light device not found in config"}), 404
     
-    Logger.info(f"/api/phue_light -> Received the command {command} for the device {device}. This device is part of the {room} and it is a {dev_type}")
+    except TypeError as e:
+        return jsonify({"response": f"Bad Request: {e}"}), 400 
     
-    with open("devices_config.json", "r") as f:
-        data = json.load(f)
+    except ConnectionError as e:
+        return jsonify({"response": f"Service Unavailable: {e}"}), 503
+    
+    except KeyError as e:
+        return jsonify({"response": f"Missing field: {e}"}), 400
+    
+    except Exception as e:
+        Logger.error(f"Unexpected error in /api/phue_light: {e}")
+        return jsonify({"response": "Internal Server Error"}), 500
 
-
-    try:
-        ip = data["Room"][room][dev_type][number]["ip"]
-        id = data["Room"][room][dev_type][number]["id"]
-        
-        
-        phue_bridge = Phue(ip)
-        phue_bridge.command(command,id)
-
-        return jsonify({"status": "success", "message": "Command received"}), 200
-        
-    except KeyError:
-        return jsonify({"status": "error", "message": "Phue_Light device not found in config"}), 404
 
 @server.route("/api/tv", methods=["POST"])
 def handle_tv():
-    content = request.json
-    room = content["room"]
-    dev_type = content["type"] 
-    number = str(content["number"]) 
-    command = content["command"]
-    device = content["device"]
-    
-    with open("devices_config.json", "r") as f:
-        data = json.load(f)
-    
     try:
-        ip = data["Room"][room][dev_type][number]["ip"]
-        if dev_type == "android_tv":
-         tv = AndroidTV(ip) 
-         tv.send_command(command, isinstance(command, dict))
+        content = request.json
+        room = content["room"]
+        dev_type = content["type"] 
+        number = str(content["number"]) 
+        command = content["command"]
+        device = content["device"]
         
-         if errors["connection"]["module"]["TV"] is None:
-            Logger.info(f"/api/tv -> Command {command} sent to {device} at {ip}.")
-            return jsonify({"status": "success", "message": "Command sent successfully"}), 200
-         else:
-            return jsonify({"status": "error", "message": "TV communication error"}), 503
-        elif dev_type == "lg_tv":
-            tv = LG_TV(ip)
+        with open("devices_config.json", "r") as f:
+            data = json.load(f)
+        
+        try:
+            ip = data["Room"][room][dev_type][number]["ip"]
+            if dev_type == "android_tv":
+                tv = AndroidTV(ip) 
+                tv.send_command(command, isinstance(command, dict))
+            
+                if errors["connection"]["module"]["TV"] is None:
+                    Logger.info(f"/api/tv -> Command {command} sent to {device} at {ip}.")
+                    return jsonify({"status": "success", "message": "Command sent successfully"}), 200
+                else:
+                    return jsonify({"status": "error", "message": "TV communication error"}), 503
+            elif dev_type == "lg_tv":
+                tv = LG_TV(ip)
 
-            tv.execute_command(command)
+                tv.execute_command(command)
 
-            Logger.info(f"/api/tv -> Command {command} sent to {device} at {ip}.")
+                Logger.info(f"/api/tv -> Command {command} sent to {device} at {ip}.")
 
-            return jsonify({"status": "success", "message": "Command sent successfully"}), 200
+                return jsonify({"status": "success", "message": "Command sent successfully"}), 200
 
- 
+        except KeyError:
+            return jsonify({"status": "error", "message": "Device not found in config"}), 404
+        
+    except TypeError as e:
+        return jsonify({"response": f"Bad Request: {e}"}), 400 
+    
+    except ConnectionError as e:
+        return jsonify({"response": f"Service Unavailable: {e}"}), 503
+    
+    except KeyError as e:
+        return jsonify({"response": f"Missing field: {e}"}), 400
+    
+    except Exception as e:
+        Logger.error(f"Unexpected error in /api/tv: {e}")
+        return jsonify({"response": "Internal Server Error"}), 500
 
-    except KeyError:
-        return jsonify({"status": "error", "message": "Device not found in config"}), 404
 
 def run_server():
     try:
@@ -979,8 +1301,17 @@ def run_server():
             debug=False,
             use_reloader=False
         )
+    except TypeError as e:
+        Logger.error({"response": f"Bad Request: {e}"})
+    
+    except ConnectionError as e:
+        Logger.error({"response": f"Service Unavailable: {e}"})
+    
+    except KeyError as e:
+        Logger.error({"response": f"Missing field: {e}"})
+    
     except Exception as e:
-        Logger.error(f"An error has occurred on the server: {e}")
+        Logger.error(f"Unexpected error in /api/ai: {e}")
 
 if __name__ == "__main__":
     threading.Thread(target=main_bot_loop).start()
