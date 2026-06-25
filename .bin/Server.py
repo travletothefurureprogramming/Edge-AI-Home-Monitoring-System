@@ -19,6 +19,10 @@ import time
 import sys
 from phue import Bridge
 from yeelight import Bulb
+from pycaw.pycaw import AudioUtilities
+import uptime
+import psutil
+
 
 
 if getattr(sys, 'frozen', False):
@@ -117,7 +121,6 @@ def start_security():
             print("Αποτυχία λήψης frame από την κάμερα.")
             break
 
-        # YOLO tracking
         results = yolo.track(frame, stream=True)
         detected_person_now = False
 
@@ -362,8 +365,8 @@ def main_bot_loop():
                 elif "/ai" in command:
                    
                    prompt = {"prompt":command}
-                   response = send_ai(prompt)["response"]
-                   send_telegram_message(response['message']['content'])
+                   response = send_ai(prompt).json()
+                   send_telegram_message(response["response"])
 
                 
                 else:
@@ -388,6 +391,77 @@ def get_tv_controller(ip):
             return None
     return tv_registry[ip]
 
+
+class ServerMonitorAndRemoteControl:
+    def __init__(self):
+        self.net_sent = 0
+        self.net_recv = 0
+        self.devices = AudioUtilities.GetSpeakers()
+        self.volume = self.devices.EndpointVolume
+
+    def get_cpu(self):
+        return psutil.cpu_percent(interval=0.5)
+    
+    def get_ram(self):
+        return psutil.virtual_memory().percent
+    
+    def get_disk_usage(self):
+        return psutil.disk_usage('/').percent
+    
+    def network_usage(self):
+        old_sent = psutil.net_io_counters().bytes_sent
+        old_recv = psutil.net_io_counters().bytes_recv
+
+        time.sleep(1)
+
+        new_sent = psutil.net_io_counters().bytes_sent
+        new_recv = psutil.net_io_counters().bytes_recv
+
+        sent = new_sent - old_sent
+        recv = new_recv - old_recv
+
+        self.net_sent = new_sent - old_sent
+        self.net_recv = new_recv - old_recv
+
+        return sent,recv
+    
+    def get_uptime(self):
+        return uptime.uptime()
+    
+    def sleep_pc(self):
+        os.system("rundll32.exe powrprof.dll,SetSuspendState 0,1,0")
+
+    def shutdown_pc(self):
+        os.system("shutdown /s /t 0")
+
+    def restart_pc(self):
+        os.system("shutdown /r")
+
+    def get_battery(self):
+        try:
+            battery = psutil.sensors_battery().percent
+            return battery
+        except:
+            return "N/A"
+    
+    def get_volume(self):
+
+        current_volume = self.volume.GetMasterVolumeLevelScalar() * 100
+        return int(current_volume)
+
+    def increase_volume(self):
+        current = self.volume.GetMasterVolumeLevelScalar()
+        new_volume = min(current + 0.01, 1.0)  
+
+        self.volume.SetMasterVolumeLevelScalar(new_volume, None)
+
+    def decrease_volume(self):
+        current = self.volume.GetMasterVolumeLevelScalar()
+        new_volume = min(current - 0.01, 1.0)  
+
+        self.volume.SetMasterVolumeLevelScalar(new_volume, None)
+ 
+Server_Monitor = ServerMonitorAndRemoteControl()
 
 class Phue:
     def __init__(self,ip):
@@ -479,7 +553,7 @@ class Tapo_Smart_Bulbs:
          self.device = await self.client.l510(self.ip_address)
         elif self.device == "l520":
          self.device = await self.client.l520(self.ip_address)  
-        elif self.device == "l520":
+        elif self.device == "l530":
          self.device = await self.client.l530(self.ip_address)
         elif self.device == "l535":
          self.device = await self.client.l535(self.ip_address)
@@ -546,7 +620,6 @@ class LG_TV:
 
         self.persist_to_your_custom_storage(self.store)
 
-    # --- MEDIA ---
     def play(self): self.media.play()
     def pause(self): self.media.pause()
     def stop(self): self.media.stop()
@@ -557,14 +630,11 @@ class LG_TV:
     def set_volume(self, level): self.media.set_volume(level)
     def mute(self, mute: bool): self.media.mute(mute)
 
-    #--INPUT--
     def home(self): self.system.home()
 
-    # --- POWER ---
     def on(self): self.system.power_on()
     def off(self): self.system.power_off()
 
-    # --- COMMAND ROUTER ---
     def execute_command(self, command):
         match command:
             case "play": self.play()
@@ -623,7 +693,7 @@ def handle_security():
 
     else:
         threading.Thread(target=stop_security).start()
-        threading.Thread(target=send_telegram_message("The camera has turned off")).start()
+        threading.Thread(target=send_telegram_message, args=("The camera has turned off",)).start()
         return jsonify({"status": "the camera has turned off"}), 200
 
 
@@ -671,6 +741,77 @@ def communicate_for_errors():
         errors[err_type]["module"][module] = error
         return jsonify({"status": "error recorded"}), 200
 
+@server.route("/system")
+def monitor_dashboard():
+    return render_template("system.html")
+
+
+@server.route("/api/system", methods=["GET"])
+def return_system_info():
+    system_info = {
+        "cpu": Server_Monitor.get_cpu(),
+        "ram": Server_Monitor.get_ram(),
+        "disk": Server_Monitor.get_disk_usage(),
+        "net_sent": Server_Monitor.net_sent,
+        "net_recv": Server_Monitor.net_recv,
+        "volume":Server_Monitor.get_volume(),
+        "battery":Server_Monitor.get_battery(),
+        "uptime":Server_Monitor.get_uptime()
+    }
+    return jsonify(system_info)
+
+
+@server.route("/api/system/actions/sleep", methods=["POST"])
+def sleep_api():
+    data = request.json
+    if data.get("action") == "sleep":
+        Server_Monitor.sleep_pc()
+    return jsonify({"message": "ok", "status": 200})
+
+@server.route("/api/system/actions/volume", methods=["GET","POST"])
+def volume_api():
+    if request.method == "GET":
+        return jsonify({"volume":int(Server_Monitor.get_volume())}) 
+    else:
+        data = request.json
+        if data.get("action") == "increase":
+            Server_Monitor.increase_volume()
+        else:
+            Server_Monitor.decrease_volume()
+        return jsonify({"message": "ok", "status": 200})
+
+@server.route("/api/system/actions/shutdown", methods=["POST"])
+def shutdown_api():
+    data = request.json
+    if data.get("action") == "shutdown":
+        Server_Monitor.shutdown_pc()
+    return jsonify({"message": "ok", "status": 200})
+
+
+@server.route("/api/system/actions/restart", methods=["POST"])
+def restart_api():
+    data = request.json
+    if data.get("action") == "restart":
+        Server_Monitor.restart_pc()
+    return jsonify({"message": "ok", "status": 200})
+
+@server.route("/api/system/processes", methods=["GET"])
+def get_processes():
+    processes = []
+    for proc in psutil.process_iter():
+        with proc.oneshot():
+            try:
+                mem = proc.memory_info().rss / (1024 * 1024)
+                processes.append({
+                    "pid": proc.pid,
+                    "name": proc.name(),
+                    "mem": round(mem, 2)
+                })
+            except (psutil.NoSuchProcess, psutil.AccessDenied):
+                continue
+    
+    top_procs = sorted(processes, key=lambda x: x['mem'], reverse=True)[:10]
+    return jsonify(top_procs)
 
 @server.route("/api/tapo_led_strip", methods=["POST"])
 def handle_tapo_lights():
@@ -755,7 +896,7 @@ def handle_yeelight():
         
         
         yeelight = Yeelight(ip)
-        yeelight.command(command,id)
+        yeelight.command(command)
 
         return jsonify({"status": "success", "message": "Command received"}), 200
         
@@ -832,7 +973,12 @@ def handle_tv():
 
 def run_server():
     try:
-        server.run(BACKEND_IP, 8080, debug=True)
+        server.run(
+            host=BACKEND_IP,
+            port=8080,
+            debug=False,
+            use_reloader=False
+        )
     except Exception as e:
         Logger.error(f"An error has occurred on the server: {e}")
 
