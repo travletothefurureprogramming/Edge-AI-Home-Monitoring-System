@@ -143,55 +143,55 @@ def read_json_file(file):
 
 def send_to_server(content):
     try:
-        requests.post("http://192.168.1.2:8080/api/communicate", json=content, timeout=5)
+        requests.post(f"http://{BACKEND_URL}/api/communicate", json=content, timeout=5)
     except Exception as error:
         Logger.error(f"An error has occured during the attemp to send the message to server. Error:{error}")
 
 def send_tv(content):
     try:
-        requests.post("http://192.168.1.2:8080/api/tv", json=content, timeout=5)
+        requests.post(f"http://{BACKEND_URL}api/tv", json=content, timeout=5)
     except Exception as error:
         Logger.error(f"An error has occured during the attemp to send the message to tv api endpoint. Error:{error}")
 
 def send_tapo_light(content):
     try:
-        requests.post("http://192.168.1.2:8080/api/tapo_light", json=content, timeout=5)
+        requests.post(f"http://{BACKEND_URL}api/tapo_light", json=content, timeout=5)
     except Exception as error:
         Logger.error(f"An error has occured during the attemp to send the message to tapo light api endpoint. Error:{error}")
 
 def send_tapo_led_strip(content):
     try:
-        requests.post("http://192.168.1.2:8080/api/tapo_led_strip", json=content, timeout=5)
+        requests.post(f"http://{BACKEND_URL}api/tapo_led_strip", json=content, timeout=5)
     except Exception as error:
         Logger.error(f"An error has occured during the attemp to send the message to tapo ledsript api endpoint. Error:{error}")
 
 def send_phue_light(content):
     try:
-        requests.post("http://192.168.1.2:8080/api/phue_light", json=content, timeout=5)
+        requests.post(f"http://{BACKEND_URL}api/phue_light", json=content, timeout=5)
     except Exception as error:
         Logger.error(f"An error has occured during the attemp to send the message to phue light api endpoint. Error:{error}")
 
 def send_yeelight(content):
     try:
-        requests.post("http://192.168.1.2:8080/api/yeelight", json=content, timeout=5)
+        requests.post(f"http://{BACKEND_URL}api/yeelight", json=content, timeout=5)
     except Exception as error:
         Logger.error(f"An error has occured during the attemp to send the message to yeelight api endpoint. Error:{error}")
 
 def send_ai(content):
     try:
-        return requests.post("http://192.168.1.2:8080/api/ai", json=content, timeout=5)
+        return requests.post(f"http://{BACKEND_URL}api/ai", json=content, timeout=5)
     except Exception as error:
         Logger.error(f"An error has occured during the attemp to send the message to AI api endpoint. Error:{error}")
 
 def send_security_notification(content):
     try:
-        return requests.post("http://192.168.1.2:8080/api/security/notification", json=content, timeout=5)
+        return requests.post(f"http://{BACKEND_URL}api/security/notification", json=content, timeout=5)
     except Exception as error:
         Logger.error(f"An error has occured during the attemp to send security notification. Error:{error}")
 
 def send_security(content):
     try:
-        return requests.post("http://192.168.1.2:8080/api/security", json=content, timeout=5)
+        return requests.post(f"http://{BACKEND_URL}api/security", json=content, timeout=5)
     except Exception as error:
         Logger.error(f"An error has occured during the attemp to send the message to security api endpoint. Error:{error}")
 
