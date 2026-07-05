@@ -1,6 +1,6 @@
 from android_tv_rc.logger import Logger
 import os
-from flask import Flask, request,jsonify,render_template
+from flask import Flask, request,jsonify,render_template, Blueprint, redirect, url_for, render_template_string, session
 from flask_cors import CORS
 import ollama
 import json
@@ -22,8 +22,10 @@ from yeelight import Bulb
 from pycaw.pycaw import AudioUtilities
 import uptime
 import psutil
+from functools import wraps
+from werkzeug.security import generate_password_hash, check_password_hash
 
-
+auth_bp = Blueprint("auth", __name__)
 
 if getattr(sys, 'frozen', False):
     BASE_DIR = os.path.dirname(sys.executable) 
@@ -32,10 +34,82 @@ else:
 
 load_dotenv(os.path.join(BASE_DIR, ".env"))
 
+ADMIN_USERNAME = os.environ.get("USER","admin")
+ADMIN_PASSWORD = os.environ.get("PASSWORD","")
+
+LOGIN_TEMPLATE = """
+<!doctype html>
+<html>
+<head>
+  <title>Edge-AI Home Monitoring — Login</title>
+  <style>
+    body { font-family: system-ui, sans-serif; background:#0f1115; color:#eee;
+           display:flex; align-items:center; justify-content:center; height:100vh; margin:0; }
+    .card { background:#181b22; padding:2rem 2.5rem; border-radius:12px; width:280px; }
+    h1 { font-size:1.1rem; margin-bottom:1.2rem; }
+    input { width:100%; padding:.6rem; margin-bottom:.8rem; border-radius:6px;
+            border:1px solid #333; background:#0f1115; color:#eee; box-sizing:border-box; }
+    button { width:100%; padding:.6rem; border:none; border-radius:6px;
+             background:#4f8cff; color:#fff; font-weight:600; cursor:pointer; }
+    .error { color:#ff6b6b; font-size:.85rem; margin-bottom:.8rem; }
+  </style>
+</head>
+<body>
+  <form class="card" method="POST">
+    <h1>🔒 Edge-AI Home Hub</h1>
+    {% if error %}<div class="error">{{ error }}</div>{% endif %}
+    <input type="text" name="username" placeholder="Username" required autofocus>
+    <input type="password" name="password" placeholder="Password" required>
+    <button type="submit">Sign in</button>
+  </form>
+</body>
+</html>
+"""
+ 
+class Auth:
+    def login_required(self, view_func):
+        @wraps(view_func)
+        def wrapped(*args, **kwargs):
+            if not session.get("authenticated"):
+                if request.path.startswith("/api/"):
+                    return {"error": "Authentication required"}, 401
+                return redirect(url_for("auth.login", next=request.path))
+            return view_func(*args, **kwargs)
+        return wrapped
+
+auth = Auth()
+
+@auth_bp.route("/login", methods=["GET", "POST"])
+def login():
+    error = None
+    if request.method == "POST":
+        username = request.form.get("username", "")
+        password = request.form.get("password", "")
+
+        valid_user = username == ADMIN_USERNAME
+        valid_pass = bool(ADMIN_PASSWORD) and check_password_hash(ADMIN_PASSWORD, password)
+
+        if valid_user and valid_pass:
+            session.clear()
+            session["authenticated"] = True
+            session.permanent = True
+            return redirect(request.args.get("next") or "/")
+
+        error = "Invalid username or password."
+
+    return render_template_string(LOGIN_TEMPLATE, error=error)
+
+
+@auth_bp.route("/logout")
+def logout():
+    session.clear()
+    return redirect(url_for("auth.login"))
 
 server = Flask(__name__)
+server.secret_key = os.environ.get("FLASK_SECRET_KEY")
 CORS(server)
 all_is_ok = True
+server.register_blueprint(auth_bp)
 
 errors = {
    "connection":{
@@ -740,8 +814,8 @@ class Yeelight:
             self.off()
 
 
-
 @server.route("/api/ai", methods=["POST"])
+@auth.login_required
 def handle_ai():
     try:
         content = request.json
@@ -771,6 +845,7 @@ def handle_ai():
     
 
 @server.route('/api/security',methods=['POST'])
+@auth.login_required
 def handle_security():
     try:
         content = request.json
@@ -803,6 +878,7 @@ def handle_security():
 
 
 @server.route('/api/security/notification',methods=['POST'])
+@auth.login_required
 def send_notification():
     try:
         content = request.json
@@ -833,6 +909,7 @@ def send_notification():
 
 
 @server.route('/api/devices', methods=['GET'])
+@auth.login_required
 def get_devices():
     try:
         config_path = os.path.join(BASE_DIR, 'devices_config.json')
@@ -857,6 +934,7 @@ def get_devices():
 
 
 @server.route("/")
+@auth.login_required
 def inferance():
    template_path = os.path.join('index.html')
 
@@ -864,6 +942,7 @@ def inferance():
 
 
 @server.route("/api/communicate", methods=["POST"])
+@auth.login_required
 def communicate_for_errors():
     try:
         data = request.json
@@ -894,11 +973,13 @@ def communicate_for_errors():
         return jsonify({"response": "Internal Server Error"}), 500
 
 @server.route("/system")
+@auth.login_required
 def monitor_dashboard():
     return render_template("system.html")
 
 
 @server.route("/api/system", methods=["GET"])
+@auth.login_required
 def return_system_info():
     try:
         system_info = {
@@ -928,6 +1009,7 @@ def return_system_info():
 
 
 @server.route("/api/system/actions/sleep", methods=["POST"])
+@auth.login_required
 def sleep_api():
     try:
         data = request.json
@@ -949,6 +1031,7 @@ def sleep_api():
         return jsonify({"response": "Internal Server Error"}), 500
 
 @server.route("/api/system/actions/volume", methods=["GET","POST"])
+@auth.login_required
 def volume_api():
     if request.method == "GET":
         try:
@@ -991,6 +1074,7 @@ def volume_api():
 
 
 @server.route("/api/system/actions/shutdown", methods=["POST"])
+@auth.login_required
 def shutdown_api():
     try:
         data = request.json
@@ -1013,6 +1097,7 @@ def shutdown_api():
 
 
 @server.route("/api/system/actions/restart", methods=["POST"])
+@auth.login_required
 def restart_api():
     try:
         data = request.json
@@ -1035,6 +1120,7 @@ def restart_api():
 
 
 @server.route("/api/system/processes", methods=["GET"])
+@auth.login_required
 def get_processes():
     try:
         processes = []
@@ -1067,6 +1153,7 @@ def get_processes():
         return jsonify({"response": "Internal Server Error"}), 500
 
 @server.route("/api/tapo_led_strip", methods=["POST"])
+@auth.login_required
 def handle_tapo_led_strip():
     try:
         content = request.json
@@ -1110,6 +1197,7 @@ def handle_tapo_led_strip():
 
 
 @server.route("/api/tapo_light", methods=["POST"])
+@auth.login_required
 def handle_tapo_light():
     try:
         content = request.json
@@ -1154,6 +1242,7 @@ def handle_tapo_light():
    
 
 @server.route("/api/yeelight", methods=["POST"])
+@auth.login_required
 def handle_yeelight():
     try:
         content = request.json
@@ -1199,6 +1288,7 @@ def handle_yeelight():
 
 
 @server.route("/api/phue_light", methods=["POST"])
+@auth.login_required
 def handle_phue_lights():
     try:    
         content = request.json
@@ -1244,6 +1334,7 @@ def handle_phue_lights():
 
 
 @server.route("/api/tv", methods=["POST"])
+@auth.login_required
 def handle_tv():
     try:
         content = request.json

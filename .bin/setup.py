@@ -5,6 +5,8 @@ import json
 import os
 import socket  
 from control import LG_TV, Phue
+from werkzeug.security import generate_password_hash, check_password_hash
+import secrets
 
 class App(ctk.CTk):
     def __init__(self):
@@ -64,6 +66,13 @@ class App(ctk.CTk):
         else:
             self.tailscale_entry.pack_forget()
 
+    def set_login_password(self):
+        password = self.login_pass_entry.get()
+        self.update_env_file("USER","admin")
+        self.update_env_file("PASSWORD",generate_password_hash(password))
+        self.update_env_file("FLASK_SECRET_KEY",secrets.token_hex(32))
+        
+
     def show_install_frame(self):
         for widget in self.container.winfo_children():
             widget.destroy()
@@ -75,6 +84,9 @@ class App(ctk.CTk):
         
         self.model_btn = ctk.CTkButton(self.container, text="Download AI Model (Phi3)", command=self.model_thread)
         self.model_btn.pack(pady=10)
+
+        self.login_pass_entry = ctk.CTkEntry(self.container, placeholder_text="Enter login password", width=200, show='*')
+        self.login_pass_entry.pack(pady=10)
         
         self.is_server_var = ctk.BooleanVar(value=False)
         self.server_chk = ctk.CTkCheckBox(
@@ -114,6 +126,8 @@ class App(ctk.CTk):
             server_ip = self.tailscale_entry.get().strip()
             self.update_env_file("SERVER_IP", server_ip)
             print(f"Saved Server IP ({server_ip}) to .env")
+
+        self.set_login_password()
         
         self.show_telegram_frame()
 
@@ -226,7 +240,7 @@ class App(ctk.CTk):
         if dev_type == "lg_tv":
             lg_tv = LG_TV(ip)
         
-        if dev_type == "phue_light" or "phue_led_strip":
+        if dev_type in ["phue_light", "phue_led_strip"]:            
             phue = Phue(ip)
 
         file_path = "devices_config.json"
