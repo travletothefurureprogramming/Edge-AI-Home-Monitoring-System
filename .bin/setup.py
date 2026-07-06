@@ -274,7 +274,7 @@ class App(ctk.CTk):
 
     def run_install(self):
         try:
-            subprocess.run(["pip", "install", "-r", "requirements.txt"], check=True)
+            subprocess.run(["pip", "install", "-r", "setup/requirements.txt"], check=True)
             self.install_btn.configure(text="Packages Ready!", fg_color="green")
         except Exception:
             self.install_btn.configure(text="Install Error", fg_color="red")

@@ -11,10 +11,8 @@ if %errorlevel% neq 0 (
     echo [Ollama] Is already installed! Skipping installation...
 )
 
-type nul > .env
-
 pip install customtkinter cowsay rich requests tapo dotenv pywebostv
 
-python "setup.py"
+python "setup/setup.py"
 
 pause
