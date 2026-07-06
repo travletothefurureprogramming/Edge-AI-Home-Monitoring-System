@@ -13,6 +13,6 @@ if %errorlevel% neq 0 (
 
 pip install customtkinter cowsay rich requests tapo dotenv pywebostv
 
-python "setup/setup.py"
+python "setup.py"
 
 pause
