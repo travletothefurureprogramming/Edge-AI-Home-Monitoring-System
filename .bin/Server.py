@@ -32,7 +32,7 @@ if getattr(sys, 'frozen', False):
 else:
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-load_dotenv(os.path.join(BASE_DIR, ".env"))
+load_dotenv(os.path.join(BASE_DIR, "config/.env"))
 
 ADMIN_USERNAME = os.environ.get("USER","admin")
 ADMIN_PASSWORD = os.environ.get("PASSWORD","")
@@ -125,7 +125,7 @@ CHAT_ID = os.getenv("CHAT_ID")
 BACKEND_IP = os.getenv("SERVER_IP")
 BACKEND_URL = f"{BACKEND_IP}:8080"
 
-yolo = ultralytics.YOLO(os.path.join(BASE_DIR, "yolov8s.pt"))
+yolo = ultralytics.YOLO(os.path.join(BASE_DIR, "models/yolov8s.pt"))
 
 is_running = False
 
@@ -324,7 +324,7 @@ def check_for_messages(offset=None):
     return []
 
 def load_devices_config():
-    config_path = os.path.join(BASE_DIR, "devices_config.json") 
+    config_path = os.path.join(BASE_DIR, "config/devices_config.json") 
     if not os.path.exists(config_path):
         print(f"Error: The file {config_path} not found.")
         return None
@@ -724,7 +724,7 @@ class Tapo_Smart_Bulbs:
 
 class LG_TV:
     def __init__(self, ip):
-        self.STORE_FILE = os.path.join(BASE_DIR, "lg_store.json")
+        self.STORE_FILE = os.path.join(BASE_DIR, "config/lg_store.json")
 
         self.store = self.load_from_your_custom_storage() if not self.your_custom_storage_is_empty() else {}
 
@@ -912,7 +912,7 @@ def send_notification():
 @auth.login_required
 def get_devices():
     try:
-        config_path = os.path.join(BASE_DIR, 'devices_config.json')
+        config_path = os.path.join(BASE_DIR, 'config/devices_config.json')
         if os.path.exists(config_path):
             with open(config_path, 'r', encoding="utf-8") as f:
                 return jsonify(json.load(f))

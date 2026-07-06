@@ -4,7 +4,7 @@ import threading
 import json
 import os
 import socket  
-from control import LG_TV, Phue
+from control.control import LG_TV, Phue
 from werkzeug.security import generate_password_hash, check_password_hash
 import secrets
 
@@ -32,7 +32,7 @@ class App(ctk.CTk):
 
     def update_env_file(self, key, value):
         """Ενημερώνει ή προσθέτει ένα key-value pair στο .env αρχείο χωρίς να διαγράφει τα υπόλοιπα."""
-        env_path = ".env"
+        env_path = "config/.env"
 
         dir_path = os.path.dirname(env_path)
         if dir_path:
@@ -243,7 +243,7 @@ class App(ctk.CTk):
         if dev_type in ["phue_light", "phue_led_strip"]:            
             phue = Phue(ip)
 
-        file_path = "devices_config.json"
+        file_path = "config/devices_config.json"
         data = {"Room": {}}
         
         if os.path.exists(file_path):

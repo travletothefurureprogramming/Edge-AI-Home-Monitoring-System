@@ -1,5 +1,10 @@
 import json
 import requests
+import os
+
+BACKEND_IP = os.getenv("SERVER_IP")
+BACKEND_URL = f"{BACKEND_IP}:8080"
+
 
 def read_json_file(file):
  with open(file, 'r') as f:
@@ -8,7 +13,6 @@ def read_json_file(file):
 
 def send_to_server(content):
     requests.post(f"http://{BACKEND_URL}api/communicate", json=content, timeout=5)
-
 
 def send_tv(content):
     requests.post(f"http://{BACKEND_URL}api/tv", json=content, timeout=5)
