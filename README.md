@@ -71,11 +71,14 @@ git clone https://github.com/travletothefurureprogramming/Edge-AI-Home-Monitorin
 5. Open setup.bat if you are in windows or setup.sh if you are in linux or mac
 6. Press "Install Dependencies" to install all the requirement python packages and ollama if you dont have it already.
 7. Press "Download AI Model (Phi3).
-8. Press "Next".
-9. Add your telegram bot token and chat id.
-10. Press "Next"
-11. Add your devices (For LG TV you must have powered on the tv and press yes. For Philips Hue devices you must have pressed the button.)
-12. Close the window.
+8. Enter a login password (You must remember it because you want it to access the dashboard
+9. If this device is the server check it.
+10. If you have tailscale check it and enter the tailscale ip.
+12. Press "Next".
+13. Add your telegram bot token and chat id.
+14. Press "Next"
+15. Add your devices (For LG TV you must have powered on the tv and press yes. For Philips Hue devices you must have pressed the button.)
+16. Close the window.
 
 
 ### Install Android SDK platform tools
@@ -125,6 +128,7 @@ Cooming soon!
 
 ### On web browser
 Open the adress of the server on port 8080.
+You must enter the credentials the username is admin. (The password is the one you entered previously in setup.)
 
 ### Via app
 Open the App.py to communicate with the chatbot from your computer.
