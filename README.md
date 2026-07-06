@@ -44,6 +44,10 @@
 * **LG TV:**
 - WEB OS 6+
 
+* **Daikin AC:**
+- BRP069Axx/BRP069Bxx/BRP072Axx
+- BRP15B61 aka. AirBas
+
 ## 🛠 Tech Stack
 
 * **Language:** Python 3.11
