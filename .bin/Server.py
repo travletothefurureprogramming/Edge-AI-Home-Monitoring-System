@@ -875,7 +875,6 @@ class DaikinAC:
             self.set_mode(args[0])
 
 
-
 @server.route("/api/ai", methods=["POST"])
 @auth.login_required
 def handle_ai():

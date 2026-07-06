@@ -9,6 +9,9 @@ from pywebostv.controls import MediaControl, SystemControl, InputControl
 import json
 from phue import Bridge
 from yeelight import Bulb
+import aiohttp
+from pydaikin.daikin_base import Appliance
+from pydaikin.factory import DaikinFactory
 
 load_dotenv(".env")
 
@@ -222,3 +225,60 @@ class Yeelight:
             self.on()
         elif command == "off":
             self.off()
+
+
+class DaikinAC:
+    def __init__(self, ip):
+        self.HOST = ip
+
+    async def async_on(self):
+        async with await DaikinFactory(self.HOST) as device:
+            await device.set_power(True)
+    
+    async def async_off(self):
+        async with await DaikinFactory(self.HOST) as device:
+            await device.set_power(False)
+
+    async def async_increase_temperature(self):
+        async with await DaikinFactory(self.HOST) as device:
+            await device.update_status()
+
+            await device.set_temperature(device.target_temperature+1)
+
+    async def async_decrease_temperature(self):
+        async with await DaikinFactory(self.HOST) as device:
+            await device.update_status()
+
+            await device.set_temperature(device.target_temperature-1)
+
+    async def async_set_mode(self,mode):
+        async with await DaikinFactory(self.HOST) as device:
+            await device.set_mode(mode)
+
+    def on(self):
+        asyncio.run(self.async_on())
+
+    def off(self):
+        asyncio.run(self.async_off())
+
+    def increase_temperature(self):
+        asyncio.run(self.async_increase_temperature())
+
+    def decrease_temperature(self):
+        asyncio.run(self.async_decrease_temperature())
+
+    def set_mode(self,mode):
+        asyncio.run(self.async_set_mode(mode))
+
+    
+    def execute_command(self,command ,*args):
+        if command == "on":
+            self.on()
+        elif command == "off":
+            self.off()
+        elif command == "increase_temperature":
+            self.increase_temperature()
+        elif command == "decrease_temperature":
+            self.decrease_temperature()
+        elif command == "set_mode":
+            self.set_mode(args[0])
