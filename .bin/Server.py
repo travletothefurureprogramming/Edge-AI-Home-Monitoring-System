@@ -24,6 +24,10 @@ import uptime
 import psutil
 from functools import wraps
 from werkzeug.security import generate_password_hash, check_password_hash
+import aiohttp
+from pydaikin.daikin_base import Appliance
+from pydaikin.factory import DaikinFactory
+
 
 auth_bp = Blueprint("auth", __name__)
 
@@ -814,6 +818,64 @@ class Yeelight:
             self.off()
 
 
+class DaikinAC:
+    def __init__(self, ip):
+        self.HOST = ip
+
+    async def async_on(self):
+        async with await DaikinFactory(self.HOST) as device:
+            await device.set_power(True)
+    
+    async def async_off(self):
+        async with await DaikinFactory(self.HOST) as device:
+            await device.set_power(False)
+
+    async def async_increase_temperature(self):
+        async with await DaikinFactory(self.HOST) as device:
+            await device.update_status()
+
+            await device.set_temperature(device.target_temperature+1)
+
+    async def async_decrease_temperature(self):
+        async with await DaikinFactory(self.HOST) as device:
+            await device.update_status()
+
+            await device.set_temperature(device.target_temperature-1)
+
+    async def async_set_mode(self,mode):
+        async with await DaikinFactory(self.HOST) as device:
+            await device.set_mode(mode)
+
+    def on(self):
+        asyncio.run(self.async_on())
+
+    def off(self):
+        asyncio.run(self.async_off())
+
+    def increase_temperature(self):
+        asyncio.run(self.async_increase_temperature())
+
+    def decrease_temperature(self):
+        asyncio.run(self.async_decrease_temperature())
+
+    def set_mode(self,mode):
+        asyncio.run(self.async_set_mode(mode))
+
+    
+    def execute_command(self,command ,*args):
+        if command == "on":
+            self.on()
+        elif command == "off":
+            self.off()
+        elif command == "increase_temperature":
+            self.increase_temperature()
+        elif command == "decrease_temperature":
+            self.decrease_temperature()
+        elif command == "set_mode":
+            self.set_mode(args[0])
+
+
+
 @server.route("/api/ai", methods=["POST"])
 @auth.login_required
 def handle_ai():
@@ -1381,6 +1443,54 @@ def handle_tv():
     
     except Exception as e:
         Logger.error(f"Unexpected error in /api/tv: {e}")
+        return jsonify({"response": "Internal Server Error"}), 500
+
+
+@server.route("/api/daikin")
+@auth.login_required
+def handle_daikin_ac():
+    try:
+        content = request.json
+        room = content["room"]
+        dev_type = content["type"] 
+        number = str(content["number"]) 
+        command = content["command"]
+        device = content["device"]
+
+        Logger.info(f"/api/daikin -> Received the command {command} for the device {device}. This device is part of the {room} and it is a {dev_type}")
+
+        with open("devices_config.json", "r") as f:
+            data = json.load(f)
+
+        try:
+            ip = data["Room"][room][dev_type][number]["ip"]
+            id = data["Room"][room][dev_type][number]["id"]
+
+            daikinAC = DaikinAC(ip)
+
+            if command == "set_mode":
+                mode = content["mode"]
+                daikinAC.execute_command(command,mode)
+        
+            else:
+                daikinAC.execute_command(command,mode)
+
+            return jsonify({"status": "success", "message": "Command received"}), 200
+        
+        except KeyError:
+            return jsonify({"status": "error", "message": "DaikinAC device not found in config"}), 404
+        
+    except TypeError as e:
+        return jsonify({"response": f"Bad Request: {e}"}), 400 
+    
+    except ConnectionError as e:
+        return jsonify({"response": f"Service Unavailable: {e}"}), 503
+    
+    except KeyError as e:
+        return jsonify({"response": f"Missing field: {e}"}), 400
+    
+    except Exception as e:
+        Logger.error(f"Unexpected error in /api/daikin: {e}")
         return jsonify({"response": "Internal Server Error"}), 500
 
 

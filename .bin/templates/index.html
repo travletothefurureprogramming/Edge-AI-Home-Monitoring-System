@@ -76,8 +76,7 @@
         </div>
 
    <script>
-    // Χρήση window.location.origin αν το αρχείο σερβίρεται από τον Flask, 
-    // αλλιώς fallback στην hardcoded IP σου.
+
     const API_URL = window.location.hostname ? `${window.location.protocol}//${window.location.hostname}:8080` : "http://192.168.1.2:8080";
 
     // Φόρτωση συσκευών από το JSON
@@ -87,17 +86,14 @@
             const data = await res.json();
             const container = document.getElementById('dashboard-container');
 
-            // Καθαρισμός container (εκτός από το AI card)
             for (const [roomName, categories] of Object.entries(data.Room)) {
                 for (const [category, devices] of Object.entries(categories)) {
                     for (const [id, dev] of Object.entries(devices)) {
                         
-                        // Δημιουργία της κάρτας για ΚΑΘΕ συσκευή
                         const card = document.createElement('div');
                         card.className = 'card';
                         card.innerHTML = `<h3>${dev.name}</h3><p style="font-size:0.8rem; color:gray;">${roomName.replace('_', ' ').toUpperCase()}</p>`;
 
-                        // Έλεγχος κατηγορίας και προσθήκη των σωστών κουμπιών
                         if (category === 'lg_tv') {
                             const cmds = ['on', 'off', 'home', 'volume_up', 'volume_down', 'play', 'pause', 'stop', 'rewind', 'fast_forward'];
                             cmds.forEach(cmd => {
@@ -140,6 +136,21 @@
                             });
                         }
 
+                        else if (category === 'daikin_ac') {
+                            const cmds = ['on', 'off', 'increase_temperature', 'decrease_temperature'];
+                            cmds.forEach(cmd => {
+                                card.innerHTML += `<button onclick="sendDaikin('${dev.name}', '${roomName}', 'daikin_ac', '${id}', '${cmd}')">${cmd.replace('_',' ').toUpperCase()}</button>`;
+                            });
+
+                            const modes = ['auto', 'cool', 'heat', 'dry', 'fan'];
+                            let modeOptions = modes.map(m => `<option value="${m}">${m.toUpperCase()}</option>`).join('');
+                            card.innerHTML += `
+                                <div style="margin-top:8px;">
+                                    <select id="mode-${roomName}-${id}">${modeOptions}</select>
+                                    <button onclick="sendDaikinMode('${dev.name}', '${roomName}', 'daikin_ac', '${id}')">SET MODE</button>
+                                </div>`;
+                        }
+
                         container.appendChild(card);
                     }
                 }
@@ -149,7 +160,6 @@
         }
     }
 
-    // AI Assistant Logic
     async function askAI() {
         const loader = document.getElementById('loader');
         const responseText = document.getElementById('aiResponse');
@@ -213,6 +223,24 @@
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ room: room, type: type, number: id, command: cmd, device: device})
+        });
+    }
+
+    async function sendDaikin(device, room, type, id, cmd) {
+        await fetch(`${API_URL}/api/daikin`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ room: room, type: type, number: id, command: cmd, device: device })
+    });
+}
+
+    async function sendDaikinMode(device, room, type, id) {
+        const select = document.getElementById(`mode-${room}-${id}`);
+        const mode = select.value;
+        await fetch(`${API_URL}/api/daikin`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ room: room, type: type, number: id, command: 'set_mode', mode: mode, device: device })
         });
     }
 
