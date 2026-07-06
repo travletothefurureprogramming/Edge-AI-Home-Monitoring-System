@@ -27,7 +27,8 @@ from werkzeug.security import generate_password_hash, check_password_hash
 import aiohttp
 from pydaikin.daikin_base import Appliance
 from pydaikin.factory import DaikinFactory
-
+from datetime import datetime
+from croniter import croniter
 
 auth_bp = Blueprint("auth", __name__)
 
@@ -874,6 +875,175 @@ class DaikinAC:
         elif command == "set_mode":
             self.set_mode(args[0])
 
+DEVICE_ENDPOINTS = {
+    "android_tv": "api/tv",
+    "lg_tv": "api/tv",
+    "tapo_light": "api/tapo_light",
+    "tapo_led_strip": "api/tapo_led_strip",
+    "phue_light": "api/phue_light",
+    "yeelight": "api/yeelight",
+    "daikin_ac": "api/daikin",
+}
+
+
+def create_device_action(name, room, dev_type, number, command, device_name, model=None, mode=None):
+    def action():
+        try:
+            with open("config/devices_config.json", "r") as f:
+                data = json.load(f)
+            dev_info = data["Room"][room][dev_type][number]
+            ip = dev_info["ip"]
+
+            if dev_type == "tapo_led_strip":
+                Tapo_Led_strip(ip, dev_info["model"]).command(command)
+            elif dev_type == "tapo_light":
+                Tapo_Smart_Bulbs(ip, dev_info["model"]).command(command)
+            elif dev_type == "yeelight":
+                Yeelight(ip).command(command)
+            elif dev_type == "phue_light":
+                Phue(ip).command(command, dev_info["id"])
+            elif dev_type == "android_tv":
+                AndroidTV(ip).send_command(command, isinstance(command, dict))
+            elif dev_type == "lg_tv":
+                LG_TV(ip).execute_command(command)
+            elif dev_type == "daikin_ac":
+                DaikinAC(ip).execute_command(command, mode)
+            else:
+                Logger.error(f"Automation '{name}': άγνωστος τύπος συσκευής '{dev_type}'")
+
+        except Exception as e:
+            Logger.error(f"Automation '{name}' απέτυχε: {e}")
+
+    action.__name__ = f"auto_{name}"
+    return action
+
+
+class AutomationManager:
+    def __init__(self):
+        self.rules_file = os.path.join(BASE_DIR, "config/automation.json")
+        self.is_running = False
+        self.rules = []
+        self.available_actions = {}
+        self.lock = threading.Lock()  
+
+    def register_action(self, func):
+        self.available_actions[func.__name__] = func
+        return func
+
+    def _load_rules(self):
+        try:
+            with open(self.rules_file, "r") as f:
+                return json.load(f)
+        except (FileNotFoundError, json.JSONDecodeError):
+            return []
+
+    def _save_rules(self):
+        os.makedirs(os.path.dirname(self.rules_file), exist_ok=True)
+        with open(self.rules_file, "w") as f:
+            json.dump(self.rules, f, indent=4)
+
+    def add_schedule_rule(self, name, time_string, action_function):
+        if action_function.__name__ not in self.available_actions:
+            self.register_action(action_function)
+
+        hour, minute = time_string.split(":")
+        hour, minute = str(int(hour)), str(int(minute))
+        cron_expression = f"{minute} {hour} * * *"
+
+        rule = {
+            "name": name,
+            "trigger": {"type": "schedule", "cron": cron_expression},
+            "action": action_function.__name__,
+            "last_fired": datetime.min.isoformat(),
+        }
+
+        with self.lock:
+            self.rules = self._load_rules()
+            self.rules.append(rule)
+            self._save_rules()
+
+    def add_event_rule(self, name, event_name, action_function):
+        if action_function.__name__ not in self.available_actions:
+            self.register_action(action_function)
+
+        rule = {
+            "name": name,
+            "trigger": {"type": "event", "event": event_name},
+            "action": action_function.__name__,
+            "last_fired": datetime.min.isoformat(),
+        }
+
+        with self.lock:
+            self.rules = self._load_rules()
+            self.rules.append(rule)
+            self._save_rules()
+
+    def delete_rule(self, name):
+        with self.lock:
+            self.rules = self._load_rules()
+            self.rules = [r for r in self.rules if r["name"] != name]
+            self._save_rules()
+
+    def _try_run(self, rule):
+        action_name = rule["action"]
+        action_func = self.available_actions.get(action_name)
+
+        if action_func:
+            try:
+                print(f"⏰ [{datetime.now().strftime('%H:%M:%S')}] Running: {rule['name']}")
+                action_func()
+            except Exception as e:
+                print(f"Σφάλμα κατά την εκτέλεση του {action_name}: {e}")
+        else:
+            print(f"Η συνάρτηση '{action_name}' δεν βρέθηκε στα available_actions "
+                  f"(μάλλον ο server έκανε restart και χάθηκαν τα registered actions)")
+
+    def trigger_event(self, event_name):
+
+        with self.lock:
+            self.rules = self._load_rules()
+        for rule in self.rules:
+            trigger = rule.get("trigger", {})
+            if trigger.get("type") == "event" and trigger.get("event") == event_name:
+                self._try_run(rule)
+
+    def _run_scheduler_loop(self):
+        while self.is_running:
+            now = datetime.now()
+
+            with self.lock:
+                self.rules = self._load_rules()
+
+            file_needs_update = False
+
+            for rule in self.rules:
+                trigger = rule.get("trigger", {})
+                if trigger.get("type") == "schedule":
+                    cron = croniter(trigger["cron"], now)
+                    prev_fire_time = cron.get_prev(datetime)
+                    last_fired = datetime.fromisoformat(rule.get("last_fired"))
+
+                    if (now - prev_fire_time).total_seconds() < 30 and prev_fire_time > last_fired:
+                        self._try_run(rule)
+                        rule["last_fired"] = prev_fire_time.isoformat()
+                        file_needs_update = True
+
+            if file_needs_update:
+                with self.lock:
+                    self._save_rules()
+
+            time.sleep(30)
+
+    def start(self):
+        if not self.is_running:
+            self.is_running = True
+            self.thread = threading.Thread(target=self._run_scheduler_loop, daemon=True)
+            self.thread.start()
+            print("The Automation Manager has started...")
+
+
+automation_manager = AutomationManager()
+
 
 @server.route("/api/ai", methods=["POST"])
 @auth.login_required
@@ -892,12 +1062,15 @@ def handle_ai():
         return jsonify({"response": ai_text}), 200
 
     except TypeError as e:
+        Logger.error(f"400 Bad request: {e}")
         return jsonify({"response": f"Bad Request: {e}"}), 400
 
     except ConnectionError as e:
+        Logger.error(f"503 Service Unavailable: {e}")
         return jsonify({"response": f"Service Unavailable: {e}"}), 503
 
     except KeyError as e:
+        Logger.error(f"400 Missing field: {e}")
         return jsonify({"response": f"Missing field: {e}"}), 400
 
     except Exception as e:
@@ -922,14 +1095,17 @@ def handle_security():
             threading.Thread(target=stop_security).start()
             threading.Thread(target=send_telegram_message, args=("The camera has turned off",)).start()
             return jsonify({"status": "the camera has turned off"}), 200
-    
+   
     except TypeError as e:
-        return jsonify({"response": f"Bad Request: {e}"}), 400 
-    
+        Logger.error(f"400 Bad request: {e}")
+        return jsonify({"response": f"Bad Request: {e}"}), 400
+
     except ConnectionError as e:
+        Logger.error(f"503 Service Unavailable: {e}")
         return jsonify({"response": f"Service Unavailable: {e}"}), 503
-    
+
     except KeyError as e:
+        Logger.error(f"400 Missing field: {e}")
         return jsonify({"response": f"Missing field: {e}"}), 400
     
     except Exception as e:
@@ -948,18 +1124,22 @@ def send_notification():
 
         if is_person == "yes":
             print("ALARM")
+            automation_manager.trigger_event("person_detected")
             send_telegram_message("ALARM!!!!!!! PERSON DETECTED ALARM PERSON DETECTED!!!!!!")
             return jsonify({"status": "Person has detected"}), 200
         
         return jsonify({"status": "All is ok"}), 200
     
     except TypeError as e:
-        return jsonify({"response": f"Bad Request: {e}"}), 400 
-    
+        Logger.error(f"400 Bad request: {e}")
+        return jsonify({"response": f"Bad Request: {e}"}), 400
+
     except ConnectionError as e:
+        Logger.error(f"503 Service Unavailable: {e}")
         return jsonify({"response": f"Service Unavailable: {e}"}), 503
-    
+
     except KeyError as e:
+        Logger.error(f"400 Missing field: {e}")
         return jsonify({"response": f"Missing field: {e}"}), 400
     
     except Exception as e:
@@ -981,12 +1161,15 @@ def get_devices():
             return jsonify({"response": f"Missing file"}), 400 
     
     except TypeError as e:
-        return jsonify({"response": f"Bad Request: {e}"}), 400 
-    
+        Logger.error(f"400 Bad request: {e}")
+        return jsonify({"response": f"Bad Request: {e}"}), 400
+
     except ConnectionError as e:
+        Logger.error(f"503 Service Unavailable: {e}")
         return jsonify({"response": f"Service Unavailable: {e}"}), 503
-    
+
     except KeyError as e:
+        Logger.error(f"400 Missing field: {e}")
         return jsonify({"response": f"Missing field: {e}"}), 400
     
     except Exception as e:
@@ -1021,12 +1204,15 @@ def communicate_for_errors():
             return jsonify({"status": "error recorded"}), 200
     
     except TypeError as e:
-        return jsonify({"response": f"Bad Request: {e}"}), 400 
-    
+        Logger.error(f"400 Bad request: {e}")
+        return jsonify({"response": f"Bad Request: {e}"}), 400
+
     except ConnectionError as e:
+        Logger.error(f"503 Service Unavailable: {e}")
         return jsonify({"response": f"Service Unavailable: {e}"}), 503
-    
+
     except KeyError as e:
+        Logger.error(f"400 Missing field: {e}")
         return jsonify({"response": f"Missing field: {e}"}), 400
     
     except Exception as e:
@@ -1056,12 +1242,15 @@ def return_system_info():
         return jsonify(system_info)
     
     except TypeError as e:
-        return jsonify({"response": f"Bad Request: {e}"}), 400 
-    
+        Logger.error(f"400 Bad request: {e}")
+        return jsonify({"response": f"Bad Request: {e}"}), 400
+
     except ConnectionError as e:
+        Logger.error(f"503 Service Unavailable: {e}")
         return jsonify({"response": f"Service Unavailable: {e}"}), 503
-    
+
     except KeyError as e:
+        Logger.error(f"400 Missing field: {e}")
         return jsonify({"response": f"Missing field: {e}"}), 400
     
     except Exception as e:
@@ -1079,12 +1268,15 @@ def sleep_api():
         return jsonify({"message": "ok", "status": 200})
         
     except TypeError as e:
-        return jsonify({"response": f"Bad Request: {e}"}), 400 
-    
+        Logger.error(f"400 Bad request: {e}")
+        return jsonify({"response": f"Bad Request: {e}"}), 400
+
     except ConnectionError as e:
+        Logger.error(f"503 Service Unavailable: {e}")
         return jsonify({"response": f"Service Unavailable: {e}"}), 503
-    
+
     except KeyError as e:
+        Logger.error(f"400 Missing field: {e}")
         return jsonify({"response": f"Missing field: {e}"}), 400
     
     except Exception as e:
@@ -1144,12 +1336,15 @@ def shutdown_api():
         return jsonify({"message": "ok", "status": 200})
     
     except TypeError as e:
-        return jsonify({"response": f"Bad Request: {e}"}), 400 
-    
+        Logger.error(f"400 Bad request: {e}")
+        return jsonify({"response": f"Bad Request: {e}"}), 400
+
     except ConnectionError as e:
+        Logger.error(f"503 Service Unavailable: {e}")
         return jsonify({"response": f"Service Unavailable: {e}"}), 503
-    
+
     except KeyError as e:
+        Logger.error(f"400 Missing field: {e}")
         return jsonify({"response": f"Missing field: {e}"}), 400
     
     except Exception as e:
@@ -1167,12 +1362,15 @@ def restart_api():
         return jsonify({"message": "ok", "status": 200})
         
     except TypeError as e:
-        return jsonify({"response": f"Bad Request: {e}"}), 400 
-    
+        Logger.error(f"400 Bad request: {e}")
+        return jsonify({"response": f"Bad Request: {e}"}), 400
+
     except ConnectionError as e:
+        Logger.error(f"503 Service Unavailable: {e}")
         return jsonify({"response": f"Service Unavailable: {e}"}), 503
-    
+
     except KeyError as e:
+        Logger.error(f"400 Missing field: {e}")
         return jsonify({"response": f"Missing field: {e}"}), 400
     
     except Exception as e:
@@ -1201,12 +1399,15 @@ def get_processes():
         return jsonify(top_procs)
     
     except TypeError as e:
-        return jsonify({"response": f"Bad Request: {e}"}), 400 
-    
+        Logger.error(f"400 Bad request: {e}")
+        return jsonify({"response": f"Bad Request: {e}"}), 400
+
     except ConnectionError as e:
+        Logger.error(f"503 Service Unavailable: {e}")
         return jsonify({"response": f"Service Unavailable: {e}"}), 503
-    
+
     except KeyError as e:
+        Logger.error(f"400 Missing field: {e}")
         return jsonify({"response": f"Missing field: {e}"}), 400
     
     except Exception as e:
@@ -1224,15 +1425,16 @@ def handle_tapo_led_strip():
         dev_type = content["type"]
         command = content["command"]
         number = str(content["number"]) 
-        model = content["model"]
+        
 
         Logger.info(f"/api/tapo_led_strip -> Received the command {command} for the device {device}. This device is part of the {room} and it is a {dev_type}")
         
-        with open("devices_config.json", "r") as f:
+        with open("config/devices_config.json", "r") as f:
             data = json.load(f)
         
         try:
             ip = data["Room"][room][dev_type][number]["ip"]
+            model = data["Room"][room][dev_type][number]["model"]
             
             
             led_strip = Tapo_Led_strip(ip,model)
@@ -1244,12 +1446,15 @@ def handle_tapo_led_strip():
             return jsonify({"status": "error", "message": "Tapo_led_strip device not found in config"}), 404
     
     except TypeError as e:
-        return jsonify({"response": f"Bad Request: {e}"}), 400 
-    
+        Logger.error(f"400 Bad request: {e}")
+        return jsonify({"response": f"Bad Request: {e}"}), 400
+
     except ConnectionError as e:
+        Logger.error(f"503 Service Unavailable: {e}")
         return jsonify({"response": f"Service Unavailable: {e}"}), 503
-    
+
     except KeyError as e:
+        Logger.error(f"400 Missing field: {e}")
         return jsonify({"response": f"Missing field: {e}"}), 400
     
     except Exception as e:
@@ -1268,17 +1473,17 @@ def handle_tapo_light():
         dev_type = content["type"]
         command = content["command"]
         number = str(content["number"])
-        model = content["model"]
     
 
         Logger.info(f"/api/tapo_light -> Received the command {command} for the device {device}. This device is part of the {room} and it is a {dev_type}")
         
-        with open("devices_config.json", "r") as f:
+        with open("config/devices_config.json", "r") as f:
             data = json.load(f)
         
         try:
             ip = data["Room"][room][dev_type][number]["ip"]
-            
+            model = data["Room"][room][dev_type][number]["model"]
+
             
             smart_bulb = Tapo_Smart_Bulbs(ip,model)
             smart_bulb.command(command)
@@ -1289,12 +1494,15 @@ def handle_tapo_light():
             return jsonify({"status": "error", "message": "Tapo_light device not found in config"}), 404
     
     except TypeError as e:
-        return jsonify({"response": f"Bad Request: {e}"}), 400 
-    
+        Logger.error(f"400 Bad request: {e}")
+        return jsonify({"response": f"Bad Request: {e}"}), 400
+
     except ConnectionError as e:
+        Logger.error(f"503 Service Unavailable: {e}")
         return jsonify({"response": f"Service Unavailable: {e}"}), 503
-    
+
     except KeyError as e:
+        Logger.error(f"400 Missing field: {e}")
         return jsonify({"response": f"Missing field: {e}"}), 400
     
     except Exception as e:
@@ -1317,7 +1525,7 @@ def handle_yeelight():
         
         Logger.info(f"/api/yeelight -> Received the command {command} for the device {device}. This device is part of the {room} and it is a {dev_type}")
         
-        with open("devices_config.json", "r") as f:
+        with open("config/devices_config.json", "r") as f:
             data = json.load(f)
 
 
@@ -1335,12 +1543,15 @@ def handle_yeelight():
             return jsonify({"status": "error", "message": "Yeelight device not found in config"}), 404
     
     except TypeError as e:
-        return jsonify({"response": f"Bad Request: {e}"}), 400 
-    
+        Logger.error(f"400 Bad request: {e}")
+        return jsonify({"response": f"Bad Request: {e}"}), 400
+
     except ConnectionError as e:
+        Logger.error(f"503 Service Unavailable: {e}")
         return jsonify({"response": f"Service Unavailable: {e}"}), 503
-    
+
     except KeyError as e:
+        Logger.error(f"400 Missing field: {e}")
         return jsonify({"response": f"Missing field: {e}"}), 400
     
     except Exception as e:
@@ -1363,7 +1574,7 @@ def handle_phue_lights():
         
         Logger.info(f"/api/phue_light -> Received the command {command} for the device {device}. This device is part of the {room} and it is a {dev_type}")
         
-        with open("devices_config.json", "r") as f:
+        with open("config/devices_config.json", "r") as f:
             data = json.load(f)
 
 
@@ -1381,12 +1592,15 @@ def handle_phue_lights():
             return jsonify({"status": "error", "message": "Phue_Light device not found in config"}), 404
     
     except TypeError as e:
-        return jsonify({"response": f"Bad Request: {e}"}), 400 
-    
+        Logger.error(f"400 Bad request: {e}")
+        return jsonify({"response": f"Bad Request: {e}"}), 400
+
     except ConnectionError as e:
+        Logger.error(f"503 Service Unavailable: {e}")
         return jsonify({"response": f"Service Unavailable: {e}"}), 503
-    
+
     except KeyError as e:
+        Logger.error(f"400 Missing field: {e}")
         return jsonify({"response": f"Missing field: {e}"}), 400
     
     except Exception as e:
@@ -1398,14 +1612,14 @@ def handle_phue_lights():
 @auth.login_required
 def handle_tv():
     try:
-        content = request.json
+        content = request.json 
         room = content["room"]
         dev_type = content["type"] 
         number = str(content["number"]) 
         command = content["command"]
         device = content["device"]
         
-        with open("devices_config.json", "r") as f:
+        with open("config/devices_config.json", "r") as f:
             data = json.load(f)
         
         try:
@@ -1432,12 +1646,15 @@ def handle_tv():
             return jsonify({"status": "error", "message": "Device not found in config"}), 404
         
     except TypeError as e:
-        return jsonify({"response": f"Bad Request: {e}"}), 400 
-    
+        Logger.error(f"400 Bad request: {e}")
+        return jsonify({"response": f"Bad Request: {e}"}), 400
+
     except ConnectionError as e:
+        Logger.error(f"503 Service Unavailable: {e}")
         return jsonify({"response": f"Service Unavailable: {e}"}), 503
-    
+
     except KeyError as e:
+        Logger.error(f"400 Missing field: {e}")
         return jsonify({"response": f"Missing field: {e}"}), 400
     
     except Exception as e:
@@ -1458,7 +1675,7 @@ def handle_daikin_ac():
 
         Logger.info(f"/api/daikin -> Received the command {command} for the device {device}. This device is part of the {room} and it is a {dev_type}")
 
-        with open("devices_config.json", "r") as f:
+        with open("config/devices_config.json", "r") as f:
             data = json.load(f)
 
         try:
@@ -1480,18 +1697,67 @@ def handle_daikin_ac():
             return jsonify({"status": "error", "message": "DaikinAC device not found in config"}), 404
         
     except TypeError as e:
-        return jsonify({"response": f"Bad Request: {e}"}), 400 
-    
+        Logger.error(f"400 Bad request: {e}")
+        return jsonify({"response": f"Bad Request: {e}"}), 400
+
     except ConnectionError as e:
+        Logger.error(f"503 Service Unavailable: {e}")
         return jsonify({"response": f"Service Unavailable: {e}"}), 503
-    
+
     except KeyError as e:
+        Logger.error(f"400 Missing field: {e}")
         return jsonify({"response": f"Missing field: {e}"}), 400
     
     except Exception as e:
         Logger.error(f"Unexpected error in /api/daikin: {e}")
         return jsonify({"response": "Internal Server Error"}), 500
 
+@server.route("/api/automations", methods=["GET"])
+@auth.login_required
+def list_automations():
+    return jsonify(automation_manager._load_rules())
+
+
+@server.route("/api/automations", methods=["POST"])
+@auth.login_required
+def create_automation():
+    try:
+        content = request.json
+        name = content["name"]
+        trigger_type = content["trigger_type"]  
+        room = content["room"]
+        dev_type = content["type"]
+        number = str(content["number"])
+        command = content["command"]
+        device_name = content.get("device", "")
+        model = content.get("model")
+        mode = content.get("mode")
+
+        action_func = create_device_action(
+            name, room, dev_type, number, command, device_name, model, mode
+        )
+
+        if trigger_type == "schedule":
+            automation_manager.add_schedule_rule(name, content["time"], action_func)
+        elif trigger_type == "event":
+            automation_manager.add_event_rule(name, content["event"], action_func)
+        else:
+            return jsonify({"error": "Unknown trigger_type"}), 400
+
+        return jsonify({"status": "success", "message": f"Automation '{name}' created"}), 200
+
+    except KeyError as e:
+        return jsonify({"response": f"Missing field: {e}"}), 400
+    except Exception as e:
+        Logger.error(f"Unexpected error in /api/automations: {e}")
+        return jsonify({"response": "Internal Server Error"}), 500
+
+
+@server.route("/api/automations/<name>", methods=["DELETE"])
+@auth.login_required
+def remove_automation(name):
+    automation_manager.delete_rule(name)
+    return jsonify({"status": "deleted"}), 200
 
 def run_server():
     try:
@@ -1514,5 +1780,6 @@ def run_server():
         Logger.error(f"Unexpected error in /api/ai: {e}")
 
 if __name__ == "__main__":
+    automation_manager.start()
     threading.Thread(target=main_bot_loop).start()
     run_server()

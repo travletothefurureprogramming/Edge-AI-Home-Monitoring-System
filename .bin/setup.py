@@ -3,15 +3,16 @@ import subprocess
 import threading
 import json
 import os
-import socket  
+import socket
 from control.control import LG_TV, Phue
 from werkzeug.security import generate_password_hash, check_password_hash
 import secrets
 
+
 class App(ctk.CTk):
     def __init__(self):
         super().__init__()
-        self.geometry("400x600")  
+        self.geometry("400x600")
         self.title("Edge AI Setup Wizard")
 
         self.container = ctk.CTkFrame(self)
@@ -57,6 +58,19 @@ class App(ctk.CTk):
         with open(env_path, "w") as f:
             f.writelines(lines)
 
+    def show_error(self, message):
+        """Απλό popup λάθους, ώστε τα exceptions να μη σκάνε αθόρυβα."""
+        error_win = ctk.CTkToplevel(self)
+        error_win.title("Σφάλμα")
+        error_win.geometry("320x150")
+        error_win.attributes("-topmost", True)
+
+        ctk.CTkLabel(
+            error_win, text=message, wraplength=280, text_color="#ff6b6b"
+        ).pack(pady=20, padx=10)
+
+        ctk.CTkButton(error_win, text="OK", command=error_win.destroy).pack(pady=10)
+
     def update_install_frame(self):
         """Εμφανίζει ή κρύβει το Entry ανάλογα με το Checkbox, διατηρώντας τη σειρά."""
         if self.tailscale_var.get():
@@ -67,39 +81,51 @@ class App(ctk.CTk):
             self.tailscale_entry.pack_forget()
 
     def set_login_password(self):
+        """
+        Αποθηκεύει τα credentials του login. Χρησιμοποιούμε APP_ADMIN_USER
+        αντί για USER γιατί το USER είναι ήδη env var του λειτουργικού
+        συστήματος (το username του τρέχοντος χρήστη) και το load_dotenv
+        δεν κάνει override σε ήδη υπάρχοντα env vars — αν χρησιμοποιούσαμε
+        USER, το app.py θα διάβαζε πάντα το OS username αντί για "admin".
+        """
         password = self.login_pass_entry.get()
-        self.update_env_file("USER","admin")
-        self.update_env_file("PASSWORD",generate_password_hash(password))
-        self.update_env_file("FLASK_SECRET_KEY",secrets.token_hex(32))
-        
+
+        if not password:
+            self.show_error("Ο κωδικός δεν μπορεί να είναι κενός.")
+            return False
+
+        self.update_env_file("APP_ADMIN_USER", "admin")
+        self.update_env_file("PASSWORD", generate_password_hash(password))
+        self.update_env_file("FLASK_SECRET_KEY", secrets.token_hex(32))
+        return True
 
     def show_install_frame(self):
         for widget in self.container.winfo_children():
             widget.destroy()
 
         ctk.CTkLabel(self.container, text="System Setup", font=("Arial", 20, "bold")).pack(pady=20)
-        
+
         self.install_btn = ctk.CTkButton(self.container, text="Install Dependencies", command=self.install_thread)
         self.install_btn.pack(pady=10)
-        
+
         self.model_btn = ctk.CTkButton(self.container, text="Download AI Model (Phi3)", command=self.model_thread)
         self.model_btn.pack(pady=10)
 
         self.login_pass_entry = ctk.CTkEntry(self.container, placeholder_text="Enter login password", width=200, show='*')
         self.login_pass_entry.pack(pady=10)
-        
+
         self.is_server_var = ctk.BooleanVar(value=False)
         self.server_chk = ctk.CTkCheckBox(
-            self.container, 
-            text="Is this machine the Server?", 
+            self.container,
+            text="Is this machine the Server?",
             variable=self.is_server_var
         )
         self.server_chk.pack(pady=20)
-        
+
         self.tailscale_var = ctk.BooleanVar(value=False)
         self.tailscale_chk = ctk.CTkCheckBox(
-            self.container, 
-            text="Do you have tailscale?", 
+            self.container,
+            text="Do you have tailscale?",
             variable=self.tailscale_var,
             command=self.update_install_frame
         )
@@ -108,9 +134,9 @@ class App(ctk.CTk):
         self.tailscale_entry = ctk.CTkEntry(self.container, placeholder_text="Enter Tailscale IP", width=200)
 
         self.next_btn = ctk.CTkButton(
-            self.container, 
-            text="Next: Telegram Setup", 
-            fg_color="teal", 
+            self.container,
+            text="Next: Telegram Setup",
+            fg_color="teal",
             command=self.handle_next_step
         )
         self.next_btn.pack(pady=10)
@@ -121,14 +147,18 @@ class App(ctk.CTk):
             server_ip = self.get_local_ip()
             self.update_env_file("SERVER_IP", server_ip)
             print(f"Saved Server IP ({server_ip}) to .env")
-        
+
         elif self.tailscale_var.get():
             server_ip = self.tailscale_entry.get().strip()
+            if not server_ip:
+                self.show_error("Συμπλήρωσε την Tailscale IP.")
+                return
             self.update_env_file("SERVER_IP", server_ip)
             print(f"Saved Server IP ({server_ip}) to .env")
 
-        self.set_login_password()
-        
+        if not self.set_login_password():
+            return
+
         self.show_telegram_frame()
 
     def show_telegram_frame(self):
@@ -146,9 +176,9 @@ class App(ctk.CTk):
         self.telegram_chat_id_entry.pack(pady=10)
 
         save_tg_btn = ctk.CTkButton(
-            self.container, 
-            text="Next: Add Devices", 
-            fg_color="teal", 
+            self.container,
+            text="Next: Add Devices",
+            fg_color="teal",
             command=self.save_telegram_and_continue
         )
         save_tg_btn.pack(pady=20)
@@ -157,14 +187,19 @@ class App(ctk.CTk):
         back_btn.pack(pady=5)
 
     def save_telegram_and_continue(self):
-        """Αποθηκεύει τα Telegram tokens στο .env και συνεχίζει στις συσκευές."""
+        """
+        Αποθηκεύει τα Telegram tokens στο .env και συνεχίζει στις συσκευές.
+        Χρησιμοποιούμε "CHAT_ID" (όχι "TELEGRAM_CHAT_ID") γιατί το app.py
+        διαβάζει CHAT_ID = os.getenv("CHAT_ID") — τα δύο ονόματα έπρεπε
+        να ταιριάζουν.
+        """
         token = self.telegram_token_entry.get().strip()
         chat_id = self.telegram_chat_id_entry.get().strip()
 
         if token:
             self.update_env_file("TELEGRAM_TOKEN", token)
         if chat_id:
-            self.update_env_file("TELEGRAM_CHAT_ID", chat_id)
+            self.update_env_file("CHAT_ID", chat_id)
 
         print("Telegram configuration saved to .env")
         self.show_devices_frame()
@@ -174,16 +209,21 @@ class App(ctk.CTk):
             widget.destroy()
 
         ctk.CTkLabel(self.container, text="Register New Device", font=("Arial", 16)).pack(pady=10)
-        
+
         self.room_entry = ctk.CTkEntry(self.container, placeholder_text="Room Name")
         self.room_entry.pack(pady=5)
-        
-        self.type_combobox = ctk.CTkComboBox(self.container, values=["android_tv", "tapo_light", "tapo_led_strip", "tapo_smart_plug", "phue_light", "phue_led_strip", "yeelight", "lg_tv" , "daikin_ac"], command=self.on_type_change)
+
+        self.type_combobox = ctk.CTkComboBox(
+            self.container,
+            values=["android_tv", "tapo_light", "tapo_led_strip", "tapo_smart_plug",
+                    "phue_light", "phue_led_strip", "yeelight", "lg_tv", "daikin_ac"],
+            command=self.on_type_change
+        )
         self.type_combobox.pack(pady=5)
-        
+
         self.name_entry = ctk.CTkEntry(self.container, placeholder_text="Device Name")
         self.name_entry.pack(pady=5)
-        
+
         self.ip_entry = ctk.CTkEntry(self.container, placeholder_text="IP Address")
         self.ip_entry.pack(pady=5)
 
@@ -192,77 +232,122 @@ class App(ctk.CTk):
         self.user_entry.pack(pady=2)
         self.pass_entry = ctk.CTkEntry(self.creds_frame, placeholder_text="Tapo Password", show="*")
         self.pass_entry.pack(pady=2)
-        self.model = ctk.CTkEntry(self.creds_frame, placeholder_text="Devvice Model")
+        self.model = ctk.CTkEntry(self.creds_frame, placeholder_text="Device Model")
         self.model.pack(pady=2)
 
         self.phue_frame = ctk.CTkFrame(self.container, fg_color="transparent")
         self.id_entry = ctk.CTkEntry(self.phue_frame, placeholder_text="ID of phue device")
         self.id_entry.pack(pady=2)
-    
+
         ctk.CTkButton(self.container, text="Save Device", command=self.save_to_json).pack(pady=15)
 
         ctk.CTkButton(self.container, text="Back", fg_color="gray", command=self.show_telegram_frame).pack(pady=5)
 
     def on_type_change(self, choice):
-        if choice == "tapo_light" or choice == "tapo_led_strip" or choice == "tapo_smart_plug":
+        if choice in ["tapo_light", "tapo_led_strip", "tapo_smart_plug"]:
             self.creds_frame.pack(pady=5)
         else:
             self.creds_frame.pack_forget()
 
-        if choice == "phue_light" or choice == "phue_led_strip":
+        if choice in ["phue_light", "phue_led_strip"]:
             self.phue_frame.pack(pady=5)
         else:
             self.phue_frame.pack_forget()
-
 
     def save_to_json(self):
         room = self.room_entry.get().strip()
         dev_type = self.type_combobox.get()
         name = self.name_entry.get().strip()
         ip = self.ip_entry.get().strip()
-        
+
+        # -- validation βασικών πεδίων --------------------------------------
+        if not room or not name or not ip:
+            self.show_error("Συμπλήρωσε Room, Name και IP.")
+            return
+
         device_data = {"name": name, "type": dev_type, "ip": ip}
-        
-        if dev_type == "light" or dev_type == "led_strip" or dev_type == "smart_plug":
-            device_data["username"] = self.user_entry.get().strip()
-            device_data["password"] = self.pass_entry.get().strip()
-            
-            device_data["model"] = self.model.get().strip()
 
-            self.update_env_file("TAPO_USERNAME", device_data["username"])
-            self.update_env_file("TAPO_PASSWORD", device_data["password"])
-        
+        # -- Tapo credentials --------------------------------------------------
+        # Διορθωμένο: το combobox επιστρέφει "tapo_light"/"tapo_led_strip"/
+        # "tapo_smart_plug", όχι "light"/"led_strip"/"smart_plug" όπως έλεγχε
+        # ο παλιός κώδικας — γι' αυτό δεν αποθηκευόταν ποτέ τίποτα.
+        if dev_type in ["tapo_light", "tapo_led_strip", "tapo_smart_plug"]:
+            username = self.user_entry.get().strip()
+            password = self.pass_entry.get().strip()
+            model = self.model.get().strip()
 
-        if dev_type == "phue_light" or dev_type == "phue_led_strip":
-            device_data["id"] = self.id_entry.get().strip()
+            if not username or not password:
+                self.show_error("Συμπλήρωσε Tapo Username και Password.")
+                return
 
+            device_data["username"] = username
+            device_data["password"] = password
+            device_data["model"] = model
 
-        if dev_type == "lg_tv":
-            lg_tv = LG_TV(ip)
-        
-        if dev_type in ["phue_light", "phue_led_strip"]:            
-            phue = Phue(ip)
+            self.update_env_file("TAPO_USERNAME", username)
+            self.update_env_file("TAPO_PASSWORD", password)
 
+        # -- Phue device ID -----------------------------------------------------
+        if dev_type in ["phue_light", "phue_led_strip"]:
+            phue_id = self.id_entry.get().strip()
+            if not phue_id:
+                self.show_error("Συμπλήρωσε το ID της συσκευής Phue.")
+                return
+            device_data["id"] = phue_id
+
+        # -- Pairing με πραγματικές συσκευές (blocking, μπορεί να αποτύχει) -----
+        try:
+            if dev_type == "lg_tv":
+                LG_TV(ip)
+
+            if dev_type in ["phue_light", "phue_led_strip"]:
+                Phue(ip)
+
+        except Exception as e:
+            self.show_error(
+                f"Αποτυχία σύνδεσης με τη συσκευή: {e}\n\n"
+                "Βεβαιώσου ότι είναι αναμμένη/συνδεδεμένη στο δίκτυο "
+                "(για Phue: πάτησε το link button στο bridge πριν πατήσεις Save)."
+            )
+            return
+
+        # -- Αποθήκευση στο devices_config.json ---------------------------------
         file_path = "config/devices_config.json"
         data = {"Room": {}}
-        
+
         if os.path.exists(file_path):
             with open(file_path, "r") as f:
-                try: 
+                try:
                     data = json.load(f)
-                except: 
+                except json.JSONDecodeError:
                     pass
 
-        if room not in data["Room"]: data["Room"][room] = {}
-        if dev_type not in data["Room"][room]: data["Room"][room][dev_type] = {}
+        if room not in data["Room"]:
+            data["Room"][room] = {}
+        if dev_type not in data["Room"][room]:
+            data["Room"][room][dev_type] = {}
 
-        new_id = str(len(data["Room"][room][dev_type]) + 1)
+        # Διορθωμένο: το νέο ID υπολογίζεται από το max υπάρχον ID + 1,
+        # όχι από το πλήθος — αλλιώς μετά από διαγραφή ενός device στη μέση
+        # δύο συσκευές θα μπορούσαν να καταλήξουν με το ίδιο ID.
+        existing_ids = [int(i) for i in data["Room"][room][dev_type].keys()]
+        new_id = str(max(existing_ids, default=0) + 1)
+
         data["Room"][room][dev_type][new_id] = device_data
-        
+
         with open(file_path, "w") as f:
             json.dump(data, f, indent=4)
-        
+
         print(f"Successfully saved {name} ({dev_type}) in {room}")
+
+        # καθάρισε τα πεδία ώστε να μπορείς να προσθέσεις την επόμενη συσκευή
+        self.room_entry.delete(0, "end")
+        self.name_entry.delete(0, "end")
+        self.ip_entry.delete(0, "end")
+        self.user_entry.delete(0, "end")
+        self.pass_entry.delete(0, "end")
+        self.model.delete(0, "end")
+        self.id_entry.delete(0, "end")
 
     def install_thread(self):
         self.install_btn.configure(state="disabled", text="Installing...")
@@ -289,6 +374,7 @@ class App(ctk.CTk):
             self.model_btn.configure(text="Model Error", fg_color="red")
         finally:
             self.model_btn.configure(state="normal")
+
 
 if __name__ == "__main__":
     app = App()

@@ -73,13 +73,56 @@
             <div id="loader" class="loader"></div>
             <p id="aiResponse" style="margin-top: 10px; color: var(--accent);"></p>
         </div>
+        <div class="card" id="automations-card" style="grid-column: 1 / -1; text-align:left;">
+            <h3 style="text-align:center;">⚙️ Automations</h3>
+        
+            <div id="automations-list" style="margin-bottom: 16px;">
+                <p style="color:gray; font-size:0.85rem;">Φόρτωση...</p>
+            </div>
+        
+            <hr style="border-color: rgba(255,255,255,0.1);">
+        
+            <h4 style="color: var(--accent); margin-bottom: 8px;">Νέο Automation</h4>
+        
+            <div style="display:flex; flex-wrap:wrap; gap:8px; align-items:center;">
+                <input type="text" id="auto-name" placeholder="Όνομα (π.χ. Sleep Lights Off)"
+                    style="flex:1 1 200px; padding:8px; border-radius:8px; border:1px solid #333; background:#0f1115; color:#eee;">
+        
+                <select id="auto-trigger-type" onchange="toggleTriggerFields()"
+                        style="padding:8px; border-radius:8px; background:#0f1115; color:#eee; border:1px solid #333;">
+                    <option value="schedule">Ώρα (Schedule)</option>
+                    <option value="event">Γεγονός (Event)</option>
+                </select>
+        
+                <input type="time" id="auto-time"
+                    style="padding:8px; border-radius:8px; background:#0f1115; color:#eee; border:1px solid #333;">
+        
+                <select id="auto-event" style="display:none; padding:8px; border-radius:8px; background:#0f1115; color:#eee; border:1px solid #333;">
+                    <option value="person_detected">Ανίχνευση ατόμου</option>
+                </select>
+            </div>
+        
+            <div style="display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-top:8px;">
+                <select id="auto-device" style="flex:1 1 220px; padding:8px; border-radius:8px; background:#0f1115; color:#eee; border:1px solid #333;">
+                    <option value="">-- Επίλεξε συσκευή --</option>
+                </select>
+        
+                <select id="auto-command" style="padding:8px; border-radius:8px; background:#0f1115; color:#eee; border:1px solid #333;">
+                    <option value="on">ON</option>
+                    <option value="off">OFF</option>
+                </select>
+        
+                <button onclick="submitAutomation()">+ Προσθήκη</button>
+            </div>
+        
+            <p id="automation-status" style="font-size:0.8rem; color: var(--accent); margin-top:6px;"></p>
+        </div>
         </div>
 
    <script>
 
     const API_URL = window.location.hostname ? `${window.location.protocol}//${window.location.hostname}:8080` : "http://192.168.1.2:8080";
 
-    // Φόρτωση συσκευών από το JSON
     async function loadDashboard() {
         try {
             const res = await fetch(`${API_URL}/api/devices`);
@@ -244,7 +287,146 @@
         });
     }
 
-    window.onload = loadDashboard;
+    let automationDeviceMap = {};
+ 
+    function toggleTriggerFields() {
+        const type = document.getElementById('auto-trigger-type').value;
+        document.getElementById('auto-time').style.display = (type === 'schedule') ? 'inline-block' : 'none';
+        document.getElementById('auto-event').style.display = (type === 'event') ? 'inline-block' : 'none';
+    }
+ 
+    async function loadAutomations() {
+        const listEl = document.getElementById('automations-list');
+        const deviceSelect = document.getElementById('auto-device');
+ 
+        try {
+            // 1) Φόρτωσε συσκευές για να γεμίσει το dropdown επιλογής συσκευής
+            const devRes = await fetch(`${API_URL}/api/devices`);
+            const devData = await devRes.json();
+ 
+            deviceSelect.innerHTML = '<option value="">-- Επίλεξε συσκευή --</option>';
+            automationDeviceMap = {};
+ 
+            for (const [roomName, categories] of Object.entries(devData.Room)) {
+                for (const [category, devices] of Object.entries(categories)) {
+                    for (const [id, dev] of Object.entries(devices)) {
+                        const key = `${roomName}|${category}|${id}`;
+                        automationDeviceMap[key] = {
+                            room: roomName,
+                            type: category,
+                            number: id,
+                            device: dev.name,
+                            model: dev.model || null
+                        };
+                        const opt = document.createElement('option');
+                        opt.value = key;
+                        opt.textContent = `${dev.name} (${roomName.replace('_',' ')})`;
+                        deviceSelect.appendChild(opt);
+                    }
+                }
+            }
+ 
+            // 2) Φόρτωσε την τρέχουσα λίστα automations
+            const res = await fetch(`${API_URL}/api/automations`);
+            const rules = await res.json();
+ 
+            if (!rules.length) {
+                listEl.innerHTML = '<p style="color:gray; font-size:0.85rem;">Δεν υπάρχουν automations ακόμα.</p>';
+                return;
+            }
+ 
+            listEl.innerHTML = '';
+            rules.forEach(rule => {
+                const row = document.createElement('div');
+                row.style = "display:flex; justify-content:space-between; align-items:center; padding:6px 0; border-bottom:1px solid rgba(255,255,255,0.05);";
+ 
+                const triggerLabel = rule.trigger.type === 'schedule'
+                    ? `⏰ ${rule.trigger.cron}`
+                    : `⚡ ${rule.trigger.event}`;
+ 
+                row.innerHTML = `
+                    <span style="font-size:0.9rem;">
+                        <strong>${rule.name}</strong>
+                        <span style="color:gray; font-size:0.8rem;"> — ${triggerLabel}</span>
+                    </span>
+                    <button onclick="deleteAutomation('${rule.name}')" style="padding:4px 10px; font-size:0.8rem;">Διαγραφή</button>
+                `;
+                listEl.appendChild(row);
+            });
+ 
+        } catch (err) {
+            listEl.innerHTML = '<p style="color:#ff6b6b; font-size:0.85rem;">Σφάλμα φόρτωσης automations.</p>';
+            console.error("Error loading automations:", err);
+        }
+    }
+ 
+    async function submitAutomation() {
+        const statusEl = document.getElementById('automation-status');
+        const name = document.getElementById('auto-name').value.trim();
+        const triggerType = document.getElementById('auto-trigger-type').value;
+        const deviceKey = document.getElementById('auto-device').value;
+        const command = document.getElementById('auto-command').value;
+ 
+        if (!name || !deviceKey) {
+            statusEl.style.color = "#ff6b6b";
+            statusEl.innerText = "Συμπλήρωσε όνομα και συσκευή.";
+            return;
+        }
+ 
+        const dev = automationDeviceMap[deviceKey];
+ 
+        const payload = {
+            name: name,
+            trigger_type: triggerType,
+            room: dev.room,
+            type: dev.type,
+            number: dev.number,
+            command: command,
+            device: dev.device,
+            model: dev.model
+        };
+ 
+        if (triggerType === 'schedule') {
+            payload.time = document.getElementById('auto-time').value; // "HH:MM"
+        } else {
+            payload.event = document.getElementById('auto-event').value;
+        }
+ 
+        try {
+            const res = await fetch(`${API_URL}/api/automations`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+ 
+            statusEl.style.color = res.ok ? "var(--accent)" : "#ff6b6b";
+            statusEl.innerText = data.message || data.error || "Κάτι πήγε στραβά.";
+ 
+            if (res.ok) {
+                document.getElementById('auto-name').value = "";
+                await loadAutomations();
+            }
+        } catch (err) {
+            statusEl.style.color = "#ff6b6b";
+            statusEl.innerText = "Σφάλμα σύνδεσης.";
+            console.error(err);
+        }
+    }
+ 
+    async function deleteAutomation(name) {
+        try {
+            await fetch(`${API_URL}/api/automations/${encodeURIComponent(name)}`, { method: 'DELETE' });
+            await loadAutomations();
+        } catch (err) {
+            console.error("Error deleting automation:", err);
+        }
+    }
+
+    window.onload = async () => {
+        await loadDashboard();
+        await loadAutomations();
+    };
 </script>
 </body>
 </html>

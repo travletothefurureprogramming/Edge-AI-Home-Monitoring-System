@@ -124,7 +124,7 @@ class Tapo_Smart_Bulbs:
 
 class LG_TV:
     def __init__(self, ip):
-        self.STORE_FILE = os.path.join(os.path.dirname(__file__), "config/lg_store.json")
+        self.STORE_FILE = os.path.join(os.path.dirname(__file__), "../config/lg_store.json")
 
         self.store = self.load_from_your_custom_storage() if not self.your_custom_storage_is_empty() else {}
 
