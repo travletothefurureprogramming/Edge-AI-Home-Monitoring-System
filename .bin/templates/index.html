@@ -294,13 +294,34 @@
         document.getElementById('auto-time').style.display = (type === 'schedule') ? 'inline-block' : 'none';
         document.getElementById('auto-event').style.display = (type === 'event') ? 'inline-block' : 'none';
     }
+
+    function populateEventDropdown() {
+        const eventSelect = document.getElementById('auto-event')
+        eventSelect.innerHTML = '<option value="person_detected">🚨 Ανίχνευση ατόμου</option>';
+
+        for (const [key, dev] of Object.entries(automationDeviceMap)){
+            ['on', 'off'].forEach(cmd => {
+                    const eventName = `${dev.room}_${dev.type}_${cmd}`;
+                    const opt = document.createElement('option');
+                    opt.value = eventName;
+                    opt.textContent = `${dev.device} -> ${cmd.toLocaleUpperCase()}`;
+                    eventSelect.appendChild(opt);
+            }
+            );
+        }
+    }
+
+    function formatEventLabel(eventStr) {
+        const parts = eventStr.split('_');
+        const cmd = parts.pop();
+        return `${parts.join(' ').replace(/\b\w/g, c => c.toUpperCase())} -> ${cmd.toUpperCase()}`;
+    }
  
     async function loadAutomations() {
         const listEl = document.getElementById('automations-list');
         const deviceSelect = document.getElementById('auto-device');
  
         try {
-            // 1) Φόρτωσε συσκευές για να γεμίσει το dropdown επιλογής συσκευής
             const devRes = await fetch(`${API_URL}/api/devices`);
             const devData = await devRes.json();
  
@@ -325,8 +346,9 @@
                     }
                 }
             }
+
+            populateEventDropdown();
  
-            // 2) Φόρτωσε την τρέχουσα λίστα automations
             const res = await fetch(`${API_URL}/api/automations`);
             const rules = await res.json();
  
@@ -340,10 +362,10 @@
                 const row = document.createElement('div');
                 row.style = "display:flex; justify-content:space-between; align-items:center; padding:6px 0; border-bottom:1px solid rgba(255,255,255,0.05);";
  
-                const triggerLabel = rule.trigger.type === 'schedule'
-                    ? `⏰ ${rule.trigger.cron}`
-                    : `⚡ ${rule.trigger.event}`;
- 
+            const triggerLabel = rule.trigger.type === 'schedule'
+                ? `⏰ ${rule.trigger.cron}`
+                : `⚡ ${formatEventLabel(rule.trigger.event)}`;
+            
                 row.innerHTML = `
                     <span style="font-size:0.9rem;">
                         <strong>${rule.name}</strong>

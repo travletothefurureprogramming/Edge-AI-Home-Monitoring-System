@@ -669,12 +669,15 @@ class Tapo_Led_strip:
      self.connect()
 
     async def async_connect(self):
-        if self.device == "l900":
-         self.device = await self.client.l900(self.ip_address)
-        elif self.device == "l920":
-         self.device = await self.client.l920(self.ip_address)
-        elif self.device == "l930":
-         self.device = await self.client.l930(self.ip_address)
+        model = self.device.lower().strip()
+        if model == "l900":
+            self.device = await self.client.l900(self.ip_address)
+        elif model == "l920":
+            self.device = await self.client.l920(self.ip_address)
+        elif model == "l930":
+            self.device = await self.client.l930(self.ip_address)
+        else:
+            raise ValueError(f"Άγνωστο μοντέλο Tapo LED strip: '{self.device}'")
 
 
     async def async_execute_command(self, command):
@@ -702,18 +705,21 @@ class Tapo_Smart_Bulbs:
      self.connect()
 
     async def async_connect(self):
-        if self.device == "l510":
-         self.device = await self.client.l510(self.ip_address)
-        elif self.device == "l520":
-         self.device = await self.client.l520(self.ip_address)  
-        elif self.device == "l530":
-         self.device = await self.client.l530(self.ip_address)
-        elif self.device == "l535":
-         self.device = await self.client.l535(self.ip_address)
-        elif self.device == "l610":
-         self.device = await self.client.l610(self.ip_address)
-        elif self.device == "l630":
-         self.device = await self.client.l630(self.ip_address)
+        model = self.device.lower().strip()
+        if model == "l510":
+            self.device = await self.client.l510(self.ip_address)
+        elif model == "l520":
+            self.device = await self.client.l520(self.ip_address)
+        elif model == "l530":
+            self.device = await self.client.l530(self.ip_address)
+        elif model == "l535":
+            self.device = await self.client.l535(self.ip_address)
+        elif model == "l610":
+            self.device = await self.client.l610(self.ip_address)
+        elif model == "l630":
+            self.device = await self.client.l630(self.ip_address)
+        else:
+            raise ValueError(f"Άγνωστο μοντέλο Tapo bulb: '{self.device}'")
         
 
     async def async_execute_command(self, command):
@@ -918,6 +924,11 @@ def create_device_action(name, room, dev_type, number, command, device_name, mod
     return action
 
 
+def emit_device_event(room, dev_type, command):
+    event_name = f"{room}_{dev_type}_{command}"
+    automation_manager.trigger_event(event_name)
+
+
 class AutomationManager:
     def __init__(self):
         self.rules_file = os.path.join(BASE_DIR, "config/automation.json")
@@ -942,7 +953,7 @@ class AutomationManager:
         with open(self.rules_file, "w") as f:
             json.dump(self.rules, f, indent=4)
 
-    def add_schedule_rule(self, name, time_string, action_function):
+    def add_schedule_rule(self, name, time_string, action_function, action_params=None):
         if action_function.__name__ not in self.available_actions:
             self.register_action(action_function)
 
@@ -954,6 +965,7 @@ class AutomationManager:
             "name": name,
             "trigger": {"type": "schedule", "cron": cron_expression},
             "action": action_function.__name__,
+            "action_params": action_params or {},
             "last_fired": datetime.min.isoformat(),
         }
 
@@ -962,7 +974,7 @@ class AutomationManager:
             self.rules.append(rule)
             self._save_rules()
 
-    def add_event_rule(self, name, event_name, action_function):
+    def add_event_rule(self, name, event_name, action_function, action_params):
         if action_function.__name__ not in self.available_actions:
             self.register_action(action_function)
 
@@ -970,6 +982,7 @@ class AutomationManager:
             "name": name,
             "trigger": {"type": "event", "event": event_name},
             "action": action_function.__name__,
+            "action_params": action_params or {},
             "last_fired": datetime.min.isoformat(),
         }
 
@@ -977,6 +990,31 @@ class AutomationManager:
             self.rules = self._load_rules()
             self.rules.append(rule)
             self._save_rules()
+
+    def rebuild_actions_from_rules(self):
+        with self.lock:
+            self.rules = self._load_rules()
+        
+        for rule in self.rules:
+            params = rule.get("action_params")
+            if not params:
+                Logger.warning(f"Το rule '{rule['name']}' δεν έχει action_params — δεν μπορεί να ξαναδημιουργηθεί (παλιό format).")
+                continue
+
+            action_func = create_device_action(
+                rule["name"],
+                params.get("room"),
+                params.get("type"),
+                params.get("number"),
+                params.get("command"),
+                params.get("device",""),
+                params.get("model"),
+                params.get("mode"),
+            )
+
+            self.register_action(action_func)
+        
+        Logger.info(f" Ξαναδημιουργήθηκαν {len(self.available_actions)} automation actions.")
 
     def delete_rule(self, name):
         with self.lock:
@@ -1036,6 +1074,7 @@ class AutomationManager:
 
     def start(self):
         if not self.is_running:
+            self.rebuild_actions_from_rules()
             self.is_running = True
             self.thread = threading.Thread(target=self._run_scheduler_loop, daemon=True)
             self.thread.start()
@@ -1630,6 +1669,7 @@ def handle_tv():
             
                 if errors["connection"]["module"]["TV"] is None:
                     Logger.info(f"/api/tv -> Command {command} sent to {device} at {ip}.")
+                    emit_device_event(room, dev_type, command)
                     return jsonify({"status": "success", "message": "Command sent successfully"}), 200
                 else:
                     return jsonify({"status": "error", "message": "TV communication error"}), 503
@@ -1639,6 +1679,7 @@ def handle_tv():
                 tv.execute_command(command)
 
                 Logger.info(f"/api/tv -> Command {command} sent to {device} at {ip}.")
+                emit_device_event(room, dev_type, command)
 
                 return jsonify({"status": "success", "message": "Command sent successfully"}), 200
 
@@ -1733,14 +1774,20 @@ def create_automation():
         model = content.get("model")
         mode = content.get("mode")
 
+        action_params = {
+            "room": room, "type": dev_type, "number": number,
+            "command": command, "device": device_name,
+            "model": model, "mode": mode,
+        }
+
         action_func = create_device_action(
             name, room, dev_type, number, command, device_name, model, mode
         )
 
         if trigger_type == "schedule":
-            automation_manager.add_schedule_rule(name, content["time"], action_func)
+            automation_manager.add_schedule_rule(name, content["time"], action_func, action_params)
         elif trigger_type == "event":
-            automation_manager.add_event_rule(name, content["event"], action_func)
+            automation_manager.add_event_rule(name, content["event"], action_func, action_params)
         else:
             return jsonify({"error": "Unknown trigger_type"}), 400
 
