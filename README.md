@@ -13,30 +13,30 @@
 
 * **Tapo Led Strips:**
 - L900
-- L920
-- L930
+- L920 (untested)
+- L930 (untested)
 
 * **Tapo Light Bulbs:**
-- L510
-- L520
-- L530
-- L535
-- L610
-- L630
+- L510 (untested)
+- L520 (untested)
+- L530 (untested)
+- L535 (untested)
+- L610 (untested)
+- L630 (untested)
 
 * **Tapo Smart Plugs:**
-- P100
-- P105
-- P110
-- P300
-- P304
-- P306
+- P100 (untested)
+- P105 (untested)
+- P110 (untested)
+- P300 (untested)
+- P304 (untested)
+- P306 (untested)
 
 * **Philips Hue Lights:**
-- All lights-bulbs or led_strips you have connected with Philips Hue Bridge
+- All lights-bulbs or led_strips you have connected with Philips Hue Bridge  (untested)
 
 * **Yeelight:**
-- All lights-bulbs wich suppourt Wi-Fi control.
+- All lights-bulbs wich suppourt Wi-Fi control.  (untested)
 
 * **Android Tv:**
 - Android 8+
@@ -45,8 +45,23 @@
 - WEB OS 6+
 
 * **Daikin AC:**
-- BRP069Axx/BRP069Bxx/BRP072Axx
-- BRP15B61 aka. AirBas
+- BRP069Axx/BRP069Bxx/BRP072Axx  (untested)
+- BRP15B61 aka. AirBas (untested)
+
+* **Shelly:**
+- Shelly1 (untested)
+- Shelly1PM (untested)
+- Shelly2 (untested)
+- Shelly2.5 (untested)
+- Shelly4Pro  (untested)
+- Shelly Plug (untested) 
+- Shelly PlugS (untested)
+- Shelly Bulb (untested) 
+- Shelly H&T (untested) 
+- Shelly Smoke (untested) 
+- Shelly EM (untested) 
+- Shelly flood (untested)
+
 
 ## 🛠 Tech Stack
 
