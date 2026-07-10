@@ -889,11 +889,11 @@ class Shelly:
         self.HOST = ip
         self.device = ShellyPy.Shelly(ip)
     
-    def turn_on_relay(self, relay_number=0):
-        self.device.relay(relay_number, turn=True)
+    def turn_on_relay(self, rellay_number=0):
+        self.device.relay(rellay_number, turn=True)
     
-    def turn_off_relay(self, relay_number=0):
-        self.device.relay(relay_number, turn=False)
+    def turn_off_relay(self, rellay_number=0):
+        self.device.relay(rellay_number, turn=False)
 
     def execute_command(self, command, *args):
         if command == "on":
@@ -914,7 +914,7 @@ DEVICE_ENDPOINTS = {
 }
 
 
-def create_device_action(name, room, dev_type, number, command, device_name, model=None, mode=None):
+def create_device_action(name, room, dev_type, number, command, device_name, model=None, mode=None, rellay_number=0):
     def action():
         try:
             with open("config/devices_config.json", "r") as f:
@@ -936,6 +936,8 @@ def create_device_action(name, room, dev_type, number, command, device_name, mod
                 LG_TV(ip).execute_command(command)
             elif dev_type == "daikin_ac":
                 DaikinAC(ip).execute_command(command, mode)
+            elif dev_type == "shelly":
+                Shelly(ip).execute_command(command, rellay_number)
             else:
                 Logger.error(f"Automation '{name}': άγνωστος τύπος συσκευής '{dev_type}'")
 
@@ -1032,6 +1034,7 @@ class AutomationManager:
                 params.get("device",""),
                 params.get("model"),
                 params.get("mode"),
+                params.get("rellay_number"),
             )
 
             self.register_action(action_func)
@@ -1791,11 +1794,11 @@ def handle_shelly():
 
         try:
             ip = data["Room"][room][dev_type][number]["ip"]
-            relay_number = data["Room"][room][dev_type][number]["relay_number"]
+            rellay_number = data["Room"][room][dev_type][number]["rellay_number"]
 
             shelly = Shelly(ip)
 
-            shelly.execute_command(command, int(relay_number))
+            shelly.execute_command(command, int(rellay_number))
         
             return jsonify({"status": "success", "message": "Command received"}), 200  
         
