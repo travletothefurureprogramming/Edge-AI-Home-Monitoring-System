@@ -9,9 +9,10 @@ from werkzeug.security import generate_password_hash, check_password_hash
 import secrets
 import pyttsx4
 import ctypes  
+from broadlink_learn import broadlink_learn
 
 engine = pyttsx4.init()
-
+engine.setProperty("rate", 150)
 
 def say(text):
     def target():
@@ -88,14 +89,24 @@ class App(ctk.CTk):
             error_win, text=message, wraplength=280, text_color="#ff6b6b"
         ).pack(pady=20, padx=10)
 
+
         ctk.CTkButton(error_win, text="OK", command=error_win.destroy).pack(pady=10)
+
+        say(message)
+
 
     def update_install_frame(self):
         if self.tailscale_var.get():
+            say(
+                "Please enter the Tailscale IP address of your server."
+            )
             self.next_btn.pack_forget()
             self.tailscale_entry.pack(pady=10)
             self.next_btn.pack(pady=10)
         else:
+            say(
+                "The local network will be used."
+            )
             self.tailscale_entry.pack_forget()
 
     def set_login_password(self):
@@ -103,7 +114,7 @@ class App(ctk.CTk):
         password = self.login_pass_entry.get()
 
         if not password:
-            self.show_error("Ο κωδικός δεν μπορεί να είναι κενός.")
+            self.show_error("Please enter an administrator password.")
             return False
 
         self.update_env_file("APP_ADMIN_USER", "admin")
@@ -152,7 +163,9 @@ class App(ctk.CTk):
             command=self.handle_next_step
         )
         self.next_btn.pack(pady=10)
-
+        say(
+            "Welcome... First, install the required packages. Then, download the AI model. After that, create your administrator password and continue to the next step."
+        )   
     def handle_next_step(self):
         if self.is_server_var.get():
             server_ip = self.get_local_ip()
@@ -173,6 +186,9 @@ class App(ctk.CTk):
         self.show_telegram_frame()
 
     def show_telegram_frame(self):
+        say(
+         "Enter your Telegram Bot Token and Chat ID. If you don't need notifications, you can skip this step."
+        )
         
         for widget in self.container.winfo_children():
             widget.destroy()
@@ -213,6 +229,9 @@ class App(ctk.CTk):
     def show_devices_frame(self):
         for widget in self.container.winfo_children():
             widget.destroy()
+        say(
+            "Telegram configuration saved. Now register your smart devices. Enter the room name, choose a device type, and enter its IP address."
+        )
 
         ctk.CTkLabel(self.container, text="Register New Device", font=("Arial", 16)).pack(pady=10)
 
@@ -222,7 +241,7 @@ class App(ctk.CTk):
         self.type_combobox = ctk.CTkComboBox(
             self.container,
             values=["android_tv", "tapo_light", "tapo_led_strip", "tapo_smart_plug",
-                    "phue_light", "phue_led_strip", "yeelight", "lg_tv", "daikin_ac", "shelly", "kasa"],
+                    "phue_light", "phue_led_strip", "yeelight", "lg_tv", "daikin_ac", "shelly", "kasa", "broadlink"],
             command=self.on_type_change
         )
         self.type_combobox.pack(pady=5)
@@ -244,9 +263,16 @@ class App(ctk.CTk):
         self.phue_frame = ctk.CTkFrame(self.container, fg_color="transparent")
         self.id_entry = ctk.CTkEntry(self.phue_frame, placeholder_text="ID of phue device")
         self.id_entry.pack(pady=2)
+        self.shelly_frame = ctk.CTkFrame(
+            self.container,
+            fg_color="transparent"
+        )
 
-        self.shelly_frame = ctk.CTkFrame(self.container, fg_color="transperent")
-        self.rellay_numer_entry = ctk.CTkEntry(self.shelly_frame, placeholder_text="Rellay Number of Shelly device")
+        self.rellay_numer_entry = ctk.CTkEntry(
+            self.shelly_frame,
+            placeholder_text="Relay Number of Shelly device"
+        )
+        self.rellay_numer_entry.pack(pady=2)
 
         ctk.CTkButton(self.container, text="Save Device", command=self.save_to_json).pack(pady=15)
 
@@ -255,19 +281,40 @@ class App(ctk.CTk):
     def on_type_change(self, choice):
         if choice in ["tapo_light", "tapo_led_strip", "tapo_smart_plug"]:
             self.creds_frame.pack(pady=5)
+            say(
+                f"You have choose {choice}. For this device type you must enter the: Tapo Username, Tapo Password, Device Model"
+            )
         else:
             self.creds_frame.pack_forget()
 
         if choice in ["phue_light", "phue_led_strip"]:
             self.phue_frame.pack(pady=5)
+            say(
+                f"You have choose {choice}. For this device type you must enter the: phue id of your device"
+            )
         else:
             self.phue_frame.pack_forget()
 
         if choice == "shelly":
             self.shelly_frame.pack(pady=5)
+            say(
+                f"You have choose {choice}. For this device type you must enter the: rellay number wich the device is connected on."
+            )
+        
+        
         else:
             self.shelly_frame.pack_forget()
 
+        if choice == "broadlink":
+            broadlink_learn.App()
+        else:
+            pass
+
+
+        if choice not in ["tapo_light", "tapo_led_strip", "tapo_smart_plug", "phue_light", "phue_led_strip", "shelly"]:
+            say(
+                f"You have choose {choice}."
+            )
         
 
     def save_to_json(self):
@@ -364,10 +411,16 @@ class App(ctk.CTk):
         self.id_entry.delete(0, "end")
 
     def install_thread(self):
+        say(
+            "Installing required packages. This may take a few minutes."
+        )
         self.install_btn.configure(state="disabled", text="Installing...")
         threading.Thread(target=self.run_install, daemon=True).start()
 
     def model_thread(self):
+        say(
+            "Downloading the Phi Three language model. Please wait."
+        )       
         self.model_btn.configure(state="disabled", text="Downloading model...")
         threading.Thread(target=self.download_model, daemon=True).start()
 
@@ -375,7 +428,7 @@ class App(ctk.CTk):
         try:
             subprocess.run(["pip", "install", "-r", "setup/requirements.txt"], check=True)
             self.install_btn.configure(text="Packages Ready!", fg_color="green")
-            say("Installation completed successfully. Now Click 'Download AI Model' to install the Phi-3 language model.")
+            say("Installation completed successfully... You can now download the AI model.")
             
         except Exception:
             self.install_btn.configure(text="Install Error", fg_color="red")
@@ -387,7 +440,7 @@ class App(ctk.CTk):
         try:
             subprocess.run(["ollama", "pull", "phi3"], check=True)
             self.model_btn.configure(text="Model Ready!", fg_color="green")
-            say("The AI model is ready. Create a secure administrator password. This password will be used to access the dashboard.")
+            say("The AI model is ready... Please create a secure administrator password.")
         except Exception:
             self.model_btn.configure(text="Model Error", fg_color="red")
             say("Download failed. Please check your internet connection and try again.")

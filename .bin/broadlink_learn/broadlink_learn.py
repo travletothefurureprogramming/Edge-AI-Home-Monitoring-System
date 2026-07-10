@@ -186,4 +186,3 @@ class App:
         except Exception as e:
             messagebox.showerror("Error", f"An error occurred: {str(e)}")
 
-app = App()
