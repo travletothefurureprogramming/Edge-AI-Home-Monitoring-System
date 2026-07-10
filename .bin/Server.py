@@ -30,6 +30,8 @@ from pydaikin.factory import DaikinFactory
 from datetime import datetime
 from croniter import croniter
 import ShellyPy
+from kasa import Discover
+
 
 
 auth_bp = Blueprint("auth", __name__)
@@ -901,6 +903,42 @@ class Shelly:
         
         elif command == "off":
             self.turn_off_relay(args)
+
+class Kasa:
+    def __init__(self, ip):
+        self.HOST = ip
+        
+        self.username = os.getenv("KASA_USERNAME")
+        self.password = os.getenv("KASA_PASSWORD")
+        
+        self.device = None
+        self.connect()
+        
+        
+    async def async_connect(self):
+        await self.device = Discover.discover_single(self.HOST, username=self.username, password=self.password)
+        await self.device.update()
+    
+    def connect(self):
+        asyncio.run(self.async_connect())
+
+    async def async_turn_on(self):
+        await self.device.turn_on()
+        await self.device.update()
+
+    def turn_on(self):
+        asyncio.run(self.async_turn_on())
+
+    async def async_turn_off(self):
+        await self.device.turn_off()
+        await self.device.update()
+
+    def turn_off(self):
+        asyncio.run(self.async_turn_off())
+
+    def execute_command(self, command):
+        if command == "on": self.turn_on()
+        elif command == "off": self.turn_off()
 
 DEVICE_ENDPOINTS = {
     "android_tv": "api/tv",
