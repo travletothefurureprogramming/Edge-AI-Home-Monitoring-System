@@ -21,7 +21,6 @@ class App(ctk.CTk):
         self.show_install_frame()
 
     def get_local_ip(self):
-        """Επιστρέφει την τοπική IP διεύθυνση αυτού του μηχανήματος."""
         try:
             s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
             s.connect(("8.8.8.8", 80))
@@ -32,7 +31,6 @@ class App(ctk.CTk):
             return "127.0.0.1"
 
     def update_env_file(self, key, value):
-        """Ενημερώνει ή προσθέτει ένα key-value pair στο .env αρχείο χωρίς να διαγράφει τα υπόλοιπα."""
         env_path = "config/.env"
 
         dir_path = os.path.dirname(env_path)
@@ -59,7 +57,6 @@ class App(ctk.CTk):
             f.writelines(lines)
 
     def show_error(self, message):
-        """Απλό popup λάθους, ώστε τα exceptions να μη σκάνε αθόρυβα."""
         error_win = ctk.CTkToplevel(self)
         error_win.title("Σφάλμα")
         error_win.geometry("320x150")
@@ -72,7 +69,6 @@ class App(ctk.CTk):
         ctk.CTkButton(error_win, text="OK", command=error_win.destroy).pack(pady=10)
 
     def update_install_frame(self):
-        """Εμφανίζει ή κρύβει το Entry ανάλογα με το Checkbox, διατηρώντας τη σειρά."""
         if self.tailscale_var.get():
             self.next_btn.pack_forget()
             self.tailscale_entry.pack(pady=10)
@@ -81,13 +77,7 @@ class App(ctk.CTk):
             self.tailscale_entry.pack_forget()
 
     def set_login_password(self):
-        """
-        Αποθηκεύει τα credentials του login. Χρησιμοποιούμε APP_ADMIN_USER
-        αντί για USER γιατί το USER είναι ήδη env var του λειτουργικού
-        συστήματος (το username του τρέχοντος χρήστη) και το load_dotenv
-        δεν κάνει override σε ήδη υπάρχοντα env vars — αν χρησιμοποιούσαμε
-        USER, το app.py θα διάβαζε πάντα το OS username αντί για "admin".
-        """
+
         password = self.login_pass_entry.get()
 
         if not password:
@@ -142,7 +132,6 @@ class App(ctk.CTk):
         self.next_btn.pack(pady=10)
 
     def handle_next_step(self):
-        """Αποθηκεύει την IP αν επιλέχθηκε ως server και προχωράει στο Telegram frame."""
         if self.is_server_var.get():
             server_ip = self.get_local_ip()
             self.update_env_file("SERVER_IP", server_ip)
@@ -162,7 +151,7 @@ class App(ctk.CTk):
         self.show_telegram_frame()
 
     def show_telegram_frame(self):
-        """Νέο Step για την εισαγωγή των Telegram Credentials."""
+        
         for widget in self.container.winfo_children():
             widget.destroy()
 
@@ -187,12 +176,7 @@ class App(ctk.CTk):
         back_btn.pack(pady=5)
 
     def save_telegram_and_continue(self):
-        """
-        Αποθηκεύει τα Telegram tokens στο .env και συνεχίζει στις συσκευές.
-        Χρησιμοποιούμε "CHAT_ID" (όχι "TELEGRAM_CHAT_ID") γιατί το app.py
-        διαβάζει CHAT_ID = os.getenv("CHAT_ID") — τα δύο ονόματα έπρεπε
-        να ταιριάζουν.
-        """
+
         token = self.telegram_token_entry.get().strip()
         chat_id = self.telegram_chat_id_entry.get().strip()
 
@@ -216,7 +200,7 @@ class App(ctk.CTk):
         self.type_combobox = ctk.CTkComboBox(
             self.container,
             values=["android_tv", "tapo_light", "tapo_led_strip", "tapo_smart_plug",
-                    "phue_light", "phue_led_strip", "yeelight", "lg_tv", "daikin_ac"],
+                    "phue_light", "phue_led_strip", "yeelight", "lg_tv", "daikin_ac", "shelly"],
             command=self.on_type_change
         )
         self.type_combobox.pack(pady=5)
@@ -239,6 +223,9 @@ class App(ctk.CTk):
         self.id_entry = ctk.CTkEntry(self.phue_frame, placeholder_text="ID of phue device")
         self.id_entry.pack(pady=2)
 
+        self.shelly_frame = ctk.CTkFrame(self.container, fg_color="transperent")
+        self.rellay_numer_entry = ctk.CTkEntry(self.shelly_frame, placeholder_text="Rellay Number of Shelly device")
+
         ctk.CTkButton(self.container, text="Save Device", command=self.save_to_json).pack(pady=15)
 
         ctk.CTkButton(self.container, text="Back", fg_color="gray", command=self.show_telegram_frame).pack(pady=5)
@@ -254,23 +241,26 @@ class App(ctk.CTk):
         else:
             self.phue_frame.pack_forget()
 
+        if choice == "shelly":
+            self.shelly_frame.pack(pady=5)
+        else:
+            self.shelly_frame.pack_forget()
+
+        
+
     def save_to_json(self):
         room = self.room_entry.get().strip()
         dev_type = self.type_combobox.get()
         name = self.name_entry.get().strip()
         ip = self.ip_entry.get().strip()
 
-        # -- validation βασικών πεδίων --------------------------------------
         if not room or not name or not ip:
             self.show_error("Συμπλήρωσε Room, Name και IP.")
             return
 
         device_data = {"name": name, "type": dev_type, "ip": ip}
 
-        # -- Tapo credentials --------------------------------------------------
-        # Διορθωμένο: το combobox επιστρέφει "tapo_light"/"tapo_led_strip"/
-        # "tapo_smart_plug", όχι "light"/"led_strip"/"smart_plug" όπως έλεγχε
-        # ο παλιός κώδικας — γι' αυτό δεν αποθηκευόταν ποτέ τίποτα.
+
         if dev_type in ["tapo_light", "tapo_led_strip", "tapo_smart_plug"]:
             username = self.user_entry.get().strip()
             password = self.pass_entry.get().strip()
@@ -287,7 +277,6 @@ class App(ctk.CTk):
             self.update_env_file("TAPO_USERNAME", username)
             self.update_env_file("TAPO_PASSWORD", password)
 
-        # -- Phue device ID -----------------------------------------------------
         if dev_type in ["phue_light", "phue_led_strip"]:
             phue_id = self.id_entry.get().strip()
             if not phue_id:
@@ -295,7 +284,14 @@ class App(ctk.CTk):
                 return
             device_data["id"] = phue_id
 
-        # -- Pairing με πραγματικές συσκευές (blocking, μπορεί να αποτύχει) -----
+        if dev_type == "shelly":
+            rellay_numer = self.rellay_numer_entry.get().strip()
+
+            if not rellay_numer:
+                self.show_error("Συμπλήρωσε το Rellay Number της συσκευής Shelly.")
+                return
+            device_data["rellay_numer"] = rellay_numer
+
         try:
             if dev_type == "lg_tv":
                 LG_TV(ip)
@@ -311,7 +307,6 @@ class App(ctk.CTk):
             )
             return
 
-        # -- Αποθήκευση στο devices_config.json ---------------------------------
         file_path = "config/devices_config.json"
         data = {"Room": {}}
 
@@ -327,9 +322,7 @@ class App(ctk.CTk):
         if dev_type not in data["Room"][room]:
             data["Room"][room][dev_type] = {}
 
-        # Διορθωμένο: το νέο ID υπολογίζεται από το max υπάρχον ID + 1,
-        # όχι από το πλήθος — αλλιώς μετά από διαγραφή ενός device στη μέση
-        # δύο συσκευές θα μπορούσαν να καταλήξουν με το ίδιο ID.
+
         existing_ids = [int(i) for i in data["Room"][room][dev_type].keys()]
         new_id = str(max(existing_ids, default=0) + 1)
 
@@ -340,7 +333,6 @@ class App(ctk.CTk):
 
         print(f"Successfully saved {name} ({dev_type}) in {room}")
 
-        # καθάρισε τα πεδία ώστε να μπορείς να προσθέσεις την επόμενη συσκευή
         self.room_entry.delete(0, "end")
         self.name_entry.delete(0, "end")
         self.ip_entry.delete(0, "end")

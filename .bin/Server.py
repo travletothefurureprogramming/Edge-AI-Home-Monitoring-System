@@ -29,6 +29,8 @@ from pydaikin.daikin_base import Appliance
 from pydaikin.factory import DaikinFactory
 from datetime import datetime
 from croniter import croniter
+import ShellyPy
+
 
 auth_bp = Blueprint("auth", __name__)
 
@@ -881,6 +883,25 @@ class DaikinAC:
         elif command == "set_mode":
             self.set_mode(args[0])
 
+
+class Shelly:
+    def __init__(self, ip):
+        self.HOST = ip
+        self.device = ShellyPy.Shelly(ip)
+    
+    def turn_on_relay(self, relay_number=0):
+        self.device.relay(relay_number, turn=True)
+    
+    def turn_off_relay(self, relay_number=0):
+        self.device.relay(relay_number, turn=False)
+
+    def execute_command(self, command, *args):
+        if command == "on":
+            self.turn_on_relay(args)
+        
+        elif command == "off":
+            self.turn_off_relay(args)
+
 DEVICE_ENDPOINTS = {
     "android_tv": "api/tv",
     "lg_tv": "api/tv",
@@ -889,6 +910,7 @@ DEVICE_ENDPOINTS = {
     "phue_light": "api/phue_light",
     "yeelight": "api/yeelight",
     "daikin_ac": "api/daikin",
+    "shelly": "api/shelly"
 }
 
 
@@ -1703,7 +1725,7 @@ def handle_tv():
         return jsonify({"response": "Internal Server Error"}), 500
 
 
-@server.route("/api/daikin")
+@server.route("/api/daikin", methods=["POST"])
 @auth.login_required
 def handle_daikin_ac():
     try:
@@ -1721,7 +1743,6 @@ def handle_daikin_ac():
 
         try:
             ip = data["Room"][room][dev_type][number]["ip"]
-            id = data["Room"][room][dev_type][number]["id"]
 
             daikinAC = DaikinAC(ip)
 
@@ -1730,7 +1751,7 @@ def handle_daikin_ac():
                 daikinAC.execute_command(command,mode)
         
             else:
-                daikinAC.execute_command(command,mode)
+                daikinAC.execute_command(command)
 
             return jsonify({"status": "success", "message": "Command received"}), 200
         
@@ -1752,6 +1773,52 @@ def handle_daikin_ac():
     except Exception as e:
         Logger.error(f"Unexpected error in /api/daikin: {e}")
         return jsonify({"response": "Internal Server Error"}), 500
+
+@server.route("/api/shelly", methods=["POST"])
+def handle_shelly():
+    try:
+        content = request.json
+        room = content["room"]
+        dev_type = content["type"]
+        number = str(content["number"])
+        command = content["command"]
+        device = content["device"]
+
+        Logger.info(f"/api/shelly -> Received the command {command} for the device {device}. This device is part of the {room} and it is a {dev_type}")
+        
+        with open("config/devices_config.json", "r") as f:
+            data = json.load(f)
+
+        try:
+            ip = data["Room"][room][dev_type][number]["ip"]
+            relay_number = data["Room"][room][dev_type][number]["relay_number"]
+
+            shelly = Shelly(ip)
+
+            shelly.execute_command(command, int(relay_number))
+        
+            return jsonify({"status": "success", "message": "Command received"}), 200  
+        
+        except KeyError:
+            return jsonify({"status": "error", "message": "DaikinAC device not found in config"}), 404
+        
+    except TypeError as e:
+        Logger.error(f"400 Bad request: {e}")
+        return jsonify({"response": f"Bad Request: {e}"}), 400
+
+    except ConnectionError as e:
+        Logger.error(f"503 Service Unavailable: {e}")
+        return jsonify({"response": f"Service Unavailable: {e}"}), 503
+
+    except KeyError as e:
+        Logger.error(f"400 Missing field: {e}")
+        return jsonify({"response": f"Missing field: {e}"}), 400
+    
+    except Exception as e:
+        Logger.error(f"Unexpected error in /api/daikin: {e}")
+        return jsonify({"response": "Internal Server Error"}), 500
+
+
 
 @server.route("/api/automations", methods=["GET"])
 @auth.login_required

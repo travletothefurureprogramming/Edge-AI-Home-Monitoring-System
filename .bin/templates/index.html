@@ -194,6 +194,14 @@
                                 </div>`;
                         }
 
+                        else if (category === "shelly") {
+                            const cmds = ['on', 'off'];
+                            cmds.forEach(cmd => {
+                                card.innerHTML += `<button onclick="sendShelly('${dev.name}', '${roomName}', 'shelly', '${id}','${cmd}')">${cmd.toUpperCase()}</button>`;
+
+                            })
+                        }
+
                         container.appendChild(card);
                     }
                 }
@@ -284,6 +292,14 @@
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ room: room, type: type, number: id, command: 'set_mode', mode: mode, device: device })
+        });
+    }
+
+    async function sendShelly(device, room, type, id, cmd) {
+        await fetch(`${API_URL}/api/shelly`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ room:room, type:type, number:id, command: cmd, device:device })
         });
     }
 
