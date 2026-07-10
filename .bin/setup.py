@@ -7,6 +7,27 @@ import socket
 from control.control import LG_TV, Phue
 from werkzeug.security import generate_password_hash, check_password_hash
 import secrets
+import pyttsx4
+import ctypes  
+
+engine = pyttsx4.init()
+
+
+def say(text):
+    def target():
+        try:
+            ctypes.windll.ole32.CoInitialize(None)
+            
+            local_engine = pyttsx4.init()
+            local_engine.say(text)
+            local_engine.runAndWait()
+            
+            ctypes.windll.ole32.CoUninitialize()
+        except Exception as e:
+            print(f"TTS Error: {e}")
+            
+    threading.Thread(target=target, daemon=True).start()
+
 
 
 class App(ctk.CTk):
@@ -20,6 +41,7 @@ class App(ctk.CTk):
 
         self.show_install_frame()
 
+        say("Welcome, to the Edge AI Setup Wizard... I'll guide you through the installation process, step by step. Don't worry, the setup is simple. Let's get your Edge AI Home Monitoring System ready. Click 'Install Dependencies' to install all required packages.")
     def get_local_ip(self):
         try:
             s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -353,8 +375,11 @@ class App(ctk.CTk):
         try:
             subprocess.run(["pip", "install", "-r", "setup/requirements.txt"], check=True)
             self.install_btn.configure(text="Packages Ready!", fg_color="green")
+            say("Installation completed successfully. Now Click 'Download AI Model' to install the Phi-3 language model.")
+            
         except Exception:
             self.install_btn.configure(text="Install Error", fg_color="red")
+            say("Installation failed. Please check your internet connection and try again.")
         finally:
             self.install_btn.configure(state="normal")
 
@@ -362,8 +387,10 @@ class App(ctk.CTk):
         try:
             subprocess.run(["ollama", "pull", "phi3"], check=True)
             self.model_btn.configure(text="Model Ready!", fg_color="green")
+            say("The AI model is ready. Create a secure administrator password. This password will be used to access the dashboard.")
         except Exception:
             self.model_btn.configure(text="Model Error", fg_color="red")
+            say("Download failed. Please check your internet connection and try again.")
         finally:
             self.model_btn.configure(state="normal")
 
