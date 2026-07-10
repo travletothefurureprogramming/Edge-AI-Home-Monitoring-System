@@ -200,7 +200,7 @@ class App(ctk.CTk):
         self.type_combobox = ctk.CTkComboBox(
             self.container,
             values=["android_tv", "tapo_light", "tapo_led_strip", "tapo_smart_plug",
-                    "phue_light", "phue_led_strip", "yeelight", "lg_tv", "daikin_ac", "shelly"],
+                    "phue_light", "phue_led_strip", "yeelight", "lg_tv", "daikin_ac", "shelly", "kasa"],
             command=self.on_type_change
         )
         self.type_combobox.pack(pady=5)
