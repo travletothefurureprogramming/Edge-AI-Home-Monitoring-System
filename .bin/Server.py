@@ -186,6 +186,25 @@ def send_yeelight(content):
     except Exception as error:
         Logger.error(f"An error has occured during the attemp to send the message to yeelight api endpoint. Error:{error}")
 
+def send_daikin(content):
+    try:
+        requests.post(f"http://{BACKEND_URL}api/daikin", json=content, timeout=5)
+    except Exception as error:
+        Logger.error(f"An error has occured during the attemp to send the message to daikin api endpoint. Error:{error}")
+
+def send_shelly(content):
+    try:
+        requests.post(f"http://{BACKEND_URL}api/shelly", json=content, timeout=5)
+    except Exception as error:
+        Logger.error(f"An error has occured during the attemp to send the message to shelly api endpoint. Error:{error}")
+
+def send_kasa(content):
+    try:
+        requests.post(f"http://{BACKEND_URL}api/kasa", json=content, timeout=5)
+    except Exception as error:
+        Logger.error(f"An error has occured during the attemp to send the message to kasa api endpoint. Error:{error}")
+
+
 def send_ai(content):
     try:
         return requests.post(f"http://{BACKEND_URL}api/ai", json=content, timeout=5)
