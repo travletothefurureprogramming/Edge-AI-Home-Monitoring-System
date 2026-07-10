@@ -1816,6 +1816,7 @@ def handle_daikin_ac():
         return jsonify({"response": "Internal Server Error"}), 500
 
 @server.route("/api/shelly", methods=["POST"])
+@auth.login_required
 def handle_shelly():
     try:
         content = request.json
@@ -1840,6 +1841,51 @@ def handle_shelly():
         
             return jsonify({"status": "success", "message": "Command received"}), 200  
         
+        except KeyError:
+            return jsonify({"status": "error", "message": "DaikinAC device not found in config"}), 404
+        
+    except TypeError as e:
+        Logger.error(f"400 Bad request: {e}")
+        return jsonify({"response": f"Bad Request: {e}"}), 400
+
+    except ConnectionError as e:
+        Logger.error(f"503 Service Unavailable: {e}")
+        return jsonify({"response": f"Service Unavailable: {e}"}), 503
+
+    except KeyError as e:
+        Logger.error(f"400 Missing field: {e}")
+        return jsonify({"response": f"Missing field: {e}"}), 400
+    
+    except Exception as e:
+        Logger.error(f"Unexpected error in /api/daikin: {e}")
+        return jsonify({"response": "Internal Server Error"}), 500
+
+
+@server.route("/api/kasa" , methods=["POST"])
+@auth.login_required
+def handle_kasa():
+    try:
+        content = request.json
+        room = content["room"]
+        dev_type = content["type"]
+        number = str(content["number"])
+        command = content["command"]
+        device = content["device"]
+
+        Logger.info(f"/api/kasa -> Received the command {command} for the device {device}. This device is part of the {room} and it is a {dev_type}")
+
+        with open("/config/device_config.json") as f:
+            data = json.load(f)
+        
+        try:
+            ip = data["Room"][room][dev_type][number][ip]
+
+            kasa = Kasa(ip)
+
+            kasa.execute_command(command)
+
+            return jsonify({"status": "success", "message": "Command received"}), 200  
+
         except KeyError:
             return jsonify({"status": "error", "message": "DaikinAC device not found in config"}), 404
         
