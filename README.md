@@ -62,6 +62,49 @@
 - Shelly EM (untested) 
 - Shelly flood (untested)
 
+* **Kasa Plugs:**
+- EP10 (untested)
+- HS103 (untested)
+- HS105 (untested)
+- HS110 (untested)
+- KP100 (untested)
+- KP105 (untested)
+- KP115 (untested)
+- KP125 (untested)
+- KP401 (untested)
+
+* **Kasa Power Strips:**
+- EP40 (untested)
+- HS107 (untested)
+- HS300 (untested)
+- KP200 (untested)
+- KP303 (untested)
+- KP400 (untested)
+
+* **Kasa Wall Switches:**
+- ES20M (untested)
+- HS210 (untested)
+- KP405 (untested)
+- KS200 (untested)
+- KS200M (untested)
+- KS220 (untested)
+- KS220M (untested)
+- KS230 (untested)
+
+* **Kasa Bulbs:**
+- KL110 (untested)
+- KL120 (untested)
+- KL125 (untested)
+- KL130 (untested)
+- KL135 (untested)
+- KL50 (untested)
+- KL60 (untested)
+- LB110 (untested)
+
+* **Kasa Light Strips:**
+- KL400L5 (untested)
+- KL420L5 (untested)
+- KL430 (untested)
 
 ## 🛠 Tech Stack
 
