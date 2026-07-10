@@ -186,3 +186,5 @@ class App:
         except Exception as e:
             messagebox.showerror("Error", f"An error occurred: {str(e)}")
 
+if __name__ == "__main__":
+    app = App()
