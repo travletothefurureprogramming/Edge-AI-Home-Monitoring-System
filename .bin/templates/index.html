@@ -202,6 +202,14 @@
                             })
                         }
 
+                        else if (category === "kasa") {
+                            const cmds = ['on', 'off'];
+                            cmds.forEach(cmd => {
+                                card.innerHTML += `<button onclick="sendShelly('${dev.name}', '${roomName}', 'kasa', '${id}','${cmd}')">${cmd.toUpperCase()}</button>`;
+
+                            })
+                        }
+
                         container.appendChild(card);
                     }
                 }
