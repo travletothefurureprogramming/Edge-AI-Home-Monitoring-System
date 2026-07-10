@@ -378,8 +378,21 @@ def execute_device_command(room, dev_type, dev_id, dev_name, action):
         endpoint = f"{BACKEND_URL}/api/tv"
     elif dev_type.lower() == "tapo_light":
         endpoint = f"{BACKEND_URL}/api/tapo_light"
-    else:
+    elif dev_type.lower() == "yeelight":
+        endpoint = f"{BACKEND_URL}/api/yeelight"
+    elif dev_type.lower() == "phue_light":
+        endpoint = f"{BACKEND_URL}/api/phue_light"
+    elif dev_type.lower() == "tapo_led_strip":
         endpoint = f"{BACKEND_URL}/api/tapo_led_strip"
+    elif dev_type.lower() == "daikin":
+        endpoint = f"{BACKEND_URL}/api/daikin"
+    elif dev_type.lower() == "shelly":
+        endpoint = f"{BACKEND_URL}/api/shelly"
+    elif dev_type.lower() == "kasa":
+        endpoint = f"{BACKEND_URL}/api/kasa"
+
+    
+
 
 
     if action in ["άναψε", "on", "open", "άνοιξε"]:
@@ -948,7 +961,8 @@ DEVICE_ENDPOINTS = {
     "phue_light": "api/phue_light",
     "yeelight": "api/yeelight",
     "daikin_ac": "api/daikin",
-    "shelly": "api/shelly"
+    "shelly": "api/shelly",
+    "kasa": "api/kasa",
 }
 
 
@@ -976,6 +990,8 @@ def create_device_action(name, room, dev_type, number, command, device_name, mod
                 DaikinAC(ip).execute_command(command, mode)
             elif dev_type == "shelly":
                 Shelly(ip).execute_command(command, rellay_number)
+            elif dev_type == "kasa":
+                Kasa(ip).execute_command(command)
             else:
                 Logger.error(f"Automation '{name}': άγνωστος τύπος συσκευής '{dev_type}'")
 
