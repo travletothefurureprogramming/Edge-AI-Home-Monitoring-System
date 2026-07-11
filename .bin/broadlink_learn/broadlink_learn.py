@@ -41,8 +41,10 @@ class App:
         self.title_label = ctk.CTkLabel(self.app, text="BROADLINK LEARN", font=("Arial", 25))
         self.title_label.pack(pady=10)
 
-        self.connect_button = ctk.CTkButton(self.app, text="Connect with broadlink device", command=self.connect)
-        self.connect_button.pack(pady=5)
+        self.ip_entry = ctk.CTkEntry(self.app, placeholder_text="Enter device ip")
+        self.ip_entry.pack(pady=5)
+
+
 
         self.device_name_entry = ctk.CTkEntry(self.app, placeholder_text="Device Name")
         self.device_name_entry.pack(pady=5)
@@ -60,10 +62,13 @@ class App:
         self.command_entry = ctk.CTkComboBox(self.app, values=["Select Command"])
         self.command_entry.pack(pady=5)
 
+        self.connect_button = ctk.CTkButton(self.app, text="Connect with Broadlink device", command=self.connect)
+        self.connect_button.pack(pady=5)
+
         self.learn_button = ctk.CTkButton(self.app, text="Learn & Save Command", fg_color="green", hover_color="darkgreen", command=self.enter_learning_mode)
         self.learn_button.pack(pady=15)
 
-        self.app.after(500, lambda: say("Hello. First, connect to the Broadlink device. Then, select the device type and command you want to learn. Finally, press the Learn and Save Command button."))
+        self.app.after(500, lambda: say("Hello. First, enter the ip adress and press connect with Broadlink device. Then, select the device type and command you want to learn. Finally, press the Learn and Save Command button."))
 
         self.app.mainloop()
 
@@ -97,17 +102,10 @@ class App:
             return []
         
     def connect(self):
-        print("Αναζήτηση συσκευών...")
-        devices = broadlink.discover()
-
-        if not devices:
-            messagebox.showwarning("Error", "The system failed to find any Broadlink devices")
-            return
-
-        self.device = devices[0]
+        self.device_ip = self.ip_entry.get()
+        self.device = broadlink.hello(self.device_ip)
         self.device.auth()
-        
-        self.device_ip = self.device.host[0] 
+       
         
         messagebox.showinfo("Success", f"Connected to {self.device.get_type()} ({self.device_ip})!")
     
@@ -168,15 +166,18 @@ class App:
             if device_key not in config_data["Room"][room]:
                 config_data["Room"][room][device_key] = {}
 
-            if "1" not in config_data["Room"][room][device_key]:
-                config_data["Room"][room][device_key]["1"] = {}
+            devices = config_data["Room"][room][device_key]
 
-            config_data["Room"][room][device_key]["1"].update({
+            index = 1
+            while str(index) in devices:
+                index += 1
+
+            devices[str(index)] = {
                 "name": device_name,
                 "type": dev_type_selected.lower(),
                 "ip": self.device_ip,
                 "is_broadlink_device": True
-            })
+            }
 
             with open(CONFIG_FILE, "w", encoding="utf-8") as f:
                 json.dump(config_data, f, indent=4, ensure_ascii=False)

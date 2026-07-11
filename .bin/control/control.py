@@ -12,6 +12,10 @@ from yeelight import Bulb
 import aiohttp
 from pydaikin.daikin_base import Appliance
 from pydaikin.factory import DaikinFactory
+import broadlink
+import ShellyPy
+from kasa import Discover
+
 
 load_dotenv(".env")
 
@@ -282,3 +286,78 @@ class DaikinAC:
             self.decrease_temperature()
         elif command == "set_mode":
             self.set_mode(args[0])
+
+
+class Shelly:
+    def __init__(self, ip):
+        self.HOST = ip
+        self.device = ShellyPy.Shelly(ip)
+    
+    def turn_on_relay(self, rellay_number=0):
+        self.device.relay(rellay_number, turn=True)
+    
+    def turn_off_relay(self, rellay_number=0):
+        self.device.relay(rellay_number, turn=False)
+
+    def execute_command(self, command, *args):
+        if command == "on":
+            self.turn_on_relay(args)
+        
+        elif command == "off":
+            self.turn_off_relay(args)
+
+class Kasa:
+    def __init__(self, ip):
+        self.HOST = ip
+        
+        self.username = os.getenv("KASA_USERNAME")
+        self.password = os.getenv("KASA_PASSWORD")
+        
+        self.device = None
+        self.connect()
+        
+        
+    async def async_connect(self):
+        await self.device = Discover.discover_single(self.HOST, username=self.username, password=self.password)
+        await self.device.update()
+    
+    def connect(self):
+        asyncio.run(self.async_connect())
+
+    async def async_turn_on(self):
+        await self.device.turn_on()
+        await self.device.update()
+
+    def turn_on(self):
+        asyncio.run(self.async_turn_on())
+
+    async def async_turn_off(self):
+        await self.device.turn_off()
+        await self.device.update()
+
+    def turn_off(self):
+        asyncio.run(self.async_turn_off())
+
+    def execute_command(self, command):
+        if command == "on": self.turn_on()
+        elif command == "off": self.turn_off()
+
+
+class Broadlink:
+    def __init__(self, ip):
+        self.HOST = ip
+
+        self.device = broadlink.hello(self.HOST)
+        self.device.auth()
+
+        self.JSON_FILE = "broadlink_codes.json"
+        self.CONFIG_FILE = "devices_config.json"  
+
+    def send_packet(self, room, device_name, command):
+        with open(self.JSON_FILE, "r", encoding="utf-8") as f:
+            data = json.load(f)
+
+            hex_packet = data[room][device_name][command]
+            byte_packet = bytes.fromhex(hex_packet)
+
+            self.device.send_data(byte_packet)

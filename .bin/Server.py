@@ -973,6 +973,28 @@ class Kasa:
         if command == "on": self.turn_on()
         elif command == "off": self.turn_off()
 
+
+class Broadlink:
+    def __init__(self, ip):
+        self.HOST = ip
+
+        self.device = broadlink.hello(self.HOST)
+        self.device.auth()
+
+        self.JSON_FILE = "broadlink_codes.json"
+        self.CONFIG_FILE = "devices_config.json"  
+
+    def send_packet(self, room, device_name, command):
+        with open(self.JSON_FILE, "r", encoding="utf-8") as f:
+            data = json.load(f)
+
+            hex_packet = data[room][device_name][command]
+            byte_packet = bytes.fromhex(hex_packet)
+
+            self.device.send_data(byte_packet)
+
+
+
 DEVICE_ENDPOINTS = {
     "android_tv": "api/tv",
     "lg_tv": "api/tv",
@@ -1759,7 +1781,39 @@ def handle_tv():
         
         with open("config/devices_config.json", "r") as f:
             data = json.load(f)
+
+        is_broadlink = data.get("Room", {})\
+                   .get(room, {})\
+                   .get(dev_type, {})\
+                   .get(number, {})\
+                   .get("is_broadlink_device", False)
         
+        if is_broadlink:
+            try:            
+                ip = data["Room"][room][dev_type][number]["ip"]
+                broadlink_ = Broadlink(ip)
+
+                broadlink_.send_packet(room,device,command)
+                
+                return jsonify({"status": "success", "message": "Command sent successfully"}), 200
+
+
+            except TypeError as e:
+                Logger.error(f"400 Bad request: {e}")
+                return jsonify({"response": f"Bad Request: {e}"}), 400
+
+            except ConnectionError as e:
+                Logger.error(f"503 Service Unavailable: {e}")
+                return jsonify({"response": f"Service Unavailable: {e}"}), 503
+
+            except KeyError as e:
+                Logger.error(f"400 Missing field: {e}")
+                return jsonify({"response": f"Missing field: {e}"}), 400
+            
+            except Exception as e:
+                Logger.error(f"Unexpected error in /api/tv: {e}")
+                return jsonify({"response": "Internal Server Error"}), 500
+            
         try:
             ip = data["Room"][room][dev_type][number]["ip"]
             if dev_type == "android_tv":
@@ -1941,6 +1995,45 @@ def handle_kasa():
         Logger.error(f"Unexpected error in /api/daikin: {e}")
         return jsonify({"response": "Internal Server Error"}), 500
 
+@server.route("/api/broadlink/ac")
+def handle_broadlink_ac():
+    try:
+        content = request.json
+        room = content["room"]
+        dev_type = content["type"]
+        number = str(content["number"])
+        command = content["command"]
+        device = content["device"]
+
+        Logger.info(f"/api/broadlink/ac -> Received the command {command} for the device {device}. This device is part of the {room} and it is a {dev_type}")
+
+        with open("/config/device_config.json") as f:
+            data = json.load(f)
+
+            ip = data["Room"][room][dev_type][number][ip]
+
+            kasa = Kasa(ip)
+
+            kasa.execute_command(command)
+
+            return jsonify({"status": "success", "message": "Command received"}), 200  
+    
+    except TypeError as e:
+        Logger.error(f"400 Bad request: {e}")
+        return jsonify({"response": f"Bad Request: {e}"}), 400
+
+    except ConnectionError as e:
+        Logger.error(f"503 Service Unavailable: {e}")
+        return jsonify({"response": f"Service Unavailable: {e}"}), 503
+
+    except KeyError as e:
+        Logger.error(f"400 Missing field: {e}")
+        return jsonify({"response": f"Missing field: {e}"}), 400
+    
+    except Exception as e:
+        Logger.error(f"Unexpected error in /api/daikin: {e}")
+        return jsonify({"response": "Internal Server Error"}), 500
+    
 
 
 @server.route("/api/automations", methods=["GET"])
