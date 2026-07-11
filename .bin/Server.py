@@ -1995,7 +1995,7 @@ def handle_kasa():
         Logger.error(f"Unexpected error in /api/daikin: {e}")
         return jsonify({"response": "Internal Server Error"}), 500
 
-@server.route("/api/broadlink/ac")
+@server.route("/api/broadlink/ac", methods=["POST"])
 def handle_broadlink_ac():
     try:
         content = request.json
@@ -2010,13 +2010,13 @@ def handle_broadlink_ac():
         with open("/config/device_config.json") as f:
             data = json.load(f)
 
-            ip = data["Room"][room][dev_type][number][ip]
+        ip = data["Room"][room][dev_type][number][ip]
 
-            kasa = Kasa(ip)
+        kasa = Kasa(ip)
 
-            kasa.execute_command(command)
+        kasa.execute_command(command)
 
-            return jsonify({"status": "success", "message": "Command received"}), 200  
+        return jsonify({"status": "success", "message": "Command received"}), 200  
     
     except TypeError as e:
         Logger.error(f"400 Bad request: {e}")
@@ -2034,6 +2034,46 @@ def handle_broadlink_ac():
         Logger.error(f"Unexpected error in /api/daikin: {e}")
         return jsonify({"response": "Internal Server Error"}), 500
     
+
+@server.route("/api/broadlink/decoder", methods=["POST"])
+def handle_broadlink_decoder():
+    try:
+        content = request.json
+        room = content["room"]
+        dev_type = content["type"]
+        number = content["number"]
+        command = content["command"]
+        device = content["device"]
+
+        Logger.info(f"/api/broadlink/decoder -> Received the command {command} for the device {device}. This device is part of the {room} and it is a {dev_type}")
+        
+        with open("config/devices_config.json") as f:
+            data = f.read()
+
+        ip = data["Room"][room][dev_type][number][ip]
+
+        broadlink_ = Broadlink()
+
+        broadlink_.send_packet(room,device,command)
+
+        return jsonify({"status": "success", "message": "Command received"}), 200  
+
+    
+    except TypeError as e:
+        Logger.error(f"400 Bad request: {e}")
+        return jsonify({"response": f"Bad Request: {e}"}), 400
+
+    except ConnectionError as e:
+        Logger.error(f"503 Service Unavailable: {e}")
+        return jsonify({"response": f"Service Unavailable: {e}"}), 503
+
+    except KeyError as e:
+        Logger.error(f"400 Missing field: {e}")
+        return jsonify({"response": f"Missing field: {e}"}), 400
+    
+    except Exception as e:
+        Logger.error(f"Unexpected error in /api/daikin: {e}")
+        return jsonify({"response": "Internal Server Error"}), 500
 
 
 @server.route("/api/automations", methods=["GET"])
