@@ -82,16 +82,16 @@ class App:
             self.command_entry.set("Select Command")
 
     def get_command_values(self, dev_type):
-        if dev_type == "TV":
+        if dev_type == "tv":
             return [
                 "on", "off", "channel_up", "channel_down", 
                 "volume_up", "volume_down", "mute",
                 "up", "down", "left", "right", "ok", 
                 "back", "exit", "menu", "home"
             ]
-        elif dev_type == "AC":
+        elif dev_type == "ac":
             return ["on", "off", "increase_temperature", "decrease_temperature"]
-        elif dev_type == "Decoder":
+        elif dev_type == "decoder":
             return [
                 "on", "off", "channel_up", "channel_down", 
                 "volume_up", "volume_down", "mute",

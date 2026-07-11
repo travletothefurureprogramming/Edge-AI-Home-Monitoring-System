@@ -205,8 +205,41 @@
                         else if (category === "kasa") {
                             const cmds = ['on', 'off'];
                             cmds.forEach(cmd => {
-                                card.innerHTML += `<button onclick="sendShelly('${dev.name}', '${roomName}', 'kasa', '${id}','${cmd}')">${cmd.toUpperCase()}</button>`;
+                                card.innerHTML += `<button onclick="sendKasa('${dev.name}', '${roomName}', 'kasa', '${id}','${cmd}')">${cmd.toUpperCase()}</button>`;
 
+                            })
+                        }
+
+                        else if (category === "tv") {
+                            const cmds = [                
+                                'on', 'off', 'channel_up', 'channel_down', 
+                                'volume_up', 'volume_down', 'mute',
+                                'up', 'down', 'left', 'right', 'ok', 
+                                'back', 'exit', 'menu', 'home'];
+                            
+                            cmds.forEach(cmd => {
+                                card.innerHTML += `<button onclick="sendTV('${dev.name}', '${roomName}', 'tv', '${id}','${cmd}')">${cmd.toUpperCase()}</button>`;
+
+                            })
+                        }
+
+                        else if (category === "decoder") {
+                            const cmds = [                
+                                'on', 'off', 'channel_up', 'channel_down', 
+                                'volume_up', 'volume_down', 'mute',
+                                'up', 'down', 'left', 'right', 'ok', 
+                                'back', 'exit', 'menu', 'home'];
+                            
+                            cmds.forEach(cmd => {
+                                card.innerHTML += `<button onclick="sendDecoder('${dev.name}', '${roomName}', 'decoder', '${id}','${cmd}')">${cmd.toUpperCase()}</button>`;
+
+                            })
+                        }
+
+                        else if (category === "ac") {
+                            const cmds = ['on', 'off', 'increase_temperature', 'decrease_temperature'];
+                            cmds.forEach(cmd => {
+                                card.innerHTML += `<button onclick="sendAC('${dev.name}', '${roomName}', 'ac', '${id}','${cmd}')">${cmd.toUpperCase()}</button>`;
                             })
                         }
 
@@ -261,6 +294,14 @@
         });
     }
 
+    async function sendDecoder(device, room, type, id, cmd) {
+        await fetch(`${API_URL}/api/broadlink/decoder`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ room: room, type: type, number: id, command: cmd, device: device})
+        });
+    }
+
     async function sendtapo_led_strip(device, room, type, id, cmd) {
         await fetch(`${API_URL}/api/tapo_led_strip`, {
             method: 'POST',
@@ -305,6 +346,22 @@
 
     async function sendShelly(device, room, type, id, cmd) {
         await fetch(`${API_URL}/api/shelly`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ room:room, type:type, number:id, command: cmd, device:device })
+        });
+    }
+
+    async function sendKasa(device, room, type, id, cmd) {
+        await fetch(`${API_URL}/api/kasa`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ room:room, type:type, number:id, command: cmd, device:device })
+        });
+    }
+
+    async function sendAC(device, room, type, id, cmd) {
+        await fetch(`${API_URL}/api/broadlink/ac`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ room:room, type:type, number:id, command: cmd, device:device })
