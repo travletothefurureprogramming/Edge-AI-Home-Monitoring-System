@@ -106,6 +106,19 @@
 - KL420L5 (untested)
 - KL430 (untested)
 
+* **Broadlink Universal remotes:**
+- RM home (untested)
+- RM mini 3 (untested)
+- RM plus (untested)
+- RM pro (untested)
+- RM pro+ (untested)
+- RM4 mini (untested)
+- RM4 pro (untested)
+- RM4C mini (untested)
+- RM4S (untested)
+- RM4 TV mate (untested)
+- You can control any devices using Broadlink Universal remotes of this categories: TV, AC, Decoder
+
 ## 🛠 Tech Stack
 
 * **Language:** Python 3.11
