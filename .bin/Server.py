@@ -1087,6 +1087,7 @@ DEVICE_ENDPOINTS = {
     "kasa": "api/kasa",
     "broadlink_ac": "api/broadlink/ac",
     "broadlink_decoder": "api/broadlink/decoder",
+    "sonos": "/api/music/control"
 }
 
 
@@ -1121,7 +1122,9 @@ def create_device_action(name, room, dev_type, number, command, device_name, mod
             elif dev_type == "broadlink_ac":
                 Broadlink(ip).send_packet(room, device_name, command)
             elif dev_type == "broadlink_decoder":
-                Broadlink(ip).send_packet(room, device_name, command)
+                Broadlink(ip).send_packet(room, device_name, command)            
+            elif dev_type == "sonos":
+                Sonos(ip).execute_command(command)
             else:
                 Logger.error(f"Automation '{name}': άγνωστος τύπος συσκευής '{dev_type}'")
 
