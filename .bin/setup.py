@@ -4,7 +4,7 @@ import threading
 import json
 import os
 import socket
-from control.control import LG_TV, Phue
+from control.control import LG_TV, Phue, Samsung_TV
 from werkzeug.security import generate_password_hash, check_password_hash
 import secrets
 import pyttsx4
@@ -241,7 +241,8 @@ class App(ctk.CTk):
         self.type_combobox = ctk.CTkComboBox(
             self.container,
             values=["android_tv", "tapo_light", "tapo_led_strip", "tapo_smart_plug",
-                    "phue_light", "phue_led_strip", "yeelight", "lg_tv", "daikin_ac", "shelly", "kasa", "broadlink"],
+                    "phue_light", "phue_led_strip", "yeelight", "lg_tv", "daikin_ac", 
+                    "shelly", "kasa", "broadlink", "samsung_tv"],
             command=self.on_type_change
         )
         self.type_combobox.pack(pady=5)
@@ -367,6 +368,9 @@ class App(ctk.CTk):
 
             if dev_type in ["phue_light", "phue_led_strip"]:
                 Phue(ip)
+            
+            if dev_type == "samsung_tv":
+                Samsung_TV(ip)
 
         except Exception as e:
             self.show_error(

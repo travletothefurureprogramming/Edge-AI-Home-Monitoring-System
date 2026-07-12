@@ -1043,6 +1043,7 @@ class Samsung_TV:
 DEVICE_ENDPOINTS = {
     "android_tv": "api/tv",
     "lg_tv": "api/tv",
+    "samsung_tv": "api/tv",
     "tapo_light": "api/tapo_light",
     "tapo_led_strip": "api/tapo_led_strip",
     "phue_light": "api/phue_light",
@@ -1075,6 +1076,8 @@ def create_device_action(name, room, dev_type, number, command, device_name, mod
                 AndroidTV(ip).send_command(command, isinstance(command, dict))
             elif dev_type == "lg_tv":
                 LG_TV(ip).execute_command(command)
+            elif dev_type == "samsung_tv":
+                Samsung_TV(ip).execute_command(command)
             elif dev_type == "daikin_ac":
                 DaikinAC(ip).execute_command(command, mode)
             elif dev_type == "shelly":
@@ -1650,6 +1653,7 @@ def handle_tapo_led_strip():
             
             led_strip = Tapo_Led_strip(ip,model)
             led_strip.command(command)
+            emit_device_event(room, dev_type, command)
 
             return jsonify({"status": "success", "message": "Command received"}), 200
             
@@ -1698,6 +1702,8 @@ def handle_tapo_light():
             
             smart_bulb = Tapo_Smart_Bulbs(ip,model)
             smart_bulb.command(command)
+            emit_device_event(room, dev_type, command)
+
 
             return jsonify({"status": "success", "message": "Command received"}), 200
             
@@ -1747,6 +1753,8 @@ def handle_yeelight():
             
             yeelight = Yeelight(ip)
             yeelight.command(command)
+            emit_device_event(room, dev_type, command)
+
 
             return jsonify({"status": "success", "message": "Command received"}), 200
             
@@ -1796,6 +1804,8 @@ def handle_phue_lights():
             
             phue_bridge = Phue(ip)
             phue_bridge.command(command,id)
+            emit_device_event(room, dev_type, command)
+
 
             return jsonify({"status": "success", "message": "Command received"}), 200
             
@@ -1886,6 +1896,15 @@ def handle_tv():
                 emit_device_event(room, dev_type, command)
 
                 return jsonify({"status": "success", "message": "Command sent successfully"}), 200
+            elif dev_type == "samsung_tv":
+                tv = Samsung_TV(ip)
+
+                tv.execute_command(command)
+                
+                Logger.info(f"/api/tv -> Command {command} sent to {device} at {ip}.")
+                emit_device_event(room, dev_type, command)
+
+                return jsonify({"status": "success", "message": "Command sent successfully"}), 200
 
         except KeyError:
             return jsonify({"status": "error", "message": "Device not found in config"}), 404
@@ -1931,9 +1950,11 @@ def handle_daikin_ac():
             if command == "set_mode":
                 mode = content["mode"]
                 daikinAC.execute_command(command,mode)
+                emit_device_event(room,dev_type,command)
         
             else:
                 daikinAC.execute_command(command)
+                emit_device_event(room,dev_type,command)
 
             return jsonify({"status": "success", "message": "Command received"}), 200
         
@@ -1979,6 +2000,7 @@ def handle_shelly():
             shelly = Shelly(ip)
 
             shelly.execute_command(command, int(rellay_number))
+            emit_device_event(room,dev_type,command)
         
             return jsonify({"status": "success", "message": "Command received"}), 200  
         
@@ -2024,6 +2046,7 @@ def handle_kasa():
             kasa = Kasa(ip)
 
             kasa.execute_command(command)
+            emit_device_event(room,dev_type,command)
 
             return jsonify({"status": "success", "message": "Command received"}), 200  
 
@@ -2066,6 +2089,7 @@ def handle_broadlink_ac():
         kasa = Kasa(ip)
 
         kasa.execute_command(command)
+        emit_device_event(room,dev_type,command)
 
         return jsonify({"status": "success", "message": "Command received"}), 200  
     
@@ -2106,6 +2130,7 @@ def handle_broadlink_decoder():
         broadlink_ = Broadlink()
 
         broadlink_.send_packet(room,device,command)
+        emit_device_event(room,dev_type,command)
 
         return jsonify({"status": "success", "message": "Command received"}), 200  
 
