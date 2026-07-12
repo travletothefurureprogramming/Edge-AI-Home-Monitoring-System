@@ -1005,6 +1005,8 @@ DEVICE_ENDPOINTS = {
     "daikin_ac": "api/daikin",
     "shelly": "api/shelly",
     "kasa": "api/kasa",
+    "broadlink_ac": "api/broadlink/ac",
+    "broadlink_decoder": "api/broadlink/decoder",
 }
 
 
@@ -1034,6 +1036,10 @@ def create_device_action(name, room, dev_type, number, command, device_name, mod
                 Shelly(ip).execute_command(command, rellay_number)
             elif dev_type == "kasa":
                 Kasa(ip).execute_command(command)
+            elif dev_type == "broadlink_ac":
+                Broadlink(ip).send_packet(room, device_name, command)
+            elif dev_type == "broadlink_decoder":
+                Broadlink(ip).send_packet(room, device_name, command)
             else:
                 Logger.error(f"Automation '{name}': άγνωστος τύπος συσκευής '{dev_type}'")
 
