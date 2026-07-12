@@ -16,6 +16,8 @@ import broadlink
 import ShellyPy
 from kasa import Discover
 from samsungtvws import SamsungTVWS
+from soco import SoCo
+
 
 
 load_dotenv(".env")

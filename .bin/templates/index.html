@@ -1,543 +1,629 @@
 <!DOCTYPE html>
 <html lang="el">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Edge AI Home Dashboard</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
-    
-    <style>
-        :root {
-            --bg: #0f172a;
-            --card-bg: rgba(30, 41, 59, 0.7);
-            --text: #f8fafc;
-            --accent: #38bdf8;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Home</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #fafafa;
+    --surface: #ffffff;
+    --border: #e7e7e7;
+    --border-strong: #d9d9d9;
+    --text: #18181b;
+    --text-dim: #71717a;
+    --text-faint: #a1a1aa;
+    --accent: #2563eb;
+    --accent-soft: #eff4ff;
+    --green: #16a34a;
+    --green-soft: #f0fdf4;
+    --red: #dc2626;
+    --red-soft: #fef2f2;
+    --radius: 10px;
+    --sans: 'Inter', system-ui, sans-serif;
+  }
 
-        body { 
-            background: var(--bg); color: var(--text); 
-            font-family: 'Inter', sans-serif; margin: 0;
-            display: flex; flex-direction: column; 
-            align-items: center; min-height: 100vh;
-        }
+  *{ box-sizing: border-box; }
 
-        h1 { margin: 2rem 0; font-weight: 600; letter-spacing: -0.05em; }
+  body{
+    margin:0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
 
-        .container {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 20px; width: 90%; max-width: 800px;
-        }
+  /* ---------- top bar ---------- */
+  .topbar{
+    display:flex; align-items:center; justify-content:space-between;
+    padding: 16px 28px;
+    border-bottom: 1px solid var(--border);
+    position: sticky; top:0; z-index: 20;
+    background: rgba(250,250,250,0.9);
+    backdrop-filter: blur(8px);
+  }
+  .brand{ display:flex; align-items:center; gap:10px; }
+  .brand-mark{
+    width: 28px; height: 28px; border-radius: 7px;
+    background: var(--text);
+    display:flex; align-items:center; justify-content:center;
+    font-weight:700; font-size: 12px; color: var(--surface);
+  }
+  .brand h1{ margin:0; font-size: 15px; font-weight:600; letter-spacing:-0.01em; }
 
-        .card { 
-            background: var(--card-bg); backdrop-filter: blur(10px);
-            padding: 24px; border-radius: 20px; 
-            border: 1px solid rgba(255,255,255,0.1); text-align: center;
-        }
+  .status-strip{ display:flex; align-items:center; gap: 20px; }
+  .stat{ display:flex; flex-direction:column; align-items:flex-end; }
+  .stat b{ font-size: 13px; font-weight:600; }
+  .stat small{ font-size:11px; color:var(--text-faint); }
+  .live{ display:flex; align-items:center; gap:6px; font-size:13px; color: var(--text-dim); }
+  .live-dot{ width:6px; height:6px; border-radius:50%; background: var(--green); }
 
-        h3 { margin-top: 0; font-size: 1.1rem; color: var(--accent); }
+  /* ---------- layout ---------- */
+  main{ max-width: 1080px; margin: 0 auto; padding: 28px 24px 80px; }
 
-        button { 
-            background: rgba(255,255,255,0.05); color: white; 
-            border: 1px solid rgba(255,255,255,0.1); padding: 10px 15px; 
-            margin: 5px; border-radius: 12px; cursor: pointer; 
-            transition: all 0.2s ease;
-        }
+  .section-head{ display:flex; align-items:baseline; justify-content:space-between; margin: 32px 0 12px; }
+  .section-head h2{ font-size: 13px; margin:0; font-weight:600; color: var(--text); }
+  .section-head .count{ font-size:12px; color: var(--text-faint); }
 
-        button:hover { background: rgba(255,255,255,0.15); transform: translateY(-2px); }
+  .grid{ display:grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; }
 
-        #aiInput {
-            width: 80%; padding: 10px; border-radius: 10px;
-            border: 1px solid var(--accent); background: rgba(255,255,255,0.05);
-            color: white; margin-bottom: 10px;
-        }
+  /* ---------- device card ---------- */
+  .card{
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+  }
 
-        .loader {
-            display: none; border: 4px solid #f3f3f3; border-top: 4px solid var(--accent);
-            border-radius: 50%; width: 20px; height: 20px;
-            animation: spin 1s linear infinite; margin: 10px auto;
-        }
+  .card-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
+  .card-title h3{ margin:0; font-size:14px; font-weight:600; }
+  .card-title .room{ font-size: 12px; color: var(--text-faint); margin-top:1px; }
+  .kind-icon{
+    width:28px; height:28px; border-radius:7px; flex:0 0 auto;
+    display:flex; align-items:center; justify-content:center; font-size:14px;
+    background: var(--bg); border:1px solid var(--border);
+  }
 
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-    </style>
+  .btn-row{ display:flex; flex-wrap:wrap; gap:6px; }
+  .btn{
+    appearance:none; border:1px solid var(--border-strong); background: var(--surface);
+    color: var(--text-dim); font-family: var(--sans); font-size: 12px; font-weight:500;
+    padding: 6px 10px; border-radius: 7px; cursor:pointer;
+    transition: background .12s ease, color .12s ease, border-color .12s ease;
+  }
+  .btn:hover{ background: var(--bg); color: var(--text); }
+  .btn.on{ border-color: #bbf0cc; color: var(--green); background: var(--green-soft); }
+  .btn.on:hover{ filter: brightness(0.97); }
+  .btn.off{ border-color: #fbd2d2; color: var(--red); background: var(--red-soft); }
+  .btn.off:hover{ filter: brightness(0.97); }
+  .btn.accent{ border-color: #c9dcfc; color: var(--accent); background: var(--accent-soft); }
+
+  select.mode-select{
+    background: var(--surface); color: var(--text); border:1px solid var(--border-strong);
+    border-radius:7px; padding:6px 8px; font-family: var(--sans); font-size:12px;
+  }
+
+  /* ---------- sonos now-playing ---------- */
+  .now-playing{
+    margin-top: 12px; padding: 10px 12px; border-radius: 8px;
+    background: var(--bg); border: 1px solid var(--border);
+    display:flex; align-items:center; gap: 10px;
+  }
+  .note-icon{ font-size: 13px; flex:0 0 auto; opacity:.55; }
+  .now-playing.playing .note-icon{ opacity: 1; }
+  .np-text{ min-width:0; flex:1; }
+  .np-title{ font-size:12.5px; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .np-sub{ font-size: 10.5px; color: var(--text-faint); margin-top:1px; }
+  .np-refresh{
+    flex:0 0 auto; width:24px; height:24px; border-radius:6px; border:1px solid var(--border);
+    background: var(--surface); color: var(--text-dim); cursor:pointer; display:flex; align-items:center; justify-content:center;
+  }
+  .np-refresh:hover{ color: var(--text); }
+  .np-refresh.spinning svg{ animation: spin .6s linear; }
+  @keyframes spin{ to{ transform: rotate(360deg); } }
+
+  /* ---------- AI assistant ---------- */
+  .ai-panel{ background: var(--surface); border:1px solid var(--border); border-radius: var(--radius); padding: 16px; }
+  .ai-label{ font-size:12px; font-weight:600; color: var(--text-dim); margin-bottom:10px; }
+  .ai-row{ display:flex; gap:8px; }
+  #aiInput{
+    flex:1; background: var(--bg); border:1px solid var(--border-strong); color: var(--text);
+    padding: 10px 12px; border-radius:8px; font-family: var(--sans); font-size:13.5px; outline:none;
+  }
+  #aiInput:focus{ border-color: var(--accent); background: var(--surface); }
+  .ai-send{
+    background: var(--text); color:var(--surface); border:none; padding: 0 16px; border-radius:8px;
+    font-weight:600; cursor:pointer; font-family: var(--sans); font-size:13px;
+  }
+  .ai-send:hover{ opacity:.85; }
+  .ai-answer{
+    margin-top: 12px; font-size: 13px; line-height:1.55; color: var(--text-dim);
+    padding: 10px 12px; background: var(--bg); border-radius: 8px; display:none;
+  }
+  .ai-answer.show{ display:block; }
+  .dots{ display:inline-flex; gap:3px; }
+  .dots span{ width:4px; height:4px; background: var(--text-faint); border-radius:50%; animation: dotfade 1.2s infinite; }
+  .dots span:nth-child(2){ animation-delay:.2s; } .dots span:nth-child(3){ animation-delay:.4s; }
+  @keyframes dotfade{ 0%,100%{opacity:.2;} 50%{opacity:1;} }
+
+  /* ---------- automations ---------- */
+  .automations-panel{ background: var(--surface); border:1px solid var(--border); border-radius: var(--radius); padding: 16px; }
+  .rule-list{ display:flex; flex-direction:column; gap:6px; margin-bottom: 16px; }
+  .rule-row{
+    display:flex; align-items:center; justify-content:space-between;
+    padding: 10px 12px; border:1px solid var(--border); border-radius:8px; background: var(--bg);
+  }
+  .rule-row .r-name{ font-size:13px; font-weight:500; }
+  .rule-row .r-trigger{ font-size: 11.5px; color: var(--text-faint); margin-top:1px; }
+  .rule-del{
+    background: var(--surface); border:1px solid var(--border-strong); color: var(--text-dim);
+    font-size:11.5px; padding:5px 9px; border-radius:6px; cursor:pointer;
+  }
+  .rule-del:hover{ color: var(--red); border-color:#fbd2d2; background: var(--red-soft); }
+  .empty-state{ font-size:12.5px; color: var(--text-faint); padding: 10px 2px; }
+
+  .form-label{ font-size:12px; font-weight:600; color: var(--text-dim); margin: 4px 0 10px; }
+  .form-grid{ display:flex; flex-wrap:wrap; gap:8px; }
+  .form-grid input[type="text"], .form-grid input[type="time"], .form-grid select{
+    background: var(--bg); border:1px solid var(--border-strong); color: var(--text);
+    padding: 9px 11px; border-radius: 8px; font-family: var(--sans); font-size: 13px;
+  }
+  #auto-name{ flex: 1 1 220px; }
+  .add-btn{
+    background: var(--text); color: var(--surface); border:none; font-weight:600; font-family: var(--sans);
+    padding: 9px 16px; border-radius:8px; cursor:pointer; font-size:13px;
+  }
+  .add-btn:hover{ opacity:.85; }
+  #automation-status{ font-size:12px; margin-top:10px; min-height: 14px; color: var(--text-dim); }
+
+  @media (max-width: 560px){
+    .topbar{ padding: 14px 16px; }
+    .status-strip{ gap: 12px; }
+    main{ padding: 20px 14px 60px; }
+  }
+</style>
 </head>
 <body>
 
-    <h1>Edge AI Dashboard</h1>
+  <div class="topbar">
+    <div class="brand">
+      <div class="brand-mark">A</div>
+      <h1>Home</h1>
+    </div>
+    <div class="status-strip">
+      <div class="stat"><b id="stat-devices">—</b><small>συσκευές</small></div>
+      <div class="stat"><b id="stat-automations">—</b><small>automations</small></div>
+      <div class="live"><span class="live-dot"></span>online</div>
+    </div>
+  </div>
 
-    <div id="dashboard-container" class="container">
-        <div class="card" style="grid-column: 1 / -1;">
-            <h3>AI Assistant</h3>
-            <input type="text" id="aiInput" placeholder="Ask anything...">
-            <button onclick="askAI()">Ask</button>
-            <div id="loader" class="loader"></div>
-            <p id="aiResponse" style="margin-top: 10px; color: var(--accent);"></p>
-        </div>
-        <div class="card" id="automations-card" style="grid-column: 1 / -1; text-align:left;">
-            <h3 style="text-align:center;">⚙️ Automations</h3>
-        
-            <div id="automations-list" style="margin-bottom: 16px;">
-                <p style="color:gray; font-size:0.85rem;">Φόρτωση...</p>
-            </div>
-        
-            <hr style="border-color: rgba(255,255,255,0.1);">
-        
-            <h4 style="color: var(--accent); margin-bottom: 8px;">Νέο Automation</h4>
-        
-            <div style="display:flex; flex-wrap:wrap; gap:8px; align-items:center;">
-                <input type="text" id="auto-name" placeholder="Όνομα (π.χ. Sleep Lights Off)"
-                    style="flex:1 1 200px; padding:8px; border-radius:8px; border:1px solid #333; background:#0f1115; color:#eee;">
-        
-                <select id="auto-trigger-type" onchange="toggleTriggerFields()"
-                        style="padding:8px; border-radius:8px; background:#0f1115; color:#eee; border:1px solid #333;">
-                    <option value="schedule">Ώρα (Schedule)</option>
-                    <option value="event">Γεγονός (Event)</option>
-                </select>
-        
-                <input type="time" id="auto-time"
-                    style="padding:8px; border-radius:8px; background:#0f1115; color:#eee; border:1px solid #333;">
-        
-                <select id="auto-event" style="display:none; padding:8px; border-radius:8px; background:#0f1115; color:#eee; border:1px solid #333;">
-                    <option value="person_detected">Ανίχνευση ατόμου</option>
-                </select>
-            </div>
-        
-            <div style="display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-top:8px;">
-                <select id="auto-device" style="flex:1 1 220px; padding:8px; border-radius:8px; background:#0f1115; color:#eee; border:1px solid #333;">
-                    <option value="">-- Επίλεξε συσκευή --</option>
-                </select>
-        
-                <select id="auto-command" style="padding:8px; border-radius:8px; background:#0f1115; color:#eee; border:1px solid #333;">
-                    <option value="on">ON</option>
-                    <option value="off">OFF</option>
-                </select>
-        
-                <button onclick="submitAutomation()">+ Προσθήκη</button>
-            </div>
-        
-            <p id="automation-status" style="font-size:0.8rem; color: var(--accent); margin-top:6px;"></p>
-        </div>
-        </div>
+  <main>
 
-   <script>
+    <section class="ai-panel">
+      <div class="ai-label">Assistant</div>
+      <div class="ai-row">
+        <input type="text" id="aiInput" placeholder="Ρώτα κάτι για το σπίτι σου..." onkeydown="if(event.key==='Enter') askAI()">
+        <button class="ai-send" onclick="askAI()">Ρώτα</button>
+      </div>
+      <div class="ai-answer" id="aiAnswerWrap">
+        <span id="aiResponse"></span>
+      </div>
+    </section>
 
-    const API_URL = window.location.hostname ? `${window.location.protocol}//${window.location.hostname}:8080` : "http://192.168.1.2:8080";
+    <div class="section-head">
+      <h2>Συσκευές</h2>
+      <span class="count" id="device-count"></span>
+    </div>
+    <div id="dashboard-container" class="grid"></div>
 
-    async function loadDashboard() {
-        try {
-            const res = await fetch(`${API_URL}/api/devices`);
-            const data = await res.json();
-            const container = document.getElementById('dashboard-container');
+    <div class="section-head">
+      <h2>Automations</h2>
+      <span class="count" id="rule-count"></span>
+    </div>
+    <section class="automations-panel">
+      <div id="automations-list" class="rule-list">
+        <p class="empty-state">Φόρτωση...</p>
+      </div>
 
-            for (const [roomName, categories] of Object.entries(data.Room)) {
-                for (const [category, devices] of Object.entries(categories)) {
-                    for (const [id, dev] of Object.entries(devices)) {
-                        
-                        const card = document.createElement('div');
-                        card.className = 'card';
-                        card.innerHTML = `<h3>${dev.name}</h3><p style="font-size:0.8rem; color:gray;">${roomName.replace('_', ' ').toUpperCase()}</p>`;
+      <div class="form-label">Νέο automation</div>
+      <div class="form-grid">
+        <input type="text" id="auto-name" placeholder="Όνομα (π.χ. Sleep Lights Off)">
+        <select id="auto-trigger-type" onchange="toggleTriggerFields()">
+          <option value="schedule">Ώρα</option>
+          <option value="event">Γεγονός</option>
+        </select>
+        <input type="time" id="auto-time">
+        <select id="auto-event" style="display:none;">
+          <option value="person_detected">Ανίχνευση ατόμου</option>
+        </select>
+      </div>
+      <div class="form-grid" style="margin-top:8px;">
+        <select id="auto-device" style="flex:1 1 220px;">
+          <option value="">-- Επίλεξε συσκευή --</option>
+        </select>
+        <select id="auto-command">
+          <option value="on">ON</option>
+          <option value="off">OFF</option>
+        </select>
+        <button class="add-btn" onclick="submitAutomation()">Προσθήκη</button>
+      </div>
+      <p id="automation-status"></p>
+    </section>
 
-                        if (category === 'lg_tv') {
-                            const cmds = ['on', 'off', 'home', 'volume_up', 'volume_down', 'play', 'pause', 'stop', 'rewind', 'fast_forward'];
-                            cmds.forEach(cmd => {
-                                card.innerHTML += `<button onclick="sendTV('${dev.name}', '${roomName}', 'lg_tv', '${id}', '${cmd}')">${cmd.toUpperCase()}</button>`;
-                            });
-                        }
-                        
-                        else if (category === 'android_tv') {
-                            const cmds = ['power', 'home', 'volume_up', 'volume_down','mute','channel_up','channel_down'];
-                            cmds.forEach(cmd => {
-                                card.innerHTML += `<button onclick="sendTV('${dev.name}', '${roomName}', 'android_tv', '${id}', '${cmd}')">${cmd.toUpperCase()}</button>`;
-                            });
-                        }
+  </main>
 
-                        else if (category === 'samsung_tv') {
-                            const cmds = ['power', 'home', 'volume_up', 'volume_down','mute','channel_up','channel_down'];
-                            cmds.forEach(cmd => {
-                                card.innerHTML += `<button onclick="sendTV('${dev.name}', '${roomName}', 'android_tv', '${id}', '${cmd}')">${cmd.toUpperCase()}</button>`;
-                            });
-                        }
+<script>
+const API_URL = window.location.hostname ? `${window.location.protocol}//${window.location.hostname}:8080` : "http://192.168.1.2:8080";
 
+const ICONS = {
+  lg_tv:'📺', android_tv:'📺', samsung_tv:'📺', tv:'📺', decoder:'📺',
+  tapo_light:'💡', tapo_led_strip:'💡', phue_light:'💡', yeelight:'💡',
+  daikin_ac:'❄️', ac:'❄️', shelly:'🔌', kasa:'🔌', sonos:'🎵'
+};
 
-                        else if (category === 'tapo_light') {
-                            const cmds = ['on', 'off'];
-                            cmds.forEach(cmd => {
-                                card.innerHTML += `<button onclick="sendtapo_light('${dev.name}', '${roomName}', 'tapo_light', '${id}', '${cmd}')">${cmd.toUpperCase()}</button>`;
-                            });
-                        }
+let sonosDeviceMap = {};
 
-                        else if (category === 'tapo_led_strip') {
-                            const cmds = ['on', 'off'];
-                            cmds.forEach(cmd => {
-                                card.innerHTML += `<button onclick="sendtapo_led_strip('${dev.name}', '${roomName}', 'tapo_led_strip', '${id}', '${cmd}')">${cmd.toUpperCase()}</button>`;
-                            });
-                        }
+function iconFor(cat){ return ICONS[cat] || '⚙️'; }
 
-                        else if (category === 'phue_light') {
-                            const cmds = ['on', 'off'];
-                            cmds.forEach(cmd => {
-                                card.innerHTML += `<button onclick="sendphue_light('${dev.name}', '${roomName}', 'phue_light', '${id}','${cmd}')">${cmd.toUpperCase()}</button>`;
-                            });
-                        }
-
-                        else if (category === 'yeelight') {
-                            const cmds = ['on', 'off'];
-                            cmds.forEach(cmd => {
-                                card.innerHTML += `<button onclick="sendyeelight('${dev.name}', '${roomName}', 'yeelight', '${id}','${cmd}')">${cmd.toUpperCase()}</button>`;
-                            });
-                        }
-
-                        else if (category === 'daikin_ac') {
-                            const cmds = ['on', 'off', 'increase_temperature', 'decrease_temperature'];
-                            cmds.forEach(cmd => {
-                                card.innerHTML += `<button onclick="sendDaikin('${dev.name}', '${roomName}', 'daikin_ac', '${id}', '${cmd}')">${cmd.replace('_',' ').toUpperCase()}</button>`;
-                            });
-
-                            const modes = ['auto', 'cool', 'heat', 'dry', 'fan'];
-                            let modeOptions = modes.map(m => `<option value="${m}">${m.toUpperCase()}</option>`).join('');
-                            card.innerHTML += `
-                                <div style="margin-top:8px;">
-                                    <select id="mode-${roomName}-${id}">${modeOptions}</select>
-                                    <button onclick="sendDaikinMode('${dev.name}', '${roomName}', 'daikin_ac', '${id}')">SET MODE</button>
-                                </div>`;
-                        }
-
-                        else if (category === "shelly") {
-                            const cmds = ['on', 'off'];
-                            cmds.forEach(cmd => {
-                                card.innerHTML += `<button onclick="sendShelly('${dev.name}', '${roomName}', 'shelly', '${id}','${cmd}')">${cmd.toUpperCase()}</button>`;
-
-                            })
-                        }
-
-                        else if (category === "kasa") {
-                            const cmds = ['on', 'off'];
-                            cmds.forEach(cmd => {
-                                card.innerHTML += `<button onclick="sendKasa('${dev.name}', '${roomName}', 'kasa', '${id}','${cmd}')">${cmd.toUpperCase()}</button>`;
-
-                            })
-                        }
-
-                        else if (category === "tv") {
-                            const cmds = [                
-                                'on', 'off', 'channel_up', 'channel_down', 
-                                'volume_up', 'volume_down', 'mute',
-                                'up', 'down', 'left', 'right', 'ok', 
-                                'back', 'exit', 'menu', 'home'];
-                            
-                            cmds.forEach(cmd => {
-                                card.innerHTML += `<button onclick="sendTV('${dev.name}', '${roomName}', 'tv', '${id}','${cmd}')">${cmd.toUpperCase()}</button>`;
-
-                            })
-                        }
-
-                        else if (category === "decoder") {
-                            const cmds = [                
-                                'on', 'off', 'channel_up', 'channel_down', 
-                                'volume_up', 'volume_down', 'mute',
-                                'up', 'down', 'left', 'right', 'ok', 
-                                'back', 'exit', 'menu', 'home'];
-                            
-                            cmds.forEach(cmd => {
-                                card.innerHTML += `<button onclick="sendDecoder('${dev.name}', '${roomName}', 'decoder', '${id}','${cmd}')">${cmd.toUpperCase()}</button>`;
-
-                            })
-                        }
-
-                        else if (category === "ac") {
-                            const cmds = ['on', 'off', 'increase_temperature', 'decrease_temperature'];
-                            cmds.forEach(cmd => {
-                                card.innerHTML += `<button onclick="sendAC('${dev.name}', '${roomName}', 'ac', '${id}','${cmd}')">${cmd.toUpperCase()}</button>`;
-                            })
-                        }
-
-                        container.appendChild(card);
-                    }
-                }
-            }
-        } catch (err) { 
-            console.error("Error loading devices:", err); 
-        }
-    }
-
-    async function askAI() {
-        const loader = document.getElementById('loader');
-        const responseText = document.getElementById('aiResponse');
-        const prompt = document.getElementById('aiInput').value;
-        
-        if(!prompt) return;
-        
-        loader.style.display = "block";
-        responseText.innerText = "Thinking...";
-
-        try {
-            const res = await fetch(`${API_URL}/api/ai`, {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({prompt: prompt})
-            });
-            const data = await res.json();
-            responseText.innerText = data.response;
-        } catch (err) { 
-            responseText.innerText = "Error connecting to AI."; 
-        } finally { 
-            loader.style.display = "none"; 
-        }
-    }
-
-    // API Calls
-    async function sendTV(device, room, type, id, cmd) {
-        await fetch(`${API_URL}/api/tv`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ room: room, type: type, number: id, command: cmd, device: device})
-        });
-    }
-
-    async function sendtapo_light(device, room, type, id, cmd) {
-        await fetch(`${API_URL}/api/tapo_light`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ room: room, type: type, number: id, command: cmd, device: device})
-        });
-    }
-
-    async function sendDecoder(device, room, type, id, cmd) {
-        await fetch(`${API_URL}/api/broadlink/decoder`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ room: room, type: type, number: id, command: cmd, device: device})
-        });
-    }
-
-    async function sendtapo_led_strip(device, room, type, id, cmd) {
-        await fetch(`${API_URL}/api/tapo_led_strip`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ room: room, type: type, number: id, command: cmd, device: device})
-        });
-    }
-
-    async function sendphue_light(device, room, type, id, cmd) {
-        await fetch(`${API_URL}/api/phue_light`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ room: room, type: type, number: id, command: cmd, device: device})
-        });
-    }
-
-    async function sendyeelight(device, room, type, id, cmd) {
-        await fetch(`${API_URL}/api/yeelight`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ room: room, type: type, number: id, command: cmd, device: device})
-        });
-    }
-
-    async function sendDaikin(device, room, type, id, cmd) {
-        await fetch(`${API_URL}/api/daikin`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ room: room, type: type, number: id, command: cmd, device: device })
-    });
+function makeBtn(label, cls, onclick){
+  return `<button class="btn ${cls||''}" onclick="${onclick}">${label}</button>`;
 }
 
-    async function sendDaikinMode(device, room, type, id) {
-        const select = document.getElementById(`mode-${room}-${id}`);
-        const mode = select.value;
-        await fetch(`${API_URL}/api/daikin`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ room: room, type: type, number: id, command: 'set_mode', mode: mode, device: device })
-        });
-    }
+async function loadDashboard() {
+  try {
+    const res = await fetch(`${API_URL}/api/devices`);
+    const data = await res.json();
+    const container = document.getElementById('dashboard-container');
+    container.innerHTML = '';
+    sonosDeviceMap = {};
+    let total = 0;
 
-    async function sendShelly(device, room, type, id, cmd) {
-        await fetch(`${API_URL}/api/shelly`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ room:room, type:type, number:id, command: cmd, device:device })
-        });
-    }
+    for (const [roomName, categories] of Object.entries(data.Room)) {
+      for (const [category, devices] of Object.entries(categories)) {
+        for (const [id, dev] of Object.entries(devices)) {
+          total++;
+          const card = document.createElement('div');
+          card.className = 'card';
 
-    async function sendKasa(device, room, type, id, cmd) {
-        await fetch(`${API_URL}/api/kasa`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ room:room, type:type, number:id, command: cmd, device:device })
-        });
-    }
+          let head = `
+            <div class="card-head">
+              <div class="card-title">
+                <h3>${dev.name}</h3>
+                <div class="room">${roomName.replace(/_/g,' ')}</div>
+              </div>
+              <div class="kind-icon">${iconFor(category)}</div>
+            </div>`;
 
-    async function sendAC(device, room, type, id, cmd) {
-        await fetch(`${API_URL}/api/broadlink/ac`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ room:room, type:type, number:id, command: cmd, device:device })
-        });
-    }
+          let controls = `<div class="btn-row">`;
 
-    let automationDeviceMap = {};
- 
-    function toggleTriggerFields() {
-        const type = document.getElementById('auto-trigger-type').value;
-        document.getElementById('auto-time').style.display = (type === 'schedule') ? 'inline-block' : 'none';
-        document.getElementById('auto-event').style.display = (type === 'event') ? 'inline-block' : 'none';
-    }
-
-    function populateEventDropdown() {
-        const eventSelect = document.getElementById('auto-event')
-        eventSelect.innerHTML = '<option value="person_detected">🚨 Ανίχνευση ατόμου</option>';
-
-        for (const [key, dev] of Object.entries(automationDeviceMap)){
-            ['on', 'off'].forEach(cmd => {
-                    const eventName = `${dev.room}_${dev.type}_${cmd}`;
-                    const opt = document.createElement('option');
-                    opt.value = eventName;
-                    opt.textContent = `${dev.device} -> ${cmd.toLocaleUpperCase()}`;
-                    eventSelect.appendChild(opt);
-            }
-            );
-        }
-    }
-
-    function formatEventLabel(eventStr) {
-        const parts = eventStr.split('_');
-        const cmd = parts.pop();
-        return `${parts.join(' ').replace(/\b\w/g, c => c.toUpperCase())} -> ${cmd.toUpperCase()}`;
-    }
- 
-    async function loadAutomations() {
-        const listEl = document.getElementById('automations-list');
-        const deviceSelect = document.getElementById('auto-device');
- 
-        try {
-            const devRes = await fetch(`${API_URL}/api/devices`);
-            const devData = await devRes.json();
- 
-            deviceSelect.innerHTML = '<option value="">-- Επίλεξε συσκευή --</option>';
-            automationDeviceMap = {};
- 
-            for (const [roomName, categories] of Object.entries(devData.Room)) {
-                for (const [category, devices] of Object.entries(categories)) {
-                    for (const [id, dev] of Object.entries(devices)) {
-                        const key = `${roomName}|${category}|${id}`;
-                        automationDeviceMap[key] = {
-                            room: roomName,
-                            type: category,
-                            number: id,
-                            device: dev.name,
-                            model: dev.model || null
-                        };
-                        const opt = document.createElement('option');
-                        opt.value = key;
-                        opt.textContent = `${dev.name} (${roomName.replace('_',' ')})`;
-                        deviceSelect.appendChild(opt);
-                    }
-                }
-            }
-
-            populateEventDropdown();
- 
-            const res = await fetch(`${API_URL}/api/automations`);
-            const rules = await res.json();
- 
-            if (!rules.length) {
-                listEl.innerHTML = '<p style="color:gray; font-size:0.85rem;">Δεν υπάρχουν automations ακόμα.</p>';
-                return;
-            }
- 
-            listEl.innerHTML = '';
-            rules.forEach(rule => {
-                const row = document.createElement('div');
-                row.style = "display:flex; justify-content:space-between; align-items:center; padding:6px 0; border-bottom:1px solid rgba(255,255,255,0.05);";
- 
-            const triggerLabel = rule.trigger.type === 'schedule'
-                ? `⏰ ${rule.trigger.cron}`
-                : `⚡ ${formatEventLabel(rule.trigger.event)}`;
-            
-                row.innerHTML = `
-                    <span style="font-size:0.9rem;">
-                        <strong>${rule.name}</strong>
-                        <span style="color:gray; font-size:0.8rem;"> — ${triggerLabel}</span>
-                    </span>
-                    <button onclick="deleteAutomation('${rule.name}')" style="padding:4px 10px; font-size:0.8rem;">Διαγραφή</button>
-                `;
-                listEl.appendChild(row);
+          if (category === 'lg_tv') {
+            ['on','off','home','volume_up','volume_down','play','pause','stop','rewind','fast_forward'].forEach(cmd=>{
+              const cls = cmd==='on'?'on':cmd==='off'?'off':'';
+              controls += makeBtn(cmd.replace('_',' '), cls, `sendTV('${dev.name}','${roomName}','lg_tv','${id}','${cmd}')`);
             });
- 
-        } catch (err) {
-            listEl.innerHTML = '<p style="color:#ff6b6b; font-size:0.85rem;">Σφάλμα φόρτωσης automations.</p>';
-            console.error("Error loading automations:", err);
-        }
-    }
- 
-    async function submitAutomation() {
-        const statusEl = document.getElementById('automation-status');
-        const name = document.getElementById('auto-name').value.trim();
-        const triggerType = document.getElementById('auto-trigger-type').value;
-        const deviceKey = document.getElementById('auto-device').value;
-        const command = document.getElementById('auto-command').value;
- 
-        if (!name || !deviceKey) {
-            statusEl.style.color = "#ff6b6b";
-            statusEl.innerText = "Συμπλήρωσε όνομα και συσκευή.";
-            return;
-        }
- 
-        const dev = automationDeviceMap[deviceKey];
- 
-        const payload = {
-            name: name,
-            trigger_type: triggerType,
-            room: dev.room,
-            type: dev.type,
-            number: dev.number,
-            command: command,
-            device: dev.device,
-            model: dev.model
-        };
- 
-        if (triggerType === 'schedule') {
-            payload.time = document.getElementById('auto-time').value; // "HH:MM"
-        } else {
-            payload.event = document.getElementById('auto-event').value;
-        }
- 
-        try {
-            const res = await fetch(`${API_URL}/api/automations`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
+          } else if (category === 'android_tv') {
+            ['power','home','volume_up','volume_down','mute','channel_up','channel_down'].forEach(cmd=>{
+              controls += makeBtn(cmd.replace('_',' '), cmd==='power'?'accent':'', `sendTV('${dev.name}','${roomName}','android_tv','${id}','${cmd}')`);
             });
-            const data = await res.json();
- 
-            statusEl.style.color = res.ok ? "var(--accent)" : "#ff6b6b";
-            statusEl.innerText = data.message || data.error || "Κάτι πήγε στραβά.";
- 
-            if (res.ok) {
-                document.getElementById('auto-name').value = "";
-                await loadAutomations();
-            }
-        } catch (err) {
-            statusEl.style.color = "#ff6b6b";
-            statusEl.innerText = "Σφάλμα σύνδεσης.";
-            console.error(err);
+          } else if (category === 'samsung_tv') {
+            ['power','home','volume_up','volume_down','mute','channel_up','channel_down'].forEach(cmd=>{
+              controls += makeBtn(cmd.replace('_',' '), cmd==='power'?'accent':'', `sendTV('${dev.name}','${roomName}','samsung_tv','${id}','${cmd}')`);
+            });
+          } else if (category === 'tapo_light') {
+            ['on','off'].forEach(cmd=> controls += makeBtn(cmd, cmd, `sendtapo_light('${dev.name}','${roomName}','tapo_light','${id}','${cmd}')`));
+          } else if (category === 'tapo_led_strip') {
+            ['on','off'].forEach(cmd=> controls += makeBtn(cmd, cmd, `sendtapo_led_strip('${dev.name}','${roomName}','tapo_led_strip','${id}','${cmd}')`));
+          } else if (category === 'phue_light') {
+            ['on','off'].forEach(cmd=> controls += makeBtn(cmd, cmd, `sendphue_light('${dev.name}','${roomName}','phue_light','${id}','${cmd}')`));
+          } else if (category === 'yeelight') {
+            ['on','off'].forEach(cmd=> controls += makeBtn(cmd, cmd, `sendyeelight('${dev.name}','${roomName}','yeelight','${id}','${cmd}')`));
+          } else if (category === 'daikin_ac') {
+            ['on','off','increase_temperature','decrease_temperature'].forEach(cmd=>{
+              const cls = cmd==='on'?'on':cmd==='off'?'off':'';
+              controls += makeBtn(cmd.replace('_',' '), cls, `sendDaikin('${dev.name}','${roomName}','daikin_ac','${id}','${cmd}')`);
+            });
+            controls += `</div><div style="margin-top:10px; display:flex; gap:6px;">
+                <select class="mode-select" id="mode-${roomName}-${id}">
+                  ${['auto','cool','heat','dry','fan'].map(m=>`<option value="${m}">${m.toUpperCase()}</option>`).join('')}
+                </select>
+                <button class="btn accent" onclick="sendDaikinMode('${dev.name}','${roomName}','daikin_ac','${id}')">Set mode</button>
+              </div><div class="btn-row" style="display:none;">`;
+          } else if (category === 'shelly') {
+            ['on','off'].forEach(cmd=> controls += makeBtn(cmd, cmd, `sendShelly('${dev.name}','${roomName}','shelly','${id}','${cmd}')`));
+          } else if (category === 'kasa') {
+            ['on','off'].forEach(cmd=> controls += makeBtn(cmd, cmd, `sendKasa('${dev.name}','${roomName}','kasa','${id}','${cmd}')`));
+          } else if (category === 'tv') {
+            ['on','off','channel_up','channel_down','volume_up','volume_down','mute','up','down','left','right','ok','back','exit','menu','home'].forEach(cmd=>{
+              controls += makeBtn(cmd.replace('_',' '), cmd==='on'?'on':cmd==='off'?'off':'', `sendTV('${dev.name}','${roomName}','tv','${id}','${cmd}')`);
+            });
+          } else if (category === 'decoder') {
+            ['on','off','channel_up','channel_down','volume_up','volume_down','mute','up','down','left','right','ok','back','exit','menu','home'].forEach(cmd=>{
+              controls += makeBtn(cmd.replace('_',' '), cmd==='on'?'on':cmd==='off'?'off':'', `sendDecoder('${dev.name}','${roomName}','decoder','${id}','${cmd}')`);
+            });
+          } else if (category === 'ac') {
+            ['on','off','increase_temperature','decrease_temperature'].forEach(cmd=>{
+              controls += makeBtn(cmd.replace('_',' '), cmd==='on'?'on':cmd==='off'?'off':'', `sendAC('${dev.name}','${roomName}','ac','${id}','${cmd}')`);
+            });
+          } else if (category === 'sonos') {
+            ['play','pause','stop','volume_up','volume_down'].forEach(cmd=>{
+              controls += makeBtn(cmd.replace('_',' '), cmd==='play'?'on':cmd==='stop'?'off':'', `sendSonos('${dev.name}','${roomName}','sonos','${id}','${cmd}')`);
+            });
+          }
+
+          controls += `</div>`;
+
+          card.innerHTML = head + controls;
+
+          if (category === 'sonos') {
+            const npId = `np-${roomName}-${id}`;
+            card.innerHTML += `
+              <div class="now-playing" id="${npId}">
+                <div class="note-icon">♫</div>
+                <div class="np-text">
+                  <div class="np-title" id="${npId}-title">—</div>
+                  <div class="np-sub">τώρα παίζει</div>
+                </div>
+                <button class="np-refresh" id="${npId}-btn" onclick="fetchCurrentSong('${dev.name}','${roomName}','sonos','${id}')" title="Refresh">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M21 12a9 9 0 1 1-3-6.7M21 4v5h-5"/></svg>
+                </button>
+              </div>`;
+            sonosDeviceMap[`${roomName}|sonos|${id}`] = { room: roomName, type: 'sonos', number: id, device: dev.name };
+          }
+
+          container.appendChild(card);
         }
-    }
- 
-    async function deleteAutomation(name) {
-        try {
-            await fetch(`${API_URL}/api/automations/${encodeURIComponent(name)}`, { method: 'DELETE' });
-            await loadAutomations();
-        } catch (err) {
-            console.error("Error deleting automation:", err);
-        }
+      }
     }
 
-    window.onload = async () => {
-        await loadDashboard();
-        await loadAutomations();
-    };
+    document.getElementById('stat-devices').innerText = total;
+    document.getElementById('device-count').innerText = `${total} σύνολο`;
+
+    Object.entries(sonosDeviceMap).forEach(([key, dev]) => {
+      fetchCurrentSong(dev.device, dev.room, dev.type, dev.number);
+    });
+
+  } catch (err) {
+    console.error("Error loading devices:", err);
+  }
+}
+
+async function fetchCurrentSong(device, room, type, id) {
+  const wrap = document.getElementById(`np-${room}-${id}`);
+  const titleEl = document.getElementById(`np-${room}-${id}-title`);
+  const btn = document.getElementById(`np-${room}-${id}-btn`);
+  if (btn) btn.classList.add('spinning');
+
+  try {
+    const res = await fetch(`${API_URL}/api/music/current`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ room, type, number: id, command: 'get', device })
+    });
+    const data = await res.json();
+
+    if (titleEl) {
+      if (data.title) {
+        titleEl.innerText = data.title;
+        wrap.classList.add('playing');
+      } else {
+        titleEl.innerText = 'Δεν παίζει κάτι';
+        wrap.classList.remove('playing');
+      }
+    }
+  } catch (err) {
+    if (titleEl) titleEl.innerText = 'Σφάλμα ανάκτησης';
+    if (wrap) wrap.classList.remove('playing');
+    console.error("Error fetching current song:", err);
+  } finally {
+    if (btn) setTimeout(()=>btn.classList.remove('spinning'), 350);
+  }
+}
+
+function refreshAllSongs(){
+  Object.entries(sonosDeviceMap).forEach(([key, dev]) => {
+    fetchCurrentSong(dev.device, dev.room, dev.type, dev.number);
+  });
+}
+
+async function askAI() {
+  const wrap = document.getElementById('aiAnswerWrap');
+  const responseText = document.getElementById('aiResponse');
+  const prompt = document.getElementById('aiInput').value.trim();
+  if (!prompt) return;
+
+  wrap.classList.add('show');
+  responseText.innerHTML = `Σκέφτομαι <span class="dots"><span></span><span></span><span></span></span>`;
+
+  try {
+    const res = await fetch(`${API_URL}/api/ai`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({prompt})
+    });
+    const data = await res.json();
+    responseText.innerText = data.response;
+  } catch (err) {
+    responseText.innerText = "Σφάλμα σύνδεσης με τον AI assistant.";
+  }
+}
+
+async function sendTV(device, room, type, id, cmd) {
+  await fetch(`${API_URL}/api/tv`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ room, type, number:id, command:cmd, device }) });
+}
+async function sendtapo_light(device, room, type, id, cmd) {
+  await fetch(`${API_URL}/api/tapo_light`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ room, type, number:id, command:cmd, device }) });
+}
+async function sendDecoder(device, room, type, id, cmd) {
+  await fetch(`${API_URL}/api/broadlink/decoder`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ room, type, number:id, command:cmd, device }) });
+}
+async function sendtapo_led_strip(device, room, type, id, cmd) {
+  await fetch(`${API_URL}/api/tapo_led_strip`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ room, type, number:id, command:cmd, device }) });
+}
+async function sendphue_light(device, room, type, id, cmd) {
+  await fetch(`${API_URL}/api/phue_light`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ room, type, number:id, command:cmd, device }) });
+}
+async function sendyeelight(device, room, type, id, cmd) {
+  await fetch(`${API_URL}/api/yeelight`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ room, type, number:id, command:cmd, device }) });
+}
+async function sendDaikin(device, room, type, id, cmd) {
+  await fetch(`${API_URL}/api/daikin`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ room, type, number:id, command:cmd, device }) });
+}
+async function sendDaikinMode(device, room, type, id) {
+  const mode = document.getElementById(`mode-${room}-${id}`).value;
+  await fetch(`${API_URL}/api/daikin`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ room, type, number:id, command:'set_mode', mode, device }) });
+}
+async function sendShelly(device, room, type, id, cmd) {
+  await fetch(`${API_URL}/api/shelly`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ room, type, number:id, command:cmd, device }) });
+}
+async function sendKasa(device, room, type, id, cmd) {
+  await fetch(`${API_URL}/api/kasa`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ room, type, number:id, command:cmd, device }) });
+}
+async function sendAC(device, room, type, id, cmd) {
+  await fetch(`${API_URL}/api/broadlink/ac`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ room, type, number:id, command:cmd, device }) });
+}
+async function sendSonos(device, room, type, id, cmd) {
+  await fetch(`${API_URL}/api/music/control`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ room, type, number:id, command:cmd, device }) });
+  setTimeout(()=>fetchCurrentSong(device, room, type, id), 900);
+}
+
+let automationDeviceMap = {};
+
+function toggleTriggerFields() {
+  const type = document.getElementById('auto-trigger-type').value;
+  document.getElementById('auto-time').style.display = (type === 'schedule') ? 'inline-block' : 'none';
+  document.getElementById('auto-event').style.display = (type === 'event') ? 'inline-block' : 'none';
+}
+
+function populateEventDropdown() {
+  const eventSelect = document.getElementById('auto-event');
+  eventSelect.innerHTML = '<option value="person_detected">Ανίχνευση ατόμου</option>';
+  for (const dev of Object.values(automationDeviceMap)) {
+    ['on','off'].forEach(cmd => {
+      const opt = document.createElement('option');
+      opt.value = `${dev.room}_${dev.type}_${cmd}`;
+      opt.textContent = `${dev.device} → ${cmd.toUpperCase()}`;
+      eventSelect.appendChild(opt);
+    });
+  }
+}
+
+function formatEventLabel(eventStr) {
+  const parts = eventStr.split('_');
+  const cmd = parts.pop();
+  return `${parts.join(' ').replace(/\b\w/g, c => c.toUpperCase())} → ${cmd.toUpperCase()}`;
+}
+
+async function loadAutomations() {
+  const listEl = document.getElementById('automations-list');
+  const deviceSelect = document.getElementById('auto-device');
+
+  try {
+    const devRes = await fetch(`${API_URL}/api/devices`);
+    const devData = await devRes.json();
+
+    deviceSelect.innerHTML = '<option value="">-- Επίλεξε συσκευή --</option>';
+    automationDeviceMap = {};
+
+    for (const [roomName, categories] of Object.entries(devData.Room)) {
+      for (const [category, devices] of Object.entries(categories)) {
+        for (const [id, dev] of Object.entries(devices)) {
+          const key = `${roomName}|${category}|${id}`;
+          automationDeviceMap[key] = { room: roomName, type: category, number: id, device: dev.name, model: dev.model || null };
+          const opt = document.createElement('option');
+          opt.value = key;
+          opt.textContent = `${dev.name} (${roomName.replace(/_/g,' ')})`;
+          deviceSelect.appendChild(opt);
+        }
+      }
+    }
+
+    populateEventDropdown();
+
+    const res = await fetch(`${API_URL}/api/automations`);
+    const rules = await res.json();
+
+    document.getElementById('stat-automations').innerText = rules.length;
+    document.getElementById('rule-count').innerText = `${rules.length} ενεργά`;
+
+    if (!rules.length) {
+      listEl.innerHTML = '<p class="empty-state">Δεν υπάρχουν automations ακόμα.</p>';
+      return;
+    }
+
+    listEl.innerHTML = '';
+    rules.forEach(rule => {
+      const triggerLabel = rule.trigger.type === 'schedule' ? rule.trigger.cron : formatEventLabel(rule.trigger.event);
+      const row = document.createElement('div');
+      row.className = 'rule-row';
+      row.innerHTML = `
+        <div>
+          <div class="r-name">${rule.name}</div>
+          <div class="r-trigger">${triggerLabel}</div>
+        </div>
+        <button class="rule-del" onclick="deleteAutomation('${rule.name}')">Διαγραφή</button>`;
+      listEl.appendChild(row);
+    });
+
+  } catch (err) {
+    listEl.innerHTML = '<p class="empty-state" style="color:var(--red);">Σφάλμα φόρτωσης automations.</p>';
+    console.error("Error loading automations:", err);
+  }
+}
+
+async function submitAutomation() {
+  const statusEl = document.getElementById('automation-status');
+  const name = document.getElementById('auto-name').value.trim();
+  const triggerType = document.getElementById('auto-trigger-type').value;
+  const deviceKey = document.getElementById('auto-device').value;
+  const command = document.getElementById('auto-command').value;
+
+  if (!name || !deviceKey) {
+    statusEl.style.color = "var(--red)";
+    statusEl.innerText = "Συμπλήρωσε όνομα και συσκευή.";
+    return;
+  }
+
+  const dev = automationDeviceMap[deviceKey];
+  const payload = { name, trigger_type: triggerType, room: dev.room, type: dev.type, number: dev.number, command, device: dev.device, model: dev.model };
+
+  if (triggerType === 'schedule') payload.time = document.getElementById('auto-time').value;
+  else payload.event = document.getElementById('auto-event').value;
+
+  try {
+    const res = await fetch(`${API_URL}/api/automations`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+    const data = await res.json();
+
+    statusEl.style.color = res.ok ? "var(--green)" : "var(--red)";
+    statusEl.innerText = data.message || data.error || "Κάτι πήγε στραβά.";
+
+    if (res.ok) {
+      document.getElementById('auto-name').value = "";
+      await loadAutomations();
+    }
+  } catch (err) {
+    statusEl.style.color = "var(--red)";
+    statusEl.innerText = "Σφάλμα σύνδεσης.";
+    console.error(err);
+  }
+}
+
+async function deleteAutomation(name) {
+  try {
+    await fetch(`${API_URL}/api/automations/${encodeURIComponent(name)}`, { method: 'DELETE' });
+    await loadAutomations();
+  } catch (err) {
+    console.error("Error deleting automation:", err);
+  }
+}
+
+window.onload = async () => {
+  await loadDashboard();
+  await loadAutomations();
+  setInterval(refreshAllSongs, 15000);
+};
 </script>
 </body>
 </html>

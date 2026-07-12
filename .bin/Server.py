@@ -33,7 +33,7 @@ import ShellyPy
 from kasa import Discover
 import broadlink
 from samsungtvws import SamsungTVWS 
-
+from soco import SoCo
 
 
 auth_bp = Blueprint("auth", __name__)
@@ -1039,6 +1039,40 @@ class Samsung_TV:
         elif command == "channel_down":
             self.channel_down()
 
+class Sonos:
+    def __init__(self, ip):
+        self.HOST = ip
+        self.device = SoCo(ip)
+    
+    def play(self):
+        self.device.play()
+    
+    def pause(self):
+        self.device.pause()
+    
+    def stop(self):
+        self.device.stop()
+    
+    def volume_up(self):
+        self.device.volume += 5
+    
+    def volume_down(self):
+        self.device.volume -= 5
+
+    def current_track(self):
+        return self.device.get_current_track_info()["title"]
+
+    def execute_command(self, command):
+        if command == "play":
+            self.play()
+        elif command == "pause":
+            self.pause()
+        elif command == "stop":
+            self.stop()
+        elif command == "volume_up":
+            self.volume_up()
+        elif command == "volume_down":
+            self.volume_down()
 
 DEVICE_ENDPOINTS = {
     "android_tv": "api/tv",
@@ -2041,7 +2075,7 @@ def handle_kasa():
             data = json.load(f)
         
         try:
-            ip = data["Room"][room][dev_type][number][ip]
+            ip = data["Room"][room][dev_type][number]["ip"]
 
             kasa = Kasa(ip)
 
@@ -2084,7 +2118,7 @@ def handle_broadlink_ac():
         with open("/config/device_config.json") as f:
             data = json.load(f)
 
-        ip = data["Room"][room][dev_type][number][ip]
+        ip = data["Room"][room][dev_type][number]["ip"]
 
         kasa = Kasa(ip)
 
@@ -2125,7 +2159,7 @@ def handle_broadlink_decoder():
         with open("config/devices_config.json") as f:
             data = f.read()
 
-        ip = data["Room"][room][dev_type][number][ip]
+        ip = data["Room"][room][dev_type][number]["ip"]
 
         broadlink_ = Broadlink()
 
@@ -2150,6 +2184,70 @@ def handle_broadlink_decoder():
     except Exception as e:
         Logger.error(f"Unexpected error in /api/daikin: {e}")
         return jsonify({"response": "Internal Server Error"}), 500
+    
+
+@server.route("/api/music/control", methods=["POST"])
+def handle_sonos():
+    try:
+        content = request.json
+        room = content["room"]
+        dev_type = content["type"]
+        number = content["number"]
+        command = content["command"]
+        device = content["device"]
+
+        Logger.info(f"/api/music/control -> Received the command {command} for the device {device}. This device is part of the {room} and it is a {dev_type}")
+
+        with open("/config/device_config.json") as f:
+            data = json.load(f)
+
+        ip = data["Room"][room][dev_type][number]["ip"]
+
+        sonos = Sonos(ip)
+
+        sonos.execute_command(command)
+
+        emit_device_event(room,dev_type,command)
+
+        return jsonify({"status": "success", "message": "Command received"}), 200  
+
+    
+    except TypeError as e:
+        Logger.error(f"400 Bad request: {e}")
+        return jsonify({"response": f"Bad Request: {e}"}), 400
+
+    except ConnectionError as e:
+        Logger.error(f"503 Service Unavailable: {e}")
+        return jsonify({"response": f"Service Unavailable: {e}"}), 503
+
+    except KeyError as e:
+        Logger.error(f"400 Missing field: {e}")
+        return jsonify({"response": f"Missing field: {e}"}), 400
+    
+    except Exception as e:
+        Logger.error(f"Unexpected error in /api/daikin: {e}")
+        return jsonify({"response": "Internal Server Error"}), 500
+
+
+@server.route("/api/music/current", methods=["POST"])
+@auth.login_required
+def current_song():
+        content = request.json
+        room = content["room"]
+        dev_type = content["type"]
+        number = content["number"]
+        command = content["command"]
+        device = content["device"]
+
+        Logger.info(f"/api/music/current -> Received the command {command} for the device {device}. This device is part of the {room} and it is a {dev_type}")
+
+        with open("/config/device_config.json") as f:
+            data = json.load(f)
+
+        ip = data["Room"][room][dev_type][number][ip]
+
+        sonos = Sonos(ip)
+        return jsonify({"title":sonos.current_track()})
 
 
 @server.route("/api/automations", methods=["GET"])
