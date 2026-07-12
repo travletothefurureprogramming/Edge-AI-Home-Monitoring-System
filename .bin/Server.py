@@ -32,6 +32,7 @@ from croniter import croniter
 import ShellyPy
 from kasa import Discover
 import broadlink
+from samsungtvws import SamsungTVWS 
 
 
 
@@ -993,6 +994,50 @@ class Broadlink:
 
             self.device.send_data(byte_packet)
 
+
+class Samsung_TV:
+    def __init__(self, ip):
+        self.HOST = ip
+        self.token_file = os.path.dirname(os.path.realpath(__file__)) + "config/samsung_store.txt"
+
+        self.device = SamsungTVWS(host=self.HOST, port=8002, token_file=self.token_file)
+    
+    def power(self):
+        self.device.shortcuts().power()
+
+    def home(self):
+        self.device.shortcuts().home()
+    
+    def volume_up(self):
+        self.device.shortcuts().volume_up()
+
+    def volume_down(self):
+        self.device.shortcuts().volume_down()
+
+    def mute(self):
+        self.device.shortcuts().mute()
+    
+    def channel_up(self):
+        self.device.shortcuts().channel_up()
+    
+    def channel_down(self):
+        self.device.shortcuts().channel_down()
+
+    def execute_command(self, command):
+        if command == "power":
+            self.power()
+        elif command == "home":
+            self.home()
+        elif command == "volume_up":
+            self.volume_up()
+        elif command == "volume_down":
+            self.volume_down()
+        elif command == "mute":
+            self.mute()
+        elif command == "channel_up":
+            self.channel_up()
+        elif command == "channel_down":
+            self.channel_down()
 
 
 DEVICE_ENDPOINTS = {
