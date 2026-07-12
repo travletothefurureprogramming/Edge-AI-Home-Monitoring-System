@@ -950,7 +950,7 @@ class Kasa:
         
         
     async def async_connect(self):
-        await self.device = Discover.discover_single(self.HOST, username=self.username, password=self.password)
+        self.device = await Discover.discover_single(self.HOST, username=self.username, password=self.password)
         await self.device.update()
     
     def connect(self):
