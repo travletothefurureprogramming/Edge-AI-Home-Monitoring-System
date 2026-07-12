@@ -119,6 +119,9 @@
 - RM4 TV mate (untested)
 - You can control any devices using Broadlink Universal remotes of this categories: TV, AC, Decoder
 
+* **Samsung TV:**
+- Suppourts Samsung Tizen TV (2016+)
+
 ## 🛠 Tech Stack
 
 * **Language:** Python 3.11
@@ -148,7 +151,7 @@ git clone https://github.com/travletothefurureprogramming/Edge-AI-Home-Monitorin
 12. Press "Next".
 13. Add your telegram bot token and chat id.
 14. Press "Next"
-15. Add your devices (For LG TV you must have powered on the tv and press yes. For Philips Hue devices you must have pressed the button.)
+15. Add your devices (For LG TV and Samsung TV you must have powered on the tv and press yes/allow. For Philips Hue devices you must have pressed the button.)
 16. Close the window.
 
 
