@@ -4,12 +4,12 @@ import threading
 import json
 import os
 import socket
-from control.control import LG_TV, Phue, Samsung_TV
+from app.control.control import LG_TV, Phue, Samsung_TV
 from werkzeug.security import generate_password_hash, check_password_hash
 import secrets
 import pyttsx4
 import ctypes  
-from broadlink_learn import broadlink_learn
+from app.broadlink_learn import broadlink_learn
 
 engine = pyttsx4.init()
 engine.setProperty("rate", 150)
