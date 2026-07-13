@@ -10,3 +10,4 @@ source/devices_config.json
 .venv/
 *.json
 /.vscode
+/models

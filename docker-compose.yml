@@ -1,0 +1,40 @@
+services:
+  edge-ai-home-monitoring-system:
+    build: .
+    container_name: edge-ai-home-monitoring-system
+
+    ports:
+      - "8080:8080"
+
+    volumes:
+      - ./.bin/app/config:/app/config
+      - ./models:/app/models
+      - ./data:/app/data
+
+    env_file:
+      - ./.bin/app/config/.env
+
+    environment:
+      - OLLAMA_HOST=http://ollama:11434
+
+    depends_on:
+      - ollama
+
+    restart: unless-stopped
+
+
+  ollama:
+    image: ollama/ollama
+    container_name: ollama
+
+    ports:
+      - "11434:11434"
+
+    volumes:
+      - ollama_data:/root/.ollama
+
+    restart: unless-stopped
+
+
+volumes:
+  ollama_data:

@@ -19,7 +19,6 @@ import time
 import sys
 from phue import Bridge
 from yeelight import Bulb
-from pycaw.pycaw import AudioUtilities
 import uptime
 import psutil
 from functools import wraps
@@ -34,6 +33,7 @@ from kasa import Discover
 import broadlink
 from samsungtvws import SamsungTVWS 
 from soco import SoCo
+import platform
 
 
 auth_bp = Blueprint("auth", __name__)
@@ -43,8 +43,10 @@ if getattr(sys, 'frozen', False):
 else:
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-load_dotenv(os.path.join(BASE_DIR, "config/.env"))
-
+load_dotenv(
+    os.path.join(BASE_DIR, "config/.env"),
+    override=True
+)
 ADMIN_USERNAME = os.environ.get("USER","admin")
 ADMIN_PASSWORD = os.environ.get("PASSWORD","")
 
@@ -583,7 +585,11 @@ class ServerMonitorAndRemoteControl:
     def __init__(self):
         self.net_sent = 0
         self.net_recv = 0
-        self.devices = AudioUtilities.GetSpeakers()
+        if platform.system() == "Windows":
+         from pycaw.pycaw import AudioUtilities
+         self.devices = AudioUtilities.GetSpeakers()
+        else:
+            self.devices = None
         self.volume = self.devices.EndpointVolume
 
     def get_cpu(self):
@@ -647,8 +653,9 @@ class ServerMonitorAndRemoteControl:
         new_volume = min(current - 0.01, 1.0)  
 
         self.volume.SetMasterVolumeLevelScalar(new_volume, None)
- 
-Server_Monitor = ServerMonitorAndRemoteControl()
+
+if platform.system() == "Windows":
+    Server_Monitor = ServerMonitorAndRemoteControl()
 
 class Phue:
     def __init__(self,ip):
@@ -2308,12 +2315,7 @@ def remove_automation(name):
 
 def run_server():
     try:
-        server.run(
-            host=BACKEND_IP,
-            port=8080,
-            debug=False,
-            use_reloader=False
-        )
+        server.run(host='0.0.0.0', port=8080)
     except TypeError as e:
         Logger.error({"response": f"Bad Request: {e}"})
     
