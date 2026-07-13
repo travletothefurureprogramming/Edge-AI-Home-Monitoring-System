@@ -2328,5 +2328,5 @@ def run_server():
 
 if __name__ == "__main__":
     automation_manager.start()
-    threading.Thread(target=main_bot_loop).start()
+    threading.Thread(target=main_bot_loop).start()      
     run_server()
