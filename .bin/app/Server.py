@@ -34,14 +34,22 @@ import broadlink
 from samsungtvws import SamsungTVWS 
 from soco import SoCo
 import platform
-
-
-auth_bp = Blueprint("auth", __name__)
+import subprocess
+from pathlib import Path
+import secrets
 
 if getattr(sys, 'frozen', False):
     BASE_DIR = os.path.dirname(sys.executable) 
 else:
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+
+config_exists = (
+    Path(f"{BASE_DIR}/config/.env").exists()
+    and Path(f"{BASE_DIR}/config/devices_config.json").exists()
+)
+
+auth_bp = Blueprint("auth", __name__)
 
 load_dotenv(
     os.path.join(BASE_DIR, "config/.env"),
@@ -162,68 +170,68 @@ def send_to_server(content):
 
 def send_tv(content):
     try:
-        requests.post(f"http://{BACKEND_URL}api/tv", json=content, timeout=5)
+        requests.post(f"http://{BACKEND_URL}/api/tv", json=content, timeout=5)
     except Exception as error:
         Logger.error(f"An error has occured during the attemp to send the message to tv api endpoint. Error:{error}")
 
 def send_tapo_light(content):
     try:
-        requests.post(f"http://{BACKEND_URL}api/tapo_light", json=content, timeout=5)
+        requests.post(f"http://{BACKEND_URL}/api/tapo_light", json=content, timeout=5)
     except Exception as error:
         Logger.error(f"An error has occured during the attemp to send the message to tapo light api endpoint. Error:{error}")
 
 def send_tapo_led_strip(content):
     try:
-        requests.post(f"http://{BACKEND_URL}api/tapo_led_strip", json=content, timeout=5)
+        requests.post(f"http://{BACKEND_URL}/api/tapo_led_strip", json=content, timeout=5)
     except Exception as error:
         Logger.error(f"An error has occured during the attemp to send the message to tapo ledsript api endpoint. Error:{error}")
 
 def send_phue_light(content):
     try:
-        requests.post(f"http://{BACKEND_URL}api/phue_light", json=content, timeout=5)
+        requests.post(f"http://{BACKEND_URL}/api/phue_light", json=content, timeout=5)
     except Exception as error:
         Logger.error(f"An error has occured during the attemp to send the message to phue light api endpoint. Error:{error}")
 
 def send_yeelight(content):
     try:
-        requests.post(f"http://{BACKEND_URL}api/yeelight", json=content, timeout=5)
+        requests.post(f"http://{BACKEND_URL}/api/yeelight", json=content, timeout=5)
     except Exception as error:
         Logger.error(f"An error has occured during the attemp to send the message to yeelight api endpoint. Error:{error}")
 
 def send_daikin(content):
     try:
-        requests.post(f"http://{BACKEND_URL}api/daikin", json=content, timeout=5)
+        requests.post(f"http://{BACKEND_URL}/api/daikin", json=content, timeout=5)
     except Exception as error:
         Logger.error(f"An error has occured during the attemp to send the message to daikin api endpoint. Error:{error}")
 
 def send_shelly(content):
     try:
-        requests.post(f"http://{BACKEND_URL}api/shelly", json=content, timeout=5)
+        requests.post(f"http://{BACKEND_URL}/api/shelly", json=content, timeout=5)
     except Exception as error:
         Logger.error(f"An error has occured during the attemp to send the message to shelly api endpoint. Error:{error}")
 
 def send_kasa(content):
     try:
-        requests.post(f"http://{BACKEND_URL}api/kasa", json=content, timeout=5)
+        requests.post(f"http://{BACKEND_URL}/api/kasa", json=content, timeout=5)
     except Exception as error:
         Logger.error(f"An error has occured during the attemp to send the message to kasa api endpoint. Error:{error}")
 
 
 def send_ai(content):
     try:
-        return requests.post(f"http://{BACKEND_URL}api/ai", json=content, timeout=5)
+        return requests.post(f"http://{BACKEND_URL}/api/ai", json=content, timeout=5)
     except Exception as error:
         Logger.error(f"An error has occured during the attemp to send the message to AI api endpoint. Error:{error}")
 
 def send_security_notification(content):
     try:
-        return requests.post(f"http://{BACKEND_URL}api/security/notification", json=content, timeout=5)
+        return requests.post(f"http://{BACKEND_URL}/api/security/notification", json=content, timeout=5)
     except Exception as error:
         Logger.error(f"An error has occured during the attemp to send security notification. Error:{error}")
 
 def send_security(content):
     try:
-        return requests.post(f"http://{BACKEND_URL}api/security", json=content, timeout=5)
+        return requests.post(f"http://{BACKEND_URL}/api/security", json=content, timeout=5)
     except Exception as error:
         Logger.error(f"An error has occured during the attemp to send the message to security api endpoint. Error:{error}")
 
@@ -1101,7 +1109,7 @@ DEVICE_ENDPOINTS = {
 def create_device_action(name, room, dev_type, number, command, device_name, model=None, mode=None, rellay_number=0):
     def action():
         try:
-            with open("config/devices_config.json", "r") as f:
+            with open(f"{BASE_DIR}/config/devices_config.json", "r") as f:
                 data = json.load(f)
             dev_info = data["Room"][room][dev_type][number]
             ip = dev_info["ip"]
@@ -1687,7 +1695,7 @@ def handle_tapo_led_strip():
 
         Logger.info(f"/api/tapo_led_strip -> Received the command {command} for the device {device}. This device is part of the {room} and it is a {dev_type}")
         
-        with open("config/devices_config.json", "r") as f:
+        with open(f"{BASE_DIR}/config/devices_config.json", "r") as f:
             data = json.load(f)
         
         try:
@@ -1736,7 +1744,7 @@ def handle_tapo_light():
 
         Logger.info(f"/api/tapo_light -> Received the command {command} for the device {device}. This device is part of the {room} and it is a {dev_type}")
         
-        with open("config/devices_config.json", "r") as f:
+        with open(f"{BASE_DIR}/config/devices_config.json", "r") as f:
             data = json.load(f)
         
         try:
@@ -1786,7 +1794,7 @@ def handle_yeelight():
         
         Logger.info(f"/api/yeelight -> Received the command {command} for the device {device}. This device is part of the {room} and it is a {dev_type}")
         
-        with open("config/devices_config.json", "r") as f:
+        with open(f"{BASE_DIR}/config/devices_config.json", "r") as f:
             data = json.load(f)
 
 
@@ -1837,7 +1845,7 @@ def handle_phue_lights():
         
         Logger.info(f"/api/phue_light -> Received the command {command} for the device {device}. This device is part of the {room} and it is a {dev_type}")
         
-        with open("config/devices_config.json", "r") as f:
+        with open(f"{BASE_DIR}/config/devices_config.json", "r") as f:
             data = json.load(f)
 
 
@@ -1884,7 +1892,7 @@ def handle_tv():
         command = content["command"]
         device = content["device"]
         
-        with open("config/devices_config.json", "r") as f:
+        with open(f"{BASE_DIR}/config/devices_config.json", "r") as f:
             data = json.load(f)
 
         is_broadlink = data.get("Room", {})\
@@ -1983,7 +1991,7 @@ def handle_daikin_ac():
 
         Logger.info(f"/api/daikin -> Received the command {command} for the device {device}. This device is part of the {room} and it is a {dev_type}")
 
-        with open("config/devices_config.json", "r") as f:
+        with open(f"{BASE_DIR}/config/devices_config.json", "r") as f:
             data = json.load(f)
 
         try:
@@ -2034,7 +2042,7 @@ def handle_shelly():
 
         Logger.info(f"/api/shelly -> Received the command {command} for the device {device}. This device is part of the {room} and it is a {dev_type}")
         
-        with open("config/devices_config.json", "r") as f:
+        with open(f"{BASE_DIR}/config/devices_config.json", "r") as f:
             data = json.load(f)
 
         try:
@@ -2166,7 +2174,7 @@ def handle_broadlink_decoder():
 
         Logger.info(f"/api/broadlink/decoder -> Received the command {command} for the device {device}. This device is part of the {room} and it is a {dev_type}")
         
-        with open("config/devices_config.json") as f:
+        with open(f"{BASE_DIR}/config/devices_config.json", "r") as f:
             data = f.read()
 
         ip = data["Room"][room][dev_type][number]["ip"]
@@ -2254,7 +2262,7 @@ def current_song():
         with open("/config/device_config.json") as f:
             data = json.load(f)
 
-        ip = data["Room"][room][dev_type][number][ip]
+        ip = data["Room"][room][dev_type][number]["ip"]
 
         sonos = Sonos(ip)
         return jsonify({"title":sonos.current_track()})
@@ -2313,9 +2321,152 @@ def remove_automation(name):
     automation_manager.delete_rule(name)
     return jsonify({"status": "deleted"}), 200
 
+CONFIG_FILE = os.path.join(BASE_DIR, "config", "devices_config.json")
+
+def save_device(
+    room,
+    device_type,
+    name,
+    ip,
+    username="",
+    password="",
+    model="",
+    device_id="",
+    relay_number=""
+):
+    os.makedirs(os.path.dirname(CONFIG_FILE), exist_ok=True)
+
+    data = {"Room": {}}
+
+    if os.path.exists(CONFIG_FILE):
+        try:
+            with open(CONFIG_FILE, "r", encoding="utf-8") as f:
+                data = json.load(f)
+        except (json.JSONDecodeError, FileNotFoundError):
+            pass
+
+    data.setdefault("Room", {})
+    data["Room"].setdefault(room, {})
+    data["Room"][room].setdefault(device_type, {})
+
+    existing_ids = [
+        int(i)
+        for i in data["Room"][room][device_type].keys()
+        if str(i).isdigit()
+    ]
+
+    new_id = str(max(existing_ids, default=0) + 1)
+
+    data["Room"][room][device_type][new_id] = {
+        "name": name,
+        "type": device_type,
+        "ip": ip,
+        "username": username,
+        "password": password,
+        "model": model,
+        "id": device_id,
+        "relay_number": relay_number
+    }
+
+    with open(CONFIG_FILE, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=4)
+
+    return new_id
+
+def update_env_file(key, value):
+        env_path = os.path.join(BASE_DIR, "config/.env")
+
+        dir_path = os.path.dirname(env_path)
+        if dir_path:
+            os.makedirs(dir_path, exist_ok=True)
+
+        lines = []
+        key_found = False
+
+        if os.path.exists(env_path):
+            with open(env_path, "r") as f:
+                lines = f.readlines()
+
+        for i, line in enumerate(lines):
+            if line.strip().startswith(f"{key}="):
+                lines[i] = f'{key}="{value}"\n'
+                key_found = True
+                break
+
+        if not key_found:
+            lines.append(f'{key}="{value}"\n')
+
+        with open(env_path, "w") as f:
+            f.writelines(lines)
+
+SETUP_FILE = os.path.join(BASE_DIR, "config", "setup-complete.txt")
+
+@server.before_request
+def check_setup():
+
+    if (
+        not os.path.exists(SETUP_FILE)
+        and request.path not in ("/setup", "/api/setup")
+        and not request.path.startswith("/static")
+    ):
+        return redirect("/setup")
+
+
+@server.route("/setup")
+def setup_page():
+    return render_template("setup.html")
+
+
+@server.route("/api/setup", methods=["POST"])
+def finish_setup():
+
+    data=request.json
+
+    update_env_file("USER","admin")
+    update_env_file("PASSWORD",generate_password_hash(data["password"]))
+    update_env_file("FLASK_SECRET_KEY",secrets.token_hex(32))
+    update_env_file("TELEGRAM_BOT_TOKEN",data["telegram_token"])
+    update_env_file("TELEGRAM_CHAT_ID",data["telegram_chat_id"])
+
+    for device in data["devices"]:
+        update_env_file("TAPO_USERNAME", device.get("username", ""))
+        update_env_file("TAPO_PASSWORD", device.get("password", ""))
+
+    for device in data["devices"]:
+        save_device(
+            room=device["room"],
+            device_type=device["type"],
+            name=device["name"],
+            ip=device["ip"],
+            username=device.get("username", ""),
+            password=device.get("password", ""),
+            model=device.get("model", ""),
+            device_id=device.get("id", ""),
+            relay_number=device.get("relay_number", "")
+        )
+
+    with open(SETUP_FILE, "w") as f:
+        f.write("ok")
+    
+    load_dotenv(override=True)
+
+    automation_manager.start()
+    threading.Thread(target=main_bot_loop, daemon=True).start()
+
+    return {"status": "success"}
+
+
+
 def run_server():
     try:
-        server.run(host='0.0.0.0', port=8080)
+        if os.path.exists(os.path.join(BASE_DIR, "config/setup-complete.txt")):
+            automation_manager.start()
+            threading.Thread(target=main_bot_loop, daemon=True).start()
+        else:
+            Logger.info("First startup detected. Waiting for web setup...")
+
+        server.run(host="0.0.0.0", port=8080)
+
     except TypeError as e:
         Logger.error({"response": f"Bad Request: {e}"})
     
@@ -2326,9 +2477,7 @@ def run_server():
         Logger.error({"response": f"Missing field: {e}"})
     
     except Exception as e:
-        Logger.error(f"Unexpected error in /api/ai: {e}")
+        Logger.error(f"Unexpected error: {e}")
 
-if __name__ == "__main__":
-    automation_manager.start()
-    threading.Thread(target=main_bot_loop).start()      
+if __name__ == "__main__":    
     run_server()

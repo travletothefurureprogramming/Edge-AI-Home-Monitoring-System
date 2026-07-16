@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Edge-AI Home Hub Setup</title>
+
+<style>
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:Segoe UI,Arial,sans-serif;
+}
+
+body{
+    background:#101317;
+    color:white;
+}
+
+.container{
+    max-width:900px;
+    margin:40px auto;
+    padding:30px;
+}
+
+.card{
+    background:#1b2128;
+    border-radius:12px;
+    padding:25px;
+    margin-bottom:25px;
+    border:1px solid #2b323b;
+}
+
+h1{
+    margin-bottom:10px;
+}
+
+.subtitle{
+    color:#9ca3af;
+    margin-bottom:25px;
+}
+
+h2{
+    margin-bottom:20px;
+}
+
+label{
+    display:block;
+    margin-top:15px;
+    margin-bottom:5px;
+}
+
+input,select{
+    width:100%;
+    padding:12px;
+    border-radius:8px;
+    border:none;
+    background:#2b323b;
+    color:white;
+}
+
+.device{
+    border:1px solid #3a414b;
+    border-radius:10px;
+    padding:20px;
+    margin-top:20px;
+}
+
+button{
+    padding:12px 18px;
+    border:none;
+    border-radius:8px;
+    cursor:pointer;
+    font-size:15px;
+}
+
+.add{
+    background:#2563eb;
+    color:white;
+}
+
+.finish{
+    width:100%;
+    background:#16a34a;
+    color:white;
+    font-size:18px;
+    margin-top:25px;
+}
+
+.remove{
+    background:#dc2626;
+    color:white;
+    margin-top:15px;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>🏠 Edge-AI Home Monitoring</h1>
+<p class="subtitle">
+Welcome! Complete the initial setup to start using your smart home hub.
+</p>
+
+<div class="card">
+
+<h2>Administrator</h2>
+
+<label>Password</label>
+<input type="password" id="password">
+
+</div>
+
+<div class="card">
+
+<h2>Telegram</h2>
+
+<label>Bot Token</label>
+<input id="telegram_token">
+
+<label>Chat ID</label>
+<input id="telegram_chat_id">
+
+</div>
+
+<div class="card">
+
+<h2>Devices</h2>
+
+<div id="devices"></div>
+
+<button class="add" onclick="addDevice()">
++ Add Device
+</button>
+
+</div>
+
+<button class="finish" onclick="finishSetup()">
+Finish Setup
+</button>
+
+</div>
+
+<script>
+
+function addDevice(){
+
+const container=document.getElementById("devices");
+
+const div=document.createElement("div");
+
+div.className="device";
+
+div.innerHTML=`
+
+<label>Room</label>
+<input class="room">
+
+<label>Device Name</label>
+<input class="name">
+
+<label>Device Type</label>
+
+<select class="type">
+
+<option>android_tv</option>
+<option>tapo_light</option>
+<option>tapo_led_strip</option>
+<option>tapo_smart_plug</option>
+<option>phue_light</option>
+<option>phue_led_strip</option>
+<option>yeelight</option>
+<option>lg_tv</option>
+<option>daikin_ac</option>
+<option>shelly</option>
+<option>kasa</option>
+<option>broadlink</option>
+<option>samsung_tv</option>
+<option>sonos</option>
+
+</select>
+
+<label>IP Address</label>
+<input class="ip">
+
+<label>Username</label>
+<input class="username">
+
+<label>Password</label>
+<input class="password">
+
+<label>Model</label>
+<input class="model">
+
+<label>Device ID</label>
+<input class="deviceid">
+
+<label>Relay Number</label>
+<input class="relay">
+
+<button class="remove" onclick="this.parentElement.remove()">
+Remove Device
+</button>
+
+`;
+
+container.appendChild(div);
+
+}
+
+async function finishSetup(){
+
+const devices=[];
+
+document.querySelectorAll(".device").forEach(d=>{
+
+devices.push({
+
+room:d.querySelector(".room").value,
+name:d.querySelector(".name").value,
+type:d.querySelector(".type").value,
+ip:d.querySelector(".ip").value,
+username:d.querySelector(".username").value,
+password:d.querySelector(".password").value,
+model:d.querySelector(".model").value,
+id:d.querySelector(".deviceid").value,
+relay_number:d.querySelector(".relay").value
+
+});
+
+});
+
+const response=await fetch("/api/setup",{
+
+method:"POST",
+
+headers:{
+"Content-Type":"application/json"
+},
+
+body:JSON.stringify({
+
+password:document.getElementById("password").value,
+
+telegram_token:document.getElementById("telegram_token").value,
+
+telegram_chat_id:document.getElementById("telegram_chat_id").value,
+
+devices:devices
+
+})
+
+});
+
+const result=await response.json();
+
+if(result.success){
+
+alert("Setup completed!");
+
+window.location = "/login";
+
+}else{
+
+alert("Setup failed.");
+
+}
+
+}
+
+addDevice();
+
+</script>
+
+</body>
+</html>
