@@ -2,21 +2,22 @@
 
 ### A privacy-first, edge-AI home automation hub using Linux, Flask, and real-time control to orchestrate smart devices.
 
-<img width="1912" height="968" alt="Screenshot 2026-06-03 172605" src="https://github.com/user-attachments/assets/1977c347-7d0e-4ddf-a71f-89956ec50f26" />
+<img width="1912" height="968" alt="Edge-AI Home Monitoring System dashboard" src="https://github.com/user-attachments/assets/1977c347-7d0e-4ddf-a71f-89956ec50f26" />
 
 ## 🚀 Features
-* Control devices seamlessly via dashboard remotely without port forwarding.
-* Real time control using a smart assistant
+
+* Control devices seamlessly via a dashboard, remotely, without port forwarding.
+* Real-time control using a smart assistant.
 * Edge AI for communication and commands.
 
-## Suppourted Devices
+## 📋 Supported Devices
 
-* **Tapo Led Strips:**
+### Tapo LED Strips
 - L900
 - L920 (untested)
 - L930 (untested)
 
-* **Tapo Light Bulbs:**
+### Tapo Light Bulbs
 - L510 (untested)
 - L520 (untested)
 - L530 (untested)
@@ -24,7 +25,7 @@
 - L610 (untested)
 - L630 (untested)
 
-* **Tapo Smart Plugs:**
+### Tapo Smart Plugs
 - P100 (untested)
 - P105 (untested)
 - P110 (untested)
@@ -32,37 +33,37 @@
 - P304 (untested)
 - P306 (untested)
 
-* **Philips Hue Lights:**
-- All lights-bulbs or led_strips you have connected with Philips Hue Bridge  (untested)
+### Philips Hue Lights
+- All lights/bulbs or LED strips connected to a Philips Hue Bridge (untested)
 
-* **Yeelight:**
-- All lights-bulbs wich suppourt Wi-Fi control.  (untested)
+### Yeelight
+- All light bulbs that support Wi-Fi control (untested)
 
-* **Android Tv:**
+### Android TV
 - Android 8+
 
-* **LG TV:**
-- WEB OS 6+
+### LG TV
+- webOS 6+
 
-* **Daikin AC:**
-- BRP069Axx/BRP069Bxx/BRP072Axx  (untested)
-- BRP15B61 aka. AirBas (untested)
+### Daikin AC
+- BRP069Axx / BRP069Bxx / BRP072Axx (untested)
+- BRP15B61, a.k.a. AirBase (untested)
 
-* **Shelly:**
-- Shelly1 (untested)
-- Shelly1PM (untested)
-- Shelly2 (untested)
-- Shelly2.5 (untested)
-- Shelly4Pro  (untested)
-- Shelly Plug (untested) 
-- Shelly PlugS (untested)
-- Shelly Bulb (untested) 
-- Shelly H&T (untested) 
-- Shelly Smoke (untested) 
-- Shelly EM (untested) 
-- Shelly flood (untested)
+### Shelly
+- Shelly 1 (untested)
+- Shelly 1PM (untested)
+- Shelly 2 (untested)
+- Shelly 2.5 (untested)
+- Shelly 4Pro (untested)
+- Shelly Plug (untested)
+- Shelly Plug S (untested)
+- Shelly Bulb (untested)
+- Shelly H&T (untested)
+- Shelly Smoke (untested)
+- Shelly EM (untested)
+- Shelly Flood (untested)
 
-* **Kasa Plugs:**
+### Kasa Plugs
 - EP10 (untested)
 - HS103 (untested)
 - HS105 (untested)
@@ -73,7 +74,7 @@
 - KP125 (untested)
 - KP401 (untested)
 
-* **Kasa Power Strips:**
+### Kasa Power Strips
 - EP40 (untested)
 - HS107 (untested)
 - HS300 (untested)
@@ -81,7 +82,7 @@
 - KP303 (untested)
 - KP400 (untested)
 
-* **Kasa Wall Switches:**
+### Kasa Wall Switches
 - ES20M (untested)
 - HS210 (untested)
 - KP405 (untested)
@@ -91,7 +92,7 @@
 - KS220M (untested)
 - KS230 (untested)
 
-* **Kasa Bulbs:**
+### Kasa Bulbs
 - KL110 (untested)
 - KL120 (untested)
 - KL125 (untested)
@@ -101,127 +102,199 @@
 - KL60 (untested)
 - LB110 (untested)
 
-* **Kasa Light Strips:**
+### Kasa Light Strips
 - KL400L5 (untested)
 - KL420L5 (untested)
 - KL430 (untested)
 
-* **Broadlink Universal remotes:**
-- RM home (untested)
-- RM mini 3 (untested)
-- RM plus (untested)
-- RM pro (untested)
-- RM pro+ (untested)
-- RM4 mini (untested)
-- RM4 pro (untested)
-- RM4C mini (untested)
+### Broadlink Universal Remotes
+- RM Home (untested)
+- RM Mini 3 (untested)
+- RM Plus (untested)
+- RM Pro (untested)
+- RM Pro+ (untested)
+- RM4 Mini (untested)
+- RM4 Pro (untested)
+- RM4C Mini (untested)
 - RM4S (untested)
-- RM4 TV mate (untested)
-- You can control any devices using Broadlink Universal remotes of this categories: TV, AC, Decoder
+- RM4 TV Mate (untested)
 
-* **Samsung TV:**
-- Suppourts Samsung Tizen TV (2016+)
+You can control any device via a Broadlink Universal Remote in the following categories: TV, AC, Decoder.
+
+### Samsung TV
+- Supports Samsung Tizen TV (2016+)
 
 ## 🛠 Tech Stack
-
 * **Language:** Python 3.11
-* **Core Library:** [AndroidTV-Remote-Controller](https://github.com/Jekso/AndroidTV-Remote-Controller)
-* **Interface Tool:** Android Debug Bridge (ADB)
+* **Core Libraries:** [AndroidTV-Remote-Controller](https://github.com/Jekso/AndroidTV-Remote-Controller), ultralytics, cv2, ollama, tapo, flask, pywebostv, samsungtvws, python-kasa, ShellyPy, phue, yeelight, pydaikin, broadlink, soco, psutil, uptime
+* **Interface Tool:** Android Debug Bridge (ADB), Telegram Bot 
 * **Environment:** Designed for Linux (Raspberry Pi compatible) / Windows / macOS
 * **Main Hardware:** An old laptop
 
-
 ## 📦 Installation
-### Clone the repository:
 
-Bash
-git clone https://github.com/travletothefurureprogramming/Edge-AI-Home-Monitoring-System/
+The Edge-AI Home Monitoring System is fully containerized using Docker. The setup process is automatic and works on **Windows**, **Linux**, and **macOS**.
 
-### Install the required dependencies:
-1. Download and Install [Visual Studio Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/)
-2. Download and Install [Python 3.11](https://www.python.org/downloads/)
-4. Download and Install [Download SDK Platform-Tools](https://developer.android.com/tools/releases/platform-tools). Then follow the steps below to add it to path.
-5. Install Telegram, Create an account and then create a bot [Download here](https://telegram.org/) and learn more below
-5. Open setup.bat if you are in windows or setup.sh if you are in linux or mac
-6. Press "Install Dependencies" to install all the requirement python packages and ollama if you dont have it already.
-7. Press "Download AI Model (Phi3).
-8. Enter a login password (You must remember it because you want it to access the dashboard
-9. If this device is the server check it.
-10. If you have tailscale check it and enter the tailscale ip.
-12. Press "Next".
-13. Add your telegram bot token and chat id.
-14. Press "Next"
-15. Add your devices (For LG TV and Samsung TV you must have powered on the tv and press yes/allow. For Philips Hue devices you must have pressed the button.)
-16. Close the window.
+### Prerequisites
 
+Before you begin, install the following software:
 
-### Install Android SDK platform tools
+* **Git** — https://git-scm.com/downloads
+* **Docker Desktop** (Windows/macOS) — https://www.docker.com/products/docker-desktop/
+* **Docker Engine + Docker Compose** (Linux) — https://docs.docker.com/engine/install/
 
-* **Find it here:** [Download SDK Platform-Tools](https://developer.android.com/tools/releases/platform-tools)
+> **Note**
+> Python, Ollama, Android SDK Platform Tools (ADB), and all required Python packages are provided automatically by Docker. No additional manual installation is required.
 
-* **Add to PATH:**
-  1. **Download and Extract:** Download the zip file and extract it to a permanent folder on your machine (e.g., `/opt/platform-tools` or `C:\tools\platform-tools`).
-  2. **Linux / macOS:** Add the following line to your `~/.bashrc` or `~/.zshrc` file:
-     ```bash
-     export PATH=$PATH:/your/extracted/path/platform-tools
-     ```
-     Then run `source ~/.bashrc` to apply the changes.
-  3. **Windows:** Search for "Edit the system environment variables" in the Start menu, go to **Environment Variables**, select **Path**, click **Edit**, and add the full path to your extracted `platform-tools` folder.
-  4. **Verify:** Open a new terminal and type `adb version` to confirm the installation.
+### 1. Clone the repository
 
-### 🤖 Telegram Bot Configuration
+```bash
+git clone https://github.com/travletothefurureprogramming/Edge-AI-Home-Monitoring-System.git
+cd Edge-AI-Home-Monitoring-System
+```
+
+### 2. Start the application
+
+**Windows**
+
+```bash
+start.bat
+```
+
+**Linux / macOS**
+
+Make the script executable (only required once):
+
+```bash
+chmod +x start.sh
+```
+
+Then start the application:
+
+```bash
+./start.sh
+```
+
+During the first launch, the startup script will automatically:
+
+* Create the required configuration directories.
+* Create the `.env` file if it does not already exist.
+* Build the Docker containers.
+* Download the Ollama Docker image.
+* Start all required services.
+
+> **Note**
+> The first startup may take several minutes while Docker downloads the required images.
+
+### 3. Open the Setup Wizard
+
+Once the containers are running, open your web browser and navigate to:
+
+```text
+http://localhost:8080
+```
+
+The setup wizard will guide you through the entire configuration process. You will be asked to:
+
+* Create the administrator password.
+* Configure Telegram notifications (optional).
+* Add and configure your smart devices.
+* Save your configuration.
+
+### 4. AI Model Download
+
+During the initial setup, the required AI model will be downloaded automatically if it is not already installed.
+
+> **Note**
+> The first model download may take several minutes depending on your internet connection.
+
+### 5. Access the Dashboard
+
+After completing the setup, open your browser and visit:
+
+```text
+http://localhost:8080
+```
+
+Sign in using:
+
+* **Username:** `admin`
+* **Password:** the password you created during setup.
+
+## 🔄 Updating
+
+To update the project:
+
+```bash
+git pull
+```
+
+Then restart the application:
+
+**Windows**
+
+```bash
+start.bat
+```
+
+**Linux / macOS**
+
+```bash
+./start.sh
+```
+
+## 🤖 Telegram Bot Configuration
+
 Your system needs a Bot Token and a Chat ID to send real-time alerts.
 
-1. Step 1: Get your Bot Token
-* Open Telegram and search for @BotFather (official verified bot).
+**Step 1 — Get your Bot Token**
 
-* Send /newbot and follow the prompts to choose a Name and a unique Username ending in _bot (e.g., my_edge_ai_bot).
+1. Open Telegram and search for **@BotFather** (official verified bot).
+2. Send `/newbot` and follow the prompts to choose a name and a unique username ending in `_bot` (e.g., `my_edge_ai_bot`).
+3. Copy the HTTP API token provided. This is your `TELEGRAM_TOKEN`.
+4. **Important:** Click the link to your new bot (e.g., `t.me/your_bot`) and press **Start**.
 
-* Copy the HTTP API Token provided. This is your TELEGRAM_TOKEN.
+**Step 2 — Get your Chat ID**
 
-* Crucial: Click the link to your new bot (e.g., t.me/your_bot) and press START.
+1. Search for **@GetMyIDBot** or **@userinfobot** in Telegram.
+2. Press **Start**.
+3. Copy the numerical value next to `Id`. This is your `TELEGRAM_CHAT_ID`.
 
-2. Step 2: Get your Chat ID
-* Search for @GetMyIDBot or @userinfobot in Telegram.
+## 🚀 Usage
 
-* Press START.
+### Web Dashboard
 
-* Copy the numerical value next to Id. This is your TELEGRAM_CHAT_ID.
+Open http://localhost:8080 and log in with:
 
-## 🏃 How to Run
+* **Username:** `admin`
+* **Password:** the password created during setup.
 
-Once the installation and setup are complete, you can start the Edge-AI hub using the automated execution scripts.
+### Desktop Assistant
 
-### 🪟 On Windows
-Navigate to the project directory open .bin folder double-click the execution script run.bat
+Run:
 
-### 🐧 On Linux or Mac
-Cooming soon!
+```bash
+python App.py
+```
 
-## How to use it
+to communicate with the Edge AI assistant.
 
-### On web browser
-Open the adress of the server on port 8080.
-You must enter the credentials the username is admin. (The password is the one you entered previously in setup.)
+### Telegram Commands
 
-### Via app
-Open the App.py to communicate with the chatbot from your computer.
+* `devices` — list all devices and device types.
+* `turn on <device>` / `turn off <device>` — send a command to a specific device (e.g., `turn on lg_tv`).
+* `turn on camera` / `turn off camera` — enable or disable the server camera. When the camera is on and detects a person, you will receive a Telegram notification.
 
-### Using Telegram
-You can use the following commands: 
+### Tailscale (Remote Access)
 
-* To give you a list of devices and dev types: devices.
-* To send a command for device: [command] [device]. For example: Turn on lg_tv.
-* To turn on/off camera: turn on/off camera.(Server camera, If the camera is on and it see a person, you will receive notifications in telegram).
-
-### Tailscale
-You can download and setup tailscale to have remote access on the server:
-
-* You must select to use tailscale ip on setup and type the ip manualy
+You can install and configure Tailscale to access the server remotely. During setup, select the option to use a Tailscale IP and enter it manually.
 
 ## 📜 Credits & Licensing
-This project utilizes the AndroidTV-Remote-Controller library by Jekso, which is distributed under the MIT License.
+
+This project uses the [AndroidTV-Remote-Controller](https://github.com/Jekso/AndroidTV-Remote-Controller) library by Jekso, distributed under the MIT License.
 
 ## 📝 License
-This project is licensed under the MIT License. See the LICENSE file for more details.
-Copyright (c) 2026 Γρηγόριος Ιωσηφίδης
+
+This project is licensed under the MIT License. See the `LICENSE` file for details.
+
+Copyright © 2026 Γρηγόριος Ιωσηφίδης
