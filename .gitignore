@@ -14,3 +14,4 @@ source/devices_config.json
 /models
 /.pytest_cache
 /data
+!.bin/app/requirements-ci.txt
