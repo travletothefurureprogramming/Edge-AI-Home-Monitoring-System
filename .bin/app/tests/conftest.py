@@ -27,14 +27,9 @@ def client():
 @pytest.fixture
 def auth_client(client):
 
-    client.post(
-        "/login",
-        data={
-            "username": "admin",
-            "password": "2611"
-        },
-        follow_redirects=True
-    )
+    with client.session_transaction() as session:
+        session["logged_in"] = True
+        session["username"] = "admin"
 
     return client
 

@@ -1,6 +1,6 @@
 from unittest.mock import patch
 
-@patch("ollama.chat")
+@patch("routes.ai.chat")
 def test_ai(mock_chat, auth_client):
 
     mock_chat.return_value = {
