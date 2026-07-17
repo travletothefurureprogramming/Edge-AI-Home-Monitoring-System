@@ -301,7 +301,12 @@ def handle_tv():
                 emit_device_event(room, dev_type, command)
 
                 return jsonify({"status": "success", "message": "Command sent successfully"}), 200
-
+            
+            else:
+                return jsonify({
+                    "status": "error",
+                    "message": "Unsupported TV type"
+                }), 404
         except KeyError:
             return jsonify({"status": "error", "message": "Device not found in config"}), 404
         
@@ -478,6 +483,7 @@ def handle_broadlink_ac():
         Logger.info(f"/broadlink/ac -> Received the command {command} for the device {device}. This device is part of the {room} and it is a {dev_type}")
 
         with open(f"{BASE_DIR}/config/devices_config.json") as f:
+           
             data = json.load(f)
 
         ip = data["Room"][room][dev_type][number]["ip"]
@@ -512,14 +518,14 @@ def handle_broadlink_decoder():
         content = request.json
         room = content["room"]
         dev_type = content["type"]
-        number = content["number"]
+        number = str(content["number"])
         command = content["command"]
         device = content["device"]
 
         Logger.info(f"/broadlink/decoder -> Received the command {command} for the device {device}. This device is part of the {room} and it is a {dev_type}")
         
         with open(f"{BASE_DIR}/config/devices_config.json", "r") as f:
-            data = f.read()
+            data = json.load(f)
 
         ip = data["Room"][room][dev_type][number]["ip"]
 
@@ -554,7 +560,7 @@ def handle_sonos():
         content = request.json
         room = content["room"]
         dev_type = content["type"]
-        number = content["number"]
+        number = str(content["number"])
         command = content["command"]
         device = content["device"]
 

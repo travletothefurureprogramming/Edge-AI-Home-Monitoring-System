@@ -1,13 +1,6 @@
 @echo off
 setlocal
 
-if not exist "..bin\app\config" (
-mkdir "..bin\app\config"
-)
-
-if not exist "..bin\app\config.env" (
-echo Creating .env...
-
 ```
 (
     echo FLASK_ENV=production

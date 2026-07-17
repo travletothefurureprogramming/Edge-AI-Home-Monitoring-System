@@ -1123,12 +1123,17 @@ def emit_device_event(room, dev_type, command):
 
 
 class AutomationManager:
-    def __init__(self):
-        self.rules_file = os.path.join(BASE_DIR, "config/automation.json")
+    def __init__(self, rules_file=None):
+
+        self.rules_file = rules_file or os.path.join(
+            BASE_DIR,
+            "config/automation.json"
+        )
+
         self.is_running = False
         self.rules = []
         self.available_actions = {}
-        self.lock = threading.Lock()  
+        self.lock = threading.Lock()
 
     def register_action(self, func):
         self.available_actions[func.__name__] = func

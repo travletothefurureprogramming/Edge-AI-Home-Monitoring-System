@@ -12,3 +12,5 @@ source/devices_config.json
 *.json
 /.vscode
 /models
+/.pytest_cache
+/data

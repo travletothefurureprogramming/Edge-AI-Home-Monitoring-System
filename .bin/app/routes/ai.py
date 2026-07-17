@@ -12,7 +12,12 @@ ai_bp = Blueprint('AI', __name__, url_prefix='/api')
 @auth.login_required
 def handle_ai():
     try:
-        content = request.json
+        content = request.get_json(silent=True)
+
+        if content is None:
+            return jsonify({
+                "error": "JSON body required"
+            }), 400
         user_input = content["prompt"]
     
         response = ollama.chat(model='phi3', messages=[
