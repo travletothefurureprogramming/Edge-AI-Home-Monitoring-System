@@ -19,3 +19,5 @@ aiohttp
 croniter
 uptime
 questionary
+cowsay
+rich
