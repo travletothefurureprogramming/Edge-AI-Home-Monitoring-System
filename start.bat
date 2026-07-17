@@ -17,7 +17,7 @@ echo Creating .env...
     echo APP_ADMIN_PASSWORD=
     echo TELEGRAM_BOT_TOKEN=
     echo TELEGRAM_CHAT_ID=
-) > ".\.bin\app\config\.env"
+) > "\.bin\app\config\.env"
 
 echo .env created.
 ```
