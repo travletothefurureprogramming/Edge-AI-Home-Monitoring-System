@@ -21,3 +21,4 @@ uptime
 questionary
 cowsay
 rich
+ollama
