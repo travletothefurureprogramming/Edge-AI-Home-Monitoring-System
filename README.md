@@ -6,9 +6,18 @@
 
 ## 🚀 Features
 
-* Control devices seamlessly via a dashboard, remotely, without port forwarding.
-* Real-time control using a smart assistant.
-* Edge AI for communication and commands.
+- **Edge-AI Architecture:** Localized processing hubs reducing cloud dependency and latency.
+- **Unified Network Control:** Asynchronous API endpoints driven by Flask and FastAPI to manage smart hardware (Yeelight, TP-Link Kasa, Sonos/Soco, Samsung TV).
+- **Extensible Integration Layer:** Modulated code structure allowing direct hardware abstraction loops.
+- **Robust CI/CD Pipeline:** Automated testing suite via GitHub Actions evaluating code coverage and reliability metrics on every push.
+
+## 🛠️ Tech Stack
+
+- **Backend Frameworks:** Python (FastAPI, Flask)
+- **Deep Learning / Computer Vision:** PyTorch, Triton Inference Server
+- **Testing & Quality:** Pytest, Pytest-Cov
+- **Target Hardware Interfaces:** Single-board computers (Raspberry Pi), Microcontrollers (RP2040), Network Smart Devices
+
 
 ## 📋 Supported Devices
 
@@ -123,13 +132,6 @@ You can control any device via a Broadlink Universal Remote in the following cat
 
 ### Samsung TV
 - Supports Samsung Tizen TV (2016+)
-
-## 🛠 Tech Stack
-* **Language:** Python 3.11
-* **Core Libraries:** [AndroidTV-Remote-Controller](https://github.com/Jekso/AndroidTV-Remote-Controller), ultralytics, cv2, ollama, tapo, flask, pywebostv, samsungtvws, python-kasa, ShellyPy, phue, yeelight, pydaikin, broadlink, soco, psutil, uptime
-* **Interface Tool:** Android Debug Bridge (ADB), Telegram Bot 
-* **Environment:** Designed for Linux (Raspberry Pi compatible) / Windows / macOS
-* **Main Hardware:** An old laptop
 
 ## 📦 Installation
 
