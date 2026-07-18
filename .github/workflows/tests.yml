@@ -51,4 +51,4 @@ jobs:
     - name: Run coverage
       working-directory: .bin/app
       run: |
-        pytest --cov=. --cov-report=term-missing
+        pytest --cov=. --cov-report=term-missing --cov-fail-under=40 --omit="Server.py,android_tv_rc/*"
