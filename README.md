@@ -1,5 +1,5 @@
 # Edge-AI Home Monitoring System
-[![Pytests](https://github.com/<travletothefurureprogramming>/Edge-AI-Home-Monitoring-System/actions/workflows/test.yml/badge.svg)](https://github.com/<travletothefurureprogramming>/Edge-AI-Home-Monitoring-System/actions)
+[![CI Tests](https://github.com/travletothefurureprogramming/Edge-AI-Home-Monitoring-System/actions/workflows/tests.yml/badge.svg)](https://github.com/travletothefurureprogramming/Edge-AI-Home-Monitoring-System/actions/workflows/tests.yml)
 ### A privacy-first, edge-AI home automation hub using Linux, Flask, and real-time control to orchestrate smart devices.
 
 <img width="1912" height="968" alt="Edge-AI Home Monitoring System dashboard" src="https://github.com/user-attachments/assets/1977c347-7d0e-4ddf-a71f-89956ec50f26" />
