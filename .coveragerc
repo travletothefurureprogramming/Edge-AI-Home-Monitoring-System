@@ -1,0 +1,5 @@
+[run]
+omit =
+    Server.py
+    android_tv_rc/key_codes.py
+    android_tv_rc/adb_client.py
