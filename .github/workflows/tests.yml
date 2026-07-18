@@ -47,8 +47,8 @@ jobs:
       run: |
         pytest -v
 
-
     - name: Run tests with coverage exclusions
+      working-directory: .bin/app
       run: |
         echo -e "[run]\nomit =\n    Server.py\n    android_tv_rc/*" > .coveragerc
         pytest --cov=. --cov-report=term-missing --cov-config=.coveragerc
