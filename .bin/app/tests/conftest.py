@@ -30,6 +30,7 @@ def auth_client(client):
     with client.session_transaction() as session:
         session["logged_in"] = True
         session["username"] = "admin"
+        session["authenticated"] = True
 
     return client
 
