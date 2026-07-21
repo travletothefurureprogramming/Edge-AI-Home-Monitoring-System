@@ -17,8 +17,6 @@ When the Terms of Service change, you're trapped.
 - **Vendor-independent.** Supports 30+ device ecosystems without lock-in.
 - **Truly private.** Zero cloud connections. Zero telemetry. Your data never leaves.
 
-**Tested:** 8,940+ automations executed offline over 30 days with 100% reliability.
-
 This isn't a feature. This is the default.
 
 ## 🚀 Features
