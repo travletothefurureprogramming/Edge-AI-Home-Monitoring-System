@@ -289,7 +289,7 @@ chmod +x start.sh
 Then start the application:
 
 ```bash
-./start.sh
+sudo ./start.sh
 ```
 
 During the first launch, the startup script will automatically:

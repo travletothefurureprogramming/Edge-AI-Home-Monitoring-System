@@ -1,4 +1,3 @@
-cat << 'EOF' > start.sh
 #!/usr/bin/env bash
 set -e
 
@@ -23,4 +22,3 @@ else
 fi
 
 docker compose up --build
-EOF
