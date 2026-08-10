@@ -1,15 +1,13 @@
+cat << 'EOF' > start.sh
 #!/usr/bin/env bash
 set -e
 
 mkdir -p ./.bin/app/config
 
 if [ ! -f ./.bin/app/config/.env ]; then
-echo "Creating .env..."
+    echo "Creating .env..."
 
-```
-cat > ./.bin/app/config/.env <<EOF
-```
-
+    cat > ./.bin/app/config/.env <<EOF
 FLASK_ENV=production
 OLLAMA_HOST=http://ollama:11434
 SECRET_KEY=CHANGE_ME
@@ -19,12 +17,10 @@ TELEGRAM_BOT_TOKEN=
 TELEGRAM_CHAT_ID=
 EOF
 
-```
-echo ".env created."
-```
-
+    echo ".env created."
 else
-echo ".env already exists."
+    echo ".env already exists."
 fi
 
 docker compose up --build
+EOF
