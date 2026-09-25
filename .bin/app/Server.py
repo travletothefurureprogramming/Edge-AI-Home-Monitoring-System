@@ -37,7 +37,7 @@ import platform
 import subprocess
 from pathlib import Path
 import secrets
-from miio import Yeelight as XiaomiYeelight, LightBulb
+from miio import Yeelight as XiaomiYeelight
 from miio.exceptions import DeviceException
 
 if getattr(sys, 'frozen', False):
