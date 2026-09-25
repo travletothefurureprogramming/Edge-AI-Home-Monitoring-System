@@ -249,6 +249,20 @@ Broadlink remotes can be used to control compatible infrared devices such as TVs
 
 * Samsung Tizen TVs (2016+)
 
+### Sonos
+
+* All Wi-Fi models
+
+### Xiaomi Lamps and Light Bulbs
+
+* Mi Smart LED Bulb Essential (untested)
+* Mi Smart LED Bulb White & Color (untested)
+* Mi Smart LED Desk Lamp 1S (untested)
+* Mi Smart LED Desk Lamp Pro (untested)
+* Mi Bedside Lamp 2 (untested)
+
+Xiaomi devices are controlled locally using the miIO protocol and require a device IP address and local access token.
+
 ## Installation
 
 The project runs inside Docker containers and is intended to work on Windows, Linux, and macOS.
