@@ -170,25 +170,29 @@ div.innerHTML=`
 
 <select class="type">
 
-<option>android_tv</option>
-<option>tapo_light</option>
-<option>tapo_led_strip</option>
-<option>tapo_smart_plug</option>
-<option>phue_light</option>
-<option>phue_led_strip</option>
-<option>yeelight</option>
-<option>lg_tv</option>
-<option>daikin_ac</option>
-<option>shelly</option>
-<option>kasa</option>
-<option>broadlink</option>
-<option>samsung_tv</option>
-<option>sonos</option>
+<option value="android_tv">android_tv</option>
+<option value="tapo_light">tapo_light</option>
+<option value="tapo_led_strip">tapo_led_strip</option>
+<option value="tapo_smart_plug">tapo_smart_plug</option>
+<option value="phue_light">phue_light</option>
+<option value="phue_led_strip">phue_led_strip</option>
+<option value="yeelight">yeelight</option>
+<option value="xiaomi_light">xiaomi_light</option> <!-- Προσθήκη Xiaomi -->
+<option value="lg_tv">lg_tv</option>
+<option value="daikin_ac">daikin_ac</option>
+<option value="shelly">shelly</option>
+<option value="kasa">kasa</option>
+<option value="broadlink">broadlink</option>
+<option value="samsung_tv">samsung_tv</option>
+<option value="sonos">sonos</option>
 
 </select>
 
 <label>IP Address</label>
 <input class="ip">
+
+<label>Token (Optional / Xiaomi)</label> <!-- Προσθήκη πεδίου Token -->
+<input class="token">
 
 <label>Username</label>
 <input class="username">
@@ -227,6 +231,7 @@ room:d.querySelector(".room").value,
 name:d.querySelector(".name").value,
 type:d.querySelector(".type").value,
 ip:d.querySelector(".ip").value,
+token:d.querySelector(".token").value, // Συλλογή του token
 username:d.querySelector(".username").value,
 password:d.querySelector(".password").value,
 model:d.querySelector(".model").value,

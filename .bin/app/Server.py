@@ -37,6 +37,8 @@ import platform
 import subprocess
 from pathlib import Path
 import secrets
+from miio import Yeelight as XiaomiYeelight, LightBulb
+from miio.exceptions import DeviceException
 
 if getattr(sys, 'frozen', False):
     BASE_DIR = os.path.dirname(sys.executable) 
@@ -388,8 +390,8 @@ def execute_device_command(room, dev_type, dev_id, dev_name, action):
         endpoint = f"{BACKEND_URL}/api/shelly"
     elif dev_type.lower() == "kasa":
         endpoint = f"{BACKEND_URL}/api/kasa"
-
-    
+    elif dev_type.lower() == "xiaomi_light":
+        endpoint = f"{BACKEND_URL}/api/xiaomi_light"
 
 
 
@@ -1056,6 +1058,26 @@ class Sonos:
         elif command == "volume_down":
             self.volume_down()
 
+class XiaomiSmartBulb:
+    def __init__(self, ip, token=None):
+        self.ip = ip
+        self.token = token
+
+        self.bulb = XiaomiYeelight(ip=self.ip, token=self.token) if self.token else XiaomiYeelight(ip=self.ip)
+
+    def turn_on(self):
+        self.bulb.on()
+
+    def turn_off(self):
+        self.bulb.off()
+
+    def execute_command(self, command):
+        if command == "on":
+            self.turn_on()
+        elif command == "off":
+            self.turn_off()
+
+
 DEVICE_ENDPOINTS = {
     "android_tv": "api/tv",
     "lg_tv": "api/tv",
@@ -1064,6 +1086,7 @@ DEVICE_ENDPOINTS = {
     "tapo_led_strip": "api/tapo_led_strip",
     "phue_light": "api/phue_light",
     "yeelight": "api/yeelight",
+    "xiaomi_light": "api/xiaomi_light",  
     "daikin_ac": "api/daikin",
     "shelly": "api/shelly",
     "kasa": "api/kasa",
@@ -1072,7 +1095,6 @@ DEVICE_ENDPOINTS = {
     "sonos": "/api/music/control"
 }
 
-
 def create_device_action(name, room, dev_type, number, command, device_name, model=None, mode=None, rellay_number=0):
     def action():
         try:
@@ -1080,6 +1102,7 @@ def create_device_action(name, room, dev_type, number, command, device_name, mod
                 data = json.load(f)
             dev_info = data["Room"][room][dev_type][number]
             ip = dev_info["ip"]
+            token = dev_info.get("token", None)
 
             if dev_type == "tapo_led_strip":
                 Tapo_Led_strip(ip, dev_info["model"]).command(command)
@@ -1107,6 +1130,8 @@ def create_device_action(name, room, dev_type, number, command, device_name, mod
                 Broadlink(ip).send_packet(room, device_name, command)            
             elif dev_type == "sonos":
                 Sonos(ip).execute_command(command)
+            elif dev_type == "xiaomi_light":
+                XiaomiSmartBulb(ip, token).execute_command(command)
             else:
                 Logger.error(f"Automation '{name}': άγνωστος τύπος συσκευής '{dev_type}'")
 

@@ -1,4 +1,3 @@
-# routes/setup.py
 from flask import Blueprint, request, jsonify, render_template, redirect
 from dotenv import load_dotenv
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -31,30 +30,30 @@ load_dotenv(
 )
 
 def update_env_file(key, value):
-        env_path = os.path.join(BASE_DIR, "config/.env")
+    env_path = os.path.join(BASE_DIR, "config/.env")
 
-        dir_path = os.path.dirname(env_path)
-        if dir_path:
-            os.makedirs(dir_path, exist_ok=True)
+    dir_path = os.path.dirname(env_path)
+    if dir_path:
+        os.makedirs(dir_path, exist_ok=True)
 
-        lines = []
-        key_found = False
+    lines = []
+    key_found = False
 
-        if os.path.exists(env_path):
-            with open(env_path, "r") as f:
-                lines = f.readlines()
+    if os.path.exists(env_path):
+        with open(env_path, "r") as f:
+            lines = f.readlines()
 
-        for i, line in enumerate(lines):
-            if line.strip().startswith(f"{key}="):
-                lines[i] = f'{key}="{value}"\n'
-                key_found = True
-                break
+    for i, line in enumerate(lines):
+        if line.strip().startswith(f"{key}="):
+            lines[i] = f'{key}="{value}"\n'
+            key_found = True
+            break
 
-        if not key_found:
-            lines.append(f'{key}="{value}"\n')
+    if not key_found:
+        lines.append(f'{key}="{value}"\n')
 
-        with open(env_path, "w") as f:
-            f.writelines(lines)
+    with open(env_path, "w") as f:
+        f.writelines(lines)
 
 SETUP_FILE = os.path.join(BASE_DIR, "config", "setup-complete.txt")
 
@@ -67,17 +66,18 @@ def setup_page():
 @setup_bp.route("/api/setup", methods=["POST"])
 def finish_setup():
 
-    data=request.json
+    data = request.json
 
-    update_env_file("USER","admin")
-    update_env_file("PASSWORD",generate_password_hash(data["password"]))
-    update_env_file("FLASK_SECRET_KEY",secrets.token_hex(32))
-    update_env_file("TELEGRAM_BOT_TOKEN",data["telegram_token"])
-    update_env_file("TELEGRAM_CHAT_ID",data["telegram_chat_id"])
+    update_env_file("USER", "admin")
+    update_env_file("PASSWORD", generate_password_hash(data["password"]))
+    update_env_file("FLASK_SECRET_KEY", secrets.token_hex(32))
+    update_env_file("TELEGRAM_BOT_TOKEN", data["telegram_token"])
+    update_env_file("TELEGRAM_CHAT_ID", data["telegram_chat_id"])
 
     for device in data["devices"]:
-        update_env_file("TAPO_USERNAME", device.get("username", ""))
-        update_env_file("TAPO_PASSWORD", device.get("password", ""))
+        if device.get("type") in ["tapo_light", "tapo_led_strip", "tapo_smart_plug"]:
+            update_env_file("TAPO_USERNAME", device.get("username", ""))
+            update_env_file("TAPO_PASSWORD", device.get("password", ""))
 
     for device in data["devices"]:
         save_device(
@@ -85,6 +85,7 @@ def finish_setup():
             device_type=device["type"],
             name=device["name"],
             ip=device["ip"],
+            token=device.get("token", ""),  
             username=device.get("username", ""),
             password=device.get("password", ""),
             model=device.get("model", ""),
@@ -100,7 +101,7 @@ def finish_setup():
     automation_manager.start()
     threading.Thread(target=main_bot_loop, daemon=True).start()
 
-    return {"status": "success"}
+    return jsonify({"success": True})  
 
 
 CONFIG_FILE = os.path.join(BASE_DIR, "config", "devices_config.json")
@@ -110,6 +111,7 @@ def save_device(
     device_type,
     name,
     ip,
+    token="",       
     username="",
     password="",
     model="",
@@ -143,6 +145,7 @@ def save_device(
         "name": name,
         "type": device_type,
         "ip": ip,
+        "token": token, 
         "username": username,
         "password": password,
         "model": model,

@@ -71,6 +71,7 @@ zope.interface==8.5
 pytest>=8.0.0
 pytest-cov>=6.0.0
 pytest-mock>=3.14.0
+python-miio>=0.5.12
 phue
 yeelight
 pydaikin

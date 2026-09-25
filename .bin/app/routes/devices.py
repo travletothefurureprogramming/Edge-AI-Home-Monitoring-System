@@ -8,7 +8,7 @@ from functools import wraps
 from Server import (
     Tapo_Smart_Bulbs, Tapo_Led_strip, Yeelight, Phue,
     LG_TV, AndroidTV, Samsung_TV, DaikinAC, Shelly, Kasa,
-    Broadlink, Sonos, emit_device_event, auth
+    Broadlink, Sonos, XiaomiSmartBulb , emit_device_event, auth
 )
 
 errors = {
@@ -594,6 +594,56 @@ def handle_sonos():
     
     except Exception as e:
         Logger.error(f"Unexpected error in /daikin: {e}")
+        return jsonify({"response": "Internal devices_bp Error"}), 500
+
+@devices_bp.route("/xiaomi_light", methods=["POST"])
+@auth.login_required
+def handle_xiaomi_light():
+    try:
+        content = request.json
+
+        device = content["device"]
+        room = content["room"]
+        dev_type = content["type"]
+        command = content["command"]
+        number = str(content["number"])
+
+        
+        Logger.info(f"/xiaomi_light -> Received the command {command} for the device {device}. This device is part of the {room} and it is a {dev_type}")
+        
+        with open(f"{BASE_DIR}/config/devices_config.json", "r") as f:
+            data = json.load(f)
+
+
+        try:
+            ip = data["Room"][room][dev_type][number]["ip"]
+            token = data["Room"][room][dev_type][number]["token"]
+            
+            
+            xiaomi_light = XiaomiSmartBulb(ip, token)
+            xiaomi_light.execute_command(command)
+            emit_device_event(room, dev_type, command)
+
+
+            return jsonify({"status": "success", "message": "Command received"}), 200
+            
+        except KeyError:
+            return jsonify({"status": "error", "message": "Xiaomi light device not found in config"}), 404
+    
+    except TypeError as e:
+        Logger.error(f"400 Bad request: {e}")
+        return jsonify({"response": f"Bad Request: {e}"}), 400
+
+    except ConnectionError as e:
+        Logger.error(f"503 Service Unavailable: {e}")
+        return jsonify({"response": f"Service Unavailable: {e}"}), 503
+
+    except KeyError as e:
+        Logger.error(f"400 Missing field: {e}")
+        return jsonify({"response": f"Missing field: {e}"}), 400
+    
+    except Exception as e:
+        Logger.error(f"Unexpected error in /xiaomi_light: {e}")
         return jsonify({"response": "Internal devices_bp Error"}), 500
 
 
