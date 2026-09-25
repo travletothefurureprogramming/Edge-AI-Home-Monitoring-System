@@ -1,267 +1,267 @@
 # Edge-AI Home Monitoring System
+
 [![CI Tests](https://github.com/travletothefurureprogramming/Edge-AI-Home-Monitoring-System/actions/workflows/tests.yml/badge.svg)](https://github.com/travletothefurureprogramming/Edge-AI-Home-Monitoring-System/actions/workflows/tests.yml)
-### A privacy-first, edge-AI home automation hub using Linux, Flask, and real-time control to orchestrate smart devices.
+
+A local-first home monitoring and automation system built with Python, Flask/FastAPI, Docker, and edge AI.
 
 <img width="1912" height="968" alt="Edge-AI Home Monitoring System dashboard" src="https://github.com/user-attachments/assets/1977c347-7d0e-4ddf-a71f-89956ec50f26" />
 
-## Your Home Shouldn't Need Permission to Work
+## Overview
 
-Most smart home systems are **cloud-first, local as an afterthought**.
+The goal of this project is to control smart-home devices locally and keep automation logic on the user's own hardware.
 
-When internet fails, they fail.  
-When the company shuts down, they stop.  
-When the Terms of Service change, you're trapped.
+The system can handle device control, automation rules, notifications, camera-based detection, and an AI assistant from a single dashboard.
 
-**Edge-AI flips that philosophy:**
-- **Local-first.** All automations run on your hardware. Internet is optional.
-- **Vendor-independent.** Supports 30+ device ecosystems without lock-in.
-- **Truly private.** Zero cloud connections. Zero telemetry. Your data never leaves.
+The main idea is simple:
 
-This isn't a feature. This is the default.
+* Automations are stored locally.
+* Device commands are sent over the local network whenever possible.
+* The system can continue working when there is no internet connection.
+* Different device ecosystems can be managed from the same interface.
 
-## 🚀 Features
+The project is still under development, so some integrations are tested while others are currently listed as untested.
 
-- **Edge-AI Architecture:** Localized processing hubs reducing cloud dependency and latency.
-- **Unified Network Control:** Asynchronous API endpoints driven by Flask and FastAPI to manage smart hardware (Yeelight, TP-Link Kasa, Sonos/Soco, Samsung TV).
-- **Extensible Integration Layer:** Modulated code structure allowing direct hardware abstraction loops.
-- **Robust CI/CD Pipeline:** Automated testing suite via GitHub Actions evaluating code coverage and reliability metrics on every push.
+## Features
 
-## 🛠️ Tech Stack
+* Local-first home automation
+* Smart-device control from a web dashboard
+* Flask and FastAPI services
+* Local automation manager
+* Camera-based person detection
+* YOLO-based computer vision
+* Telegram notifications
+* AI assistant integration
+* Docker-based deployment
+* GitHub Actions CI tests
+* Optional remote access through Tailscale
 
-- **Backend Frameworks:** Python (FastAPI, Flask)
-- **Deep Learning / Computer Vision:** PyTorch, Triton Inference Server
-- **Testing & Quality:** Pytest, Pytest-Cov
-- **Target Hardware Interfaces:** Single-board computers (Raspberry Pi), Microcontrollers (RP2040), Network Smart Devices
+## Tech Stack
 
-## 🔌 Offline-First Automations: They Never Stop
+### Backend
 
-Unlike cloud-dependent systems, your automations **always run**—even if:
-- Internet goes down
-- WiFi router dies or reboots
-- You unplug the system entirely (automations resume on power-up)
-- Cloud services are unreachable
+* Python
+* Flask
+* FastAPI
 
-### How It Works
+### AI / Computer Vision
 
-All automation rules are stored **locally** in `automations.json`. The `AutomationManager` runs on a background thread that:
+* PyTorch
+* YOLO
+* Triton Inference Server
 
-1. **Loads rules from disk** at startup (not cloud)
-2. **Executes scheduled rules** using local cron (no external scheduler needed)
-3. **Triggers event-based rules** from local sensors (YOLO camera, device state changes)
-4. **Calls device APIs directly** without internet involvement
+### Testing
 
-**No internet = No outbound calls. Automation continues normally.**
+* Pytest
+* Pytest-Cov
+* GitHub Actions
 
-### Proof
+### Deployment
 
-```bash
-# Scenario: Internet dies at 22:00
-# Rule: "At 23:00, turn off all lights"
+* Docker
+* Docker Compose
 
-# What happens:
-22:00 - Router unplugged (internet dies)
-22:30 - Dashboard unreachable, but system continues running
-23:00 - Automation fires on schedule
-        Lights turn off automatically
-        No internet call was made
-23:30 - Verify: SSH into Pi, confirm in logs that automation executed
+### Hardware
+
+* Raspberry Pi and other single-board computers
+* RP2040-based microcontrollers
+* Network-connected smart-home devices
+
+## Offline Operation
+
+One of the main design goals is to keep automation independent of cloud services.
+
+Automation rules are stored locally in `automations.json` and managed by the `AutomationManager`.
+
+At startup, the system loads the rules from disk and continues running them locally. Depending on the automation, rules can be triggered by schedules, device state changes, or local sensor events.
+
+For example:
+
+```text
+22:00 - Internet connection goes down
+
+23:00 - Scheduled automation runs
+        Lights are turned off
+
+23:30 - The automation can be verified locally
 ```
 
-### Why This Matters
+The exact behavior depends on the devices involved. Some devices may still require an internet connection for features that are provided by their manufacturer.
 
-**Home Assistant:** If internet dies, cloud integrations fail. Automations break.
+## Automation System
 
-**Edge-AI:** Internet is optional. Your automations are guaranteed to run, always.
+Automation rules are handled locally by the automation manager.
 
+The general flow is:
 
-## 📊 How Edge-AI Compares
+1. Load automation rules from disk.
+2. Check scheduled rules.
+3. React to supported local events.
+4. Send commands to the relevant devices.
+5. Record the result in the local logs.
 
-| Feature | Home Assistant | Edge-AI |
-|---------|---|---|
-| **Automations work offline** | ❌ Cloud integrations fail | ✅ 100% guaranteed |
-| **Internet required** | ✅ For most automations | ❌ Zero required |
-| **Setup time** | 1 hour (config files) | 5 minutes (wizard) |
-| **Startup time** | 45 seconds | <5 seconds |
-| **Privacy** | Integrations vary | ✅ 100% local, zero exfil |
-| **Device count** | 1,000+ | 30+ (curated, tested) |
-| **Resiliency** | ⚠️ Single Pi = single point of failure | ✅ Local-only = always works |
-| **Learning curve** | Steep (YAML, templating) | Gentle (web UI only) |
-| **Automation chaining** | ✅ Yes, but complex | ✅ Yes, simple web UI |
-| **Philosophy** | Flexibility first | Privacy & sovereignty first |
+This means the automation engine itself does not need an external scheduling service.
 
-**Bottom line:** HA is powerful but fragile. Edge-AI is simple but unbreakable.
+## Network and Privacy
 
+The project is designed around local processing and local device communication.
 
-## 🔒 True Privacy: Here's the Proof
+Automation data and configuration are stored on the machine running the system. Device commands are sent directly to supported devices or their local APIs.
 
-Cloud-dependent systems claim "local control" but still phone home:
-- Status syncs to cloud
-- Automations checked against cloud
-- Device state uploaded for analytics
+The project does not require a central cloud backend for its core automation functionality.
 
-**Edge-AI: Zero external connections.**
+Some optional features, such as Telegram notifications, obviously require access to their respective external services.
 
-Every automation rule is stored on your hardware. Every device command stays on your local network. No cloud service knows when you turned on your lights.
-
-### Privacy Guarantee
+You can inspect network activity yourself with tools such as `tcpdump`:
 
 ```bash
-# Monitor all network traffic for 24 hours
-# No packets to: AWS, Google, Microsoft, Telegram, etc.
-# Only local network traffic (your home WiFi)
-
 tcpdump -i any 'not (dst 192.168.0.0/16 or dst 10.0.0.0/8 or dst 127.0.0.1)'
-# Result: Empty (no external traffic during automation execution)
 ```
 
+The result will depend on which features are enabled and which devices or services are being used.
 
-## 💡 What This Proves
-
-**Most smart home platforms are cloud-first, local as an afterthought.**
-
-We flipped that: **local-first, cloud as optional.**
-
-The result: A system that works better offline than most systems work online.
-
-### Your Home Should Be Sovereign
-
-You should not be at the mercy of:
-- ISP uptime
-- AWS availability
-- Company pivots or shutdown
-- Terms of service changes
-
-**With Edge-AI, you own your infrastructure. Literally.**
-
-
-## 📋 Supported Devices
+## Supported Devices
 
 ### Tapo LED Strips
-- L900
-- L920 (untested)
-- L930 (untested)
+
+* L900
+* L920 (untested)
+* L930 (untested)
 
 ### Tapo Light Bulbs
-- L510 (untested)
-- L520 (untested)
-- L530 (untested)
-- L535 (untested)
-- L610 (untested)
-- L630 (untested)
+
+* L510 (untested)
+* L520 (untested)
+* L530 (untested)
+* L535 (untested)
+* L610 (untested)
+* L630 (untested)
 
 ### Tapo Smart Plugs
-- P100 (untested)
-- P105 (untested)
-- P110 (untested)
-- P300 (untested)
-- P304 (untested)
-- P306 (untested)
 
-### Philips Hue Lights
-- All lights/bulbs or LED strips connected to a Philips Hue Bridge (untested)
+* P100 (untested)
+* P105 (untested)
+* P110 (untested)
+* P300 (untested)
+* P304 (untested)
+* P306 (untested)
+
+### Philips Hue
+
+* Lights, bulbs, and LED strips connected through a Philips Hue Bridge (untested)
 
 ### Yeelight
-- All light bulbs that support Wi-Fi control (untested)
+
+* Wi-Fi-enabled light bulbs (untested)
 
 ### Android TV
-- Android 8+
+
+* Android 8+
 
 ### LG TV
-- webOS 6+
+
+* webOS 6+
 
 ### Daikin AC
-- BRP069Axx / BRP069Bxx / BRP072Axx (untested)
-- BRP15B61, a.k.a. AirBase (untested)
+
+* BRP069Axx / BRP069Bxx / BRP072Axx (untested)
+* BRP15B61 / AirBase (untested)
 
 ### Shelly
-- Shelly 1 (untested)
-- Shelly 1PM (untested)
-- Shelly 2 (untested)
-- Shelly 2.5 (untested)
-- Shelly 4Pro (untested)
-- Shelly Plug (untested)
-- Shelly Plug S (untested)
-- Shelly Bulb (untested)
-- Shelly H&T (untested)
-- Shelly Smoke (untested)
-- Shelly EM (untested)
-- Shelly Flood (untested)
+
+* Shelly 1 (untested)
+* Shelly 1PM (untested)
+* Shelly 2 (untested)
+* Shelly 2.5 (untested)
+* Shelly 4Pro (untested)
+* Shelly Plug (untested)
+* Shelly Plug S (untested)
+* Shelly Bulb (untested)
+* Shelly H&T (untested)
+* Shelly Smoke (untested)
+* Shelly EM (untested)
+* Shelly Flood (untested)
 
 ### Kasa Plugs
-- EP10 (untested)
-- HS103 (untested)
-- HS105 (untested)
-- HS110 (untested)
-- KP100 (untested)
-- KP105 (untested)
-- KP115 (untested)
-- KP125 (untested)
-- KP401 (untested)
+
+* EP10 (untested)
+* HS103 (untested)
+* HS105 (untested)
+* HS110 (untested)
+* KP100 (untested)
+* KP105 (untested)
+* KP115 (untested)
+* KP125 (untested)
+* KP401 (untested)
 
 ### Kasa Power Strips
-- EP40 (untested)
-- HS107 (untested)
-- HS300 (untested)
-- KP200 (untested)
-- KP303 (untested)
-- KP400 (untested)
+
+* EP40 (untested)
+* HS107 (untested)
+* HS300 (untested)
+* KP200 (untested)
+* KP303 (untested)
+* KP400 (untested)
 
 ### Kasa Wall Switches
-- ES20M (untested)
-- HS210 (untested)
-- KP405 (untested)
-- KS200 (untested)
-- KS200M (untested)
-- KS220 (untested)
-- KS220M (untested)
-- KS230 (untested)
+
+* ES20M (untested)
+* HS210 (untested)
+* KP405 (untested)
+* KS200 (untested)
+* KS200M (untested)
+* KS220 (untested)
+* KS220M (untested)
+* KS230 (untested)
 
 ### Kasa Bulbs
-- KL110 (untested)
-- KL120 (untested)
-- KL125 (untested)
-- KL130 (untested)
-- KL135 (untested)
-- KL50 (untested)
-- KL60 (untested)
-- LB110 (untested)
+
+* KL110 (untested)
+* KL120 (untested)
+* KL125 (untested)
+* KL130 (untested)
+* KL135 (untested)
+* KL50 (untested)
+* KL60 (untested)
+* LB110 (untested)
 
 ### Kasa Light Strips
-- KL400L5 (untested)
-- KL420L5 (untested)
-- KL430 (untested)
 
-### Broadlink Universal Remotes
-- RM Home (untested)
-- RM Mini 3 (untested)
-- RM Plus (untested)
-- RM Pro (untested)
-- RM Pro+ (untested)
-- RM4 Mini (untested)
-- RM4 Pro (untested)
-- RM4C Mini (untested)
-- RM4S (untested)
-- RM4 TV Mate (untested)
+* KL400L5 (untested)
+* KL420L5 (untested)
+* KL430 (untested)
 
-You can control any device via a Broadlink Universal Remote in the following categories: TV, AC, Decoder.
+### Broadlink
+
+* RM Home (untested)
+* RM Mini 3 (untested)
+* RM Plus (untested)
+* RM Pro (untested)
+* RM Pro+ (untested)
+* RM4 Mini (untested)
+* RM4 Pro (untested)
+* RM4C Mini (untested)
+* RM4S (untested)
+* RM4 TV Mate (untested)
+
+Broadlink remotes can be used to control compatible infrared devices such as TVs, air conditioners, and decoders.
 
 ### Samsung TV
-- Supports Samsung Tizen TV (2016+)
 
-## 📦 Installation
+* Samsung Tizen TVs (2016+)
 
-The Edge-AI Home Monitoring System is fully containerized using Docker. The setup process is automatic and works on **Windows**, **Linux**, and **macOS**.
+## Installation
 
-### Prerequisites
+The project runs inside Docker containers and is intended to work on Windows, Linux, and macOS.
 
-Before you begin, install the following software:
+### Requirements
 
-* **Git** — https://git-scm.com/downloads
-* **Docker Desktop** (Windows/macOS) — https://www.docker.com/products/docker-desktop/
-* **Docker Engine + Docker Compose** (Linux) — https://docs.docker.com/engine/install/
+Install:
 
-> **Note**
-> Python, Ollama, Android SDK Platform Tools (ADB), and all required Python packages are provided automatically by Docker. No additional manual installation is required.
+* [Git](https://git-scm.com/downloads)
+* [Docker Desktop](https://www.docker.com/products/docker-desktop/) on Windows/macOS
+* Docker Engine and Docker Compose on Linux
+
+Python and the required Python packages are installed inside the containers.
 
 ### 1. Clone the repository
 
@@ -272,119 +272,142 @@ cd Edge-AI-Home-Monitoring-System
 
 ### 2. Start the application
 
-**Windows**
+#### Windows
 
-```bash
+```bat
 start.bat
 ```
 
-**Linux / macOS**
+#### Linux / macOS
 
-Make the script executable (only required once):
+Make the script executable:
 
 ```bash
 chmod +x start.sh
 ```
 
-Then start the application:
-
-```bash
-sudo ./start.sh
-```
-
-During the first launch, the startup script will automatically:
-
-* Create the required configuration directories.
-* Create the `.env` file if it does not already exist.
-* Build the Docker containers.
-* Download the Ollama Docker image.
-* Start all required services.
-
-> **Note**
-> The first startup may take several minutes while Docker downloads the required images.
-
-### 3. Open the Setup Wizard
-
-Once the containers are running, open your web browser and navigate to:
-
-```text
-http://localhost:8080
-```
-
-The setup wizard will guide you through the entire configuration process. You will be asked to:
-
-* Create the administrator password.
-* Configure Telegram notifications (optional).
-* Add and configure your smart devices.
-* Save your configuration.
-
-### 4. AI Model Download
-
-During the initial setup, the required AI model will be downloaded automatically if it is not already installed.
-
-> **Note**
-> The first model download may take several minutes depending on your internet connection.
-
-### 5. Access the Dashboard
-
-After completing the setup, open your browser and visit:
-
-```text
-http://localhost:8080
-```
-
-Sign in using:
-
-* **Username:** `admin`
-* **Password:** the password you created during setup.
-
-## 🔄 Updating
-
-To update the project:
-
-```bash
-git pull
-```
-
-Then restart the application:
-
-**Windows**
-
-```bash
-start.bat
-```
-
-**Linux / macOS**
+Then run:
 
 ```bash
 ./start.sh
 ```
 
-## 🤖 Telegram Bot Configuration
+The startup script takes care of the initial setup, including:
 
-Your system needs a Bot Token and a Chat ID to send real-time alerts.
+* Creating required directories
+* Creating the `.env` file when needed
+* Building the Docker containers
+* Pulling the required Docker images
+* Starting the application services
 
-**Step 1 — Get your Bot Token**
+The first startup can take a few minutes because Docker may need to download several images.
 
-1. Open Telegram and search for **@BotFather** (official verified bot).
-2. Send `/newbot` and follow the prompts to choose a name and a unique username ending in `_bot` (e.g., `my_edge_ai_bot`).
-3. Copy the HTTP API token provided. This is your `TELEGRAM_TOKEN`.
-4. **Important:** Click the link to your new bot (e.g., `t.me/your_bot`) and press **Start**.
+### 3. Open the Setup Wizard
 
-**Step 2 — Get your Chat ID**
+Open:
 
-1. Search for **@GetMyIDBot** or **@userinfobot** in Telegram.
-2. Press **Start**.
-3. Copy the numerical value next to `Id`. This is your `TELEGRAM_CHAT_ID`.
+```text
+http://localhost:8080
+```
 
-## 🚀 Usage
+The setup wizard will guide you through the initial configuration.
+
+You can configure:
+
+* Administrator password
+* Telegram notifications
+* Smart devices
+* Other system settings
+
+### 4. AI Model
+
+The required AI model is downloaded during the initial setup when it is not already available.
+
+The download time depends on your internet connection and the model size.
+
+### 5. Dashboard
+
+After setup, open:
+
+```text
+http://localhost:8080
+```
+
+Default username:
+
+```text
+admin
+```
+
+The password is the one created during the setup process.
+
+## Updating
+
+Pull the latest changes:
+
+```bash
+git pull
+```
+
+Then restart the application.
+
+### Windows
+
+```bat
+start.bat
+```
+
+### Linux / macOS
+
+```bash
+./start.sh
+```
+
+## Telegram Bot
+
+Telegram can be used for notifications and remote commands.
+
+### Get a Bot Token
+
+1. Open Telegram.
+2. Search for `@BotFather`.
+3. Run `/newbot`.
+4. Follow the instructions.
+5. Copy the token provided by BotFather.
+6. Open the new bot and press **Start**.
+
+The token is used as:
+
+```text
+TELEGRAM_TOKEN
+```
+
+### Get a Chat ID
+
+You can use bots such as:
+
+* `@GetMyIDBot`
+* `@userinfobot`
+
+Start the bot and copy the numerical ID.
+
+This is used as:
+
+```text
+TELEGRAM_CHAT_ID
+```
+
+## Usage
 
 ### Web Dashboard
 
-Open http://localhost:8080 and log in with:
+Open:
 
-* **Username:** `admin`
-* **Password:** the password created during setup.
+```text
+http://localhost:8080
+```
+
+and log in with the administrator account created during setup.
 
 ### Desktop Assistant
 
@@ -394,24 +417,52 @@ Run:
 python App.py
 ```
 
-to communicate with the Edge AI assistant.
+to start the desktop assistant.
 
 ### Telegram Commands
 
-* `devices` — list all devices and device types.
-* `turn on <device>` / `turn off <device>` — send a command to a specific device (e.g., `turn on lg_tv`).
-* `turn on camera` / `turn off camera` — enable or disable the server camera. When the camera is on and detects a person, you will receive a Telegram notification.
+Some available commands include:
 
-### Tailscale (Remote Access)
+```text
+devices
+turn on <device>
+turn off <device>
+turn on camera
+turn off camera
+```
 
-You can install and configure Tailscale to access the server remotely. During setup, select the option to use a Tailscale IP and enter it manually.
+For example:
 
-## 📜 Credits & Licensing
+```text
+turn on lg_tv
+```
 
-This project uses the [AndroidTV-Remote-Controller](https://github.com/Jekso/AndroidTV-Remote-Controller) library by Jekso, distributed under the MIT License.
+The camera commands enable or disable the server camera. When person detection is enabled, the system can send a Telegram notification when a person is detected.
 
-## 📝 License
+### Tailscale
 
-This project is licensed under the MIT License. See the `LICENSE` file for details.
+Tailscale can be used for remote access to the system.
+
+During setup, configure the system with the Tailscale IP address when remote access is required.
+
+## Project Status
+
+This project is currently under active development.
+
+Some integrations have been tested with real hardware, while others are included based on compatibility and still need testing.
+
+Expect configuration changes, new integrations, and other changes as the project develops.
+
+## Credits
+
+This project uses the [AndroidTV-Remote-Controller](https://github.com/Jekso/AndroidTV-Remote-Controller) library by Jekso.
+
+The library is distributed under the MIT License.
+
+## License
+
+This project is licensed under the MIT License.
+
+See the [`LICENSE`](LICENSE) file for the full license text.
 
 Copyright © 2026 Γρηγόριος Ιωσηφίδης
